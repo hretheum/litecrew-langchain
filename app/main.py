@@ -17,6 +17,7 @@ from app.core.logging import (
     request_id_var,
 )
 from app.core.metrics import metrics_collector, cost_tracker
+from app.core.metrics_storage import MetricsStorage
 from prometheus_client import CONTENT_TYPE_LATEST
 
 # Setup logging
@@ -26,6 +27,11 @@ setup_logging(
 )
 
 logger = get_logger(__name__)
+
+# Initialize metrics storage
+metrics_storage = MetricsStorage()
+metrics_collector.storage = metrics_storage
+metrics_collector.cost_tracker = cost_tracker
 
 
 @asynccontextmanager
@@ -152,6 +158,10 @@ async def metrics():
     )
 
 
+# Import and include dashboard
+from app.api.dashboard import router as dashboard_router
+app.include_router(dashboard_router)
+
 # API routes will be added here
 @app.get("/")
 async def root():
@@ -162,6 +172,7 @@ async def root():
         "docs": "/docs",
         "health": "/health",
         "metrics": "/metrics",
+        "dashboard": "/dashboard",
     }
 
 

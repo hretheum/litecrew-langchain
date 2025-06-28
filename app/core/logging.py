@@ -7,7 +7,8 @@ import json
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Dict
+from typing import Dict, Optional
+from datetime import timedelta
 import uuid
 from contextvars import ContextVar
 
@@ -47,14 +48,14 @@ class JSONFormatter(logging.Formatter):
 
 def setup_logging(
     log_level: str = "INFO",
-    log_file: str = "/var/log/litecrewai/app.log",
+    log_dir: str = "/opt/litecrewai/logs",
     enable_console: bool = True,
 ) -> None:
-    """Setup logging configuration"""
+    """Setup logging configuration with multiple log files"""
 
     # Create log directory if it doesn't exist
-    log_path = Path(log_file)
-    log_path.parent.mkdir(parents=True, exist_ok=True)
+    log_path = Path(log_dir)
+    log_path.mkdir(parents=True, exist_ok=True)
 
     # Clear existing handlers
     logging.root.handlers = []
@@ -65,13 +66,30 @@ def setup_logging(
         "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     )
 
-    # File handler with JSON format
-    file_handler = logging.FileHandler(log_file)
-    file_handler.setFormatter(json_formatter)
-    file_handler.setLevel(getattr(logging, log_level.upper()))
+    # Define log files
+    log_files = {
+        "app": log_path / "app.log",
+        "api": log_path / "api.log",
+        "llm": log_path / "llm.log",
+        "error": log_path / "error.log",
+    }
+
+    # Create handlers for each log file
+    handlers = []
+    
+    # Application log handler
+    app_handler = logging.FileHandler(log_files["app"])
+    app_handler.setFormatter(json_formatter)
+    app_handler.setLevel(getattr(logging, log_level.upper()))
+    handlers.append(app_handler)
+
+    # Error log handler
+    error_handler = logging.FileHandler(log_files["error"])
+    error_handler.setFormatter(json_formatter)
+    error_handler.setLevel(logging.ERROR)
+    handlers.append(error_handler)
 
     # Console handler
-    handlers = [file_handler]
     if enable_console:
         console_handler = logging.StreamHandler(sys.stdout)
         console_handler.setFormatter(console_formatter)
@@ -80,6 +98,21 @@ def setup_logging(
 
     # Configure root logger
     logging.basicConfig(level=getattr(logging, log_level.upper()), handlers=handlers)
+
+    # Configure specific loggers with dedicated handlers
+    # API logger
+    api_logger = logging.getLogger("litecrewai.api")
+    api_handler = logging.FileHandler(log_files["api"])
+    api_handler.setFormatter(json_formatter)
+    api_logger.addHandler(api_handler)
+    api_logger.propagate = False
+
+    # LLM logger
+    llm_logger = logging.getLogger("litecrewai.llm")
+    llm_handler = logging.FileHandler(log_files["llm"])
+    llm_handler.setFormatter(json_formatter)
+    llm_logger.addHandler(llm_handler)
+    llm_logger.propagate = False
 
     # Configure specific loggers
     logging.getLogger("uvicorn.access").setLevel(logging.WARNING)
@@ -132,3 +165,114 @@ class PerformanceLogger:
                 "success": exc_type is None,
             },
         )
+
+
+# Correlation ID tracking
+class CorrelationIDManager:
+    """Manage correlation IDs for request tracking"""
+
+    def __init__(self):
+        self.correlation_id_var: ContextVar[Optional[str]] = ContextVar(
+            "correlation_id", default=None
+        )
+
+    def set_correlation_id(self, correlation_id: Optional[str] = None) -> str:
+        """Set correlation ID for current context"""
+        if not correlation_id:
+            correlation_id = str(uuid.uuid4())
+        self.correlation_id_var.set(correlation_id)
+        return correlation_id
+
+    def get_correlation_id(self) -> Optional[str]:
+        """Get current correlation ID"""
+        return self.correlation_id_var.get()
+
+    def clear_correlation_id(self) -> None:
+        """Clear correlation ID"""
+        self.correlation_id_var.set(None)
+
+
+# Global correlation ID manager
+correlation_manager = CorrelationIDManager()
+
+
+# Log analysis utilities
+class LogAnalyzer:
+    """Analyze logs for patterns and statistics"""
+
+    def __init__(self, log_dir: str = "/opt/litecrewai/logs"):
+        self.log_dir = Path(log_dir)
+
+    def parse_json_logs(self, log_file: str, hours: int = 24) -> list[Dict]:
+        """Parse JSON logs from the last N hours"""
+        logs = []
+        cutoff_time = datetime.utcnow() - timedelta(hours=hours)
+        
+        log_path = self.log_dir / log_file
+        if not log_path.exists():
+            return logs
+            
+        with open(log_path, "r") as f:
+            for line in f:
+                try:
+                    log_entry = json.loads(line.strip())
+                    log_time = datetime.fromisoformat(
+                        log_entry["timestamp"].replace("Z", "+00:00")
+                    )
+                    if log_time > cutoff_time:
+                        logs.append(log_entry)
+                except (json.JSONDecodeError, KeyError):
+                    continue
+                    
+        return logs
+
+    def get_error_statistics(self, hours: int = 24) -> Dict:
+        """Get error statistics from logs"""
+        errors = self.parse_json_logs("error.log", hours)
+        
+        stats = {
+            "total_errors": len(errors),
+            "errors_by_level": {},
+            "errors_by_module": {},
+            "top_errors": [],
+        }
+        
+        for error in errors:
+            # Count by level
+            level = error.get("level", "UNKNOWN")
+            stats["errors_by_level"][level] = (
+                stats["errors_by_level"].get(level, 0) + 1
+            )
+            
+            # Count by module
+            module = error.get("module", "unknown")
+            stats["errors_by_module"][module] = (
+                stats["errors_by_module"].get(module, 0) + 1
+            )
+            
+        return stats
+
+    def get_performance_metrics(self, hours: int = 24) -> Dict:
+        """Get performance metrics from logs"""
+        app_logs = self.parse_json_logs("app.log", hours)
+        
+        metrics = {
+            "request_count": 0,
+            "avg_duration": 0,
+            "p95_duration": 0,
+            "p99_duration": 0,
+        }
+        
+        durations = []
+        for log in app_logs:
+            if "duration_seconds" in log.get("extra_fields", {}):
+                durations.append(log["extra_fields"]["duration_seconds"])
+                
+        if durations:
+            durations.sort()
+            metrics["request_count"] = len(durations)
+            metrics["avg_duration"] = sum(durations) / len(durations)
+            metrics["p95_duration"] = durations[int(len(durations) * 0.95)]
+            metrics["p99_duration"] = durations[int(len(durations) * 0.99)]
+            
+        return metrics

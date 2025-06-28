@@ -4,7 +4,7 @@ LiteCrewAI Metrics Collection
 
 from prometheus_client import Counter, Histogram, Gauge, Info
 from prometheus_client import generate_latest
-from typing import Dict
+from typing import Dict, Optional
 import psutil
 import time
 
@@ -62,13 +62,15 @@ disk_usage = Gauge("litecrewai_disk_usage_percent", "Disk usage percentage")
 class MetricsCollector:
     """Collect system and application metrics"""
 
-    def __init__(self):
+    def __init__(self, storage=None):
         self.start_time = time.time()
+        self.storage = storage
 
     def collect_system_metrics(self):
         """Collect system resource metrics"""
         # CPU
-        cpu_usage.set(psutil.cpu_percent(interval=1))
+        cpu_percent = psutil.cpu_percent(interval=1)
+        cpu_usage.set(cpu_percent)
 
         # Memory
         memory = psutil.virtual_memory()
@@ -77,11 +79,28 @@ class MetricsCollector:
         # Disk
         disk = psutil.disk_usage("/")
         disk_usage.set(disk.percent)
+        
+        # Store in SQLite if available
+        if self.storage:
+            self.storage.record_metrics_batch([
+                ("system.cpu.usage_percent", cpu_percent, None),
+                ("system.memory.used_bytes", memory.used, None),
+                ("system.memory.percent", memory.percent, None),
+                ("system.disk.usage_percent", disk.percent, None),
+            ])
 
     def track_request(self, method: str, endpoint: str, status: int, duration: float):
         """Track HTTP request metrics"""
         request_count.labels(method=method, endpoint=endpoint, status=str(status)).inc()
         request_duration.labels(method=method, endpoint=endpoint).observe(duration)
+        
+        # Store in SQLite if available
+        if self.storage:
+            self.storage.record_metric(
+                "http.request.duration_seconds",
+                duration,
+                {"method": method, "endpoint": endpoint, "status": str(status)}
+            )
 
     def track_agent_task(
         self, agent_name: str, task_type: str, status: str, duration: float
@@ -110,6 +129,18 @@ class MetricsCollector:
             completion_tokens
         )
         llm_latency.labels(provider=provider, model=model).observe(latency)
+        
+        # Store in SQLite if available
+        if self.storage:
+            self.storage.record_metrics_batch([
+                ("llm.request.latency_seconds", latency, {"provider": provider, "model": model}),
+                ("llm.tokens.prompt", prompt_tokens, {"provider": provider, "model": model}),
+                ("llm.tokens.completion", completion_tokens, {"provider": provider, "model": model}),
+            ])
+            
+        # Update cost tracker
+        if hasattr(self, "cost_tracker"):
+            self.cost_tracker.add_usage(provider, model, prompt_tokens, completion_tokens)
 
     def get_metrics(self) -> bytes:
         """Generate Prometheus metrics"""
