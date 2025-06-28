@@ -79,11 +79,55 @@ SECRET_KEY=long-random-string-here
 4. Nigdy nie commituj prawdziwych sekretów
 5. Zawsze waliduj dane wejściowe
 
-## ⚠️ Znane problemy bezpieczeństwa do naprawienia
+## ✅ Status bezpieczeństwa
 
-1. **metrics_endpoint.py** - usuń domyślne credentials
-2. **websocket_api.py** - dodaj autentykację
-3. **validate_droplet_setup.sh** - waliduj $DROPLET_IP
+Wszystkie znane problemy bezpieczeństwa zostały naprawione:
+- metrics_endpoint.py - wymaga METRICS_USERNAME/PASSWORD z .env
+- websocket_api.py - wymaga tokenu autoryzacyjnego
+- validate_droplet_setup.sh - waliduje format adresu IP
+
+# Custom Commands / Aliasy
+
+## /nakurwiaj <szczegóły>
+
+Gdy użytkownik wpisze tę komendę, wykonaj następujące kroki:
+
+1. Wczytaj numerowany blok zadań atomowych który użytkownik wskaże z podanego pliku
+2. we wskazanym w <szczegóły> bloku zadań atomowych:
+   a. Rozpocznij wykonywanie pierwszego zadania atomowego
+   b. Po każdym zadaniu atomowym oznacz je jako wykonane (checkbox [x])
+   c. Po ukończeniu wszystkich zadań w bloku:
+      - Przeprowadź walidację kryteriów sukcesu metodami wskazanymi w dokumencie
+      - Wykonaj code review
+      - Wprowadź ewentualne poprawki
+      - Wykonaj git add, commit bez push
+        d. Zatrzymaj się
+3. Używaj równoległych wywołań narzędzi gdzie to możliwe
+4. Minimalizuj output - skupiaj się na wykonaniu, nie na opisywaniu
+
+
+## /status
+
+Pokaż:
+
+- Aktualny dzień projektu
+- Stan zadań z roadmapy na dziś
+- Które bloki zadań są ukończone
+- Co jest w trakcie realizacji
+- Co pozostało do zrobienia
+
+## /next
+
+Przejdź do następnego zadania atomowego lub bloku zadań z roadmapy
+
+## 🚀 DROPLET CONFIG - KURWA UŻYWAJ TEGO!
+
+**IP**: 46.101.181.183
+**USER**: root (na początku, potem litecrewai)
+**SSH KEY**: ~/.ssh/id_rag
+**SSH COMMAND**: `ssh -i ~/.ssh/id_rag root@46.101.181.183`
+
+⚠️ **NAKAZ**: ZAWSZE używaj powyższej konfiguracji SSH. NIE WYMYŚLAJ własnej!
 
 ## 🔗 Linki
 

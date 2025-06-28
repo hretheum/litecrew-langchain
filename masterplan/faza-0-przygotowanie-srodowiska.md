@@ -28,6 +28,7 @@ Wymagania:
 - Ubuntu 22.04 LTS, 2GB RAM, 50GB SSD
 - Konfiguracja firewall (ufw) - tylko porty 22, 80, 443
 - Utworzenie użytkownika 'litecrewai' z sudo
+- Konfiguracja sudo bez hasła dla użytkownika 'litecrewai' (NOPASSWD:ALL)
 - Disable root SSH login
 - Setup fail2ban
 - Konfiguracja automatycznych updates security
@@ -52,13 +53,13 @@ Skrypt powinien być idempotentny i zawierać sprawdzanie błędów.
 Napisz skrypt instalacyjny dla wszystkich dependencies LiteCrewAI na Ubuntu 22.04.
 
 Pakiety do instalacji:
-- Python 3.11 (z deadsnakes PPA)
+- Python 3.11  (z deadsnakes PPA)
 - Redis Server 7.x (z oficjalnego repo Redis)
 - SQLite 3.40+ 
 - Nginx (jako reverse proxy)
 - Supervisor (do zarządzania procesami)
 - Git, curl, wget, htop, tmux
-- Build essentials dla Python packages
+- Build essentials dla Python               w32q
 - Docker i docker-compose (opcjonalnie)
 
 Konfiguracje:
@@ -197,11 +198,11 @@ Dodatkowo stwórz skrypt monitorujący zużycie zasobów przez Ollama.
 [→ Zobacz skrypt: validate_ollama.py](./src/faza-0/validate_ollama.py)
 
 #### Task 0.2.3: Git Repository and CI/CD Setup (2h)
-**Cel**: Pełna automatyzacja deploymentu z GitHub
+**Cel**: Pełna automatyzacja deploymentu z GitLab
 
 **Prompt dla AI Agent**:
 ```
-Stwórz kompletny setup CI/CD dla LiteCrewAI używając GitHub Actions.
+Stwórz kompletny setup CI/CD dla LiteCrewAI używając GitLab
 
 Wymagania:
 1. Initialize git repo z właściwą strukturą:
@@ -210,12 +211,12 @@ Wymagania:
    - LICENSE (MIT)
    - CONTRIBUTING.md
 
-2. GitHub Actions workflows:
+2. Gitlab workflows:
    - test.yml: uruchamia testy przy każdym PR
    - deploy.yml: deploy na DigitalOcean przy merge do main
    - scheduled-backup.yml: codzienny backup o 3 AM
 
-3. Secrets w GitHub:
+3. Secrets w GitLab:
    - DROPLET_IP
    - SSH_PRIVATE_KEY
    - BACKUP_ENCRYPTION_KEY
@@ -232,8 +233,8 @@ Wszystko ma być w pełni zautomatyzowane i bezpieczne.
 ```
 
 **Metryki Sukcesu**:
-- ✅ Git repo połączone z GitHub
-- ✅ GitHub Actions workflows aktywne
+- ✅ Git repo połączone z GitLab
+- ✅ GitLab Actions workflows aktywne
 - ✅ Deploy działa w <2 minuty
 - ✅ Automatyczny rollback przy błędzie
 

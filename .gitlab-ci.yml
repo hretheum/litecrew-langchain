@@ -1,0 +1,205 @@
+stages:
+  - test
+  - build
+  - deploy
+  - backup
+
+variables:
+  DOCKER_DRIVER: overlay2
+  DOCKER_TLS_CERTDIR: ""
+  IMAGE_NAME: $CI_REGISTRY_IMAGE/litecrewai
+  IMAGE_TAG: $CI_COMMIT_SHORT_SHA
+
+# Test stage
+test:unit:
+  stage: test
+  image: python:3.12-slim
+  before_script:
+    - pip install -r requirements.txt
+    - pip install pytest pytest-cov pytest-asyncio
+  script:
+    - pytest tests/ -v --cov=app --cov-report=html --cov-report=term
+  coverage: '/TOTAL.*\s+(\d+%)$/'
+  artifacts:
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage.xml
+    paths:
+      - htmlcov/
+  only:
+    - branches
+    - merge_requests
+
+lint:
+  stage: test
+  image: python:3.12-slim
+  before_script:
+    - pip install black ruff mypy
+  script:
+    - black --check app/
+    - ruff check app/
+    - mypy app/ --ignore-missing-imports
+  only:
+    - branches
+    - merge_requests
+
+# Build stage
+build:docker:
+  stage: build
+  image: docker:latest
+  services:
+    - docker:dind
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  script:
+    - docker build -t $IMAGE_NAME:$IMAGE_TAG .
+    - docker tag $IMAGE_NAME:$IMAGE_TAG $IMAGE_NAME:latest
+    - docker push $IMAGE_NAME:$IMAGE_TAG
+    - docker push $IMAGE_NAME:latest
+  only:
+    - main
+    - master
+
+# Deploy stage
+deploy:production:
+  stage: deploy
+  image: alpine:latest
+  before_script:
+    - apk add --no-cache openssh-client
+    - eval $(ssh-agent -s)
+    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    - ssh-keyscan -H $DROPLET_IP >> ~/.ssh/known_hosts
+  script:
+    - |
+      ssh litecrewai@$DROPLET_IP << 'EOF'
+        set -e
+        echo "🚀 Starting deployment..."
+        
+        # Backup current version
+        if [ -d /opt/litecrewai/app ]; then
+          sudo tar -czf /opt/litecrewai/backups/backup-$(date +%Y%m%d-%H%M%S).tar.gz \
+            -C /opt/litecrewai app data config
+        fi
+        
+        # Pull latest code
+        cd /opt/litecrewai
+        git pull origin main || git pull origin master
+        
+        # Update Docker image
+        docker compose pull
+        
+        # Stop current container
+        docker compose down
+        
+        # Run database migrations if needed
+        # docker compose run --rm litecrewai alembic upgrade head
+        
+        # Start new version
+        docker compose up -d
+        
+        # Health check
+        sleep 10
+        curl -f http://localhost:8000/health || exit 1
+        
+        echo "✅ Deployment successful!"
+      EOF
+  environment:
+    name: production
+    url: http://$DROPLET_IP
+  only:
+    - main
+    - master
+  when: manual
+
+# Rollback job
+rollback:production:
+  stage: deploy
+  image: alpine:latest
+  before_script:
+    - apk add --no-cache openssh-client
+    - eval $(ssh-agent -s)
+    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    - ssh-keyscan -H $DROPLET_IP >> ~/.ssh/known_hosts
+  script:
+    - |
+      ssh litecrewai@$DROPLET_IP << 'EOF'
+        set -e
+        echo "🔄 Starting rollback..."
+        
+        # Find latest backup
+        LATEST_BACKUP=$(ls -t /opt/litecrewai/backups/*.tar.gz | head -1)
+        
+        if [ -z "$LATEST_BACKUP" ]; then
+          echo "❌ No backup found!"
+          exit 1
+        fi
+        
+        # Stop current container
+        cd /opt/litecrewai
+        docker compose down
+        
+        # Restore from backup
+        sudo tar -xzf "$LATEST_BACKUP" -C /opt/litecrewai
+        
+        # Start previous version
+        docker compose up -d
+        
+        echo "✅ Rollback completed!"
+      EOF
+  when: manual
+  only:
+    - main
+    - master
+
+# Scheduled backup
+backup:daily:
+  stage: backup
+  image: alpine:latest
+  before_script:
+    - apk add --no-cache openssh-client
+    - eval $(ssh-agent -s)
+    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    - ssh-keyscan -H $DROPLET_IP >> ~/.ssh/known_hosts
+  script:
+    - |
+      ssh litecrewai@$DROPLET_IP << 'EOF'
+        set -e
+        echo "📦 Starting backup..."
+        
+        # Create backup
+        BACKUP_NAME="backup-$(date +%Y%m%d-%H%M%S).tar.gz"
+        cd /opt/litecrewai
+        
+        # Stop container for consistent backup
+        docker compose stop litecrewai
+        
+        # Create backup
+        sudo tar -czf "/opt/litecrewai/backups/$BACKUP_NAME" \
+          app data config logs
+        
+        # Encrypt backup if encryption key is set
+        if [ ! -z "$BACKUP_ENCRYPTION_KEY" ]; then
+          openssl enc -aes-256-cbc -salt -in "/opt/litecrewai/backups/$BACKUP_NAME" \
+            -out "/opt/litecrewai/backups/$BACKUP_NAME.enc" \
+            -k "$BACKUP_ENCRYPTION_KEY"
+          rm "/opt/litecrewai/backups/$BACKUP_NAME"
+          BACKUP_NAME="$BACKUP_NAME.enc"
+        fi
+        
+        # Start container again
+        docker compose start litecrewai
+        
+        # Clean old backups (keep last 7 days)
+        find /opt/litecrewai/backups -name "backup-*.tar.gz*" -mtime +7 -delete
+        
+        echo "✅ Backup completed: $BACKUP_NAME"
+      EOF
+  only:
+    - schedules
