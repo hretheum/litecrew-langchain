@@ -14,8 +14,15 @@ LiteCrewAI to uproszczona wersja CrewAI zaprojektowana dla:
 ## 🗂️ Struktura
 
 - `masterplan/` - Kompletna dokumentacja techniczna projektu (8 faz rozwoju)
-- `masterplan/src/` - Kod źródłowy wyekstrahowany z dokumentacji
-- `litecrewai-master-plan.md` - Główny dokument planowania
+  - `src/common/` - Współdzielone skrypty walidacyjne
+  - `src/faza-X/` - Kod źródłowy dla każdej fazy
+- `docs/` - Dokumentacja dodatkowa i materiały pomocnicze
+- `litecrewai-master-plan.md` - Monolityczny dokument ze wszystkimi fazami
+- `SECURITY.md` - Wytyczne bezpieczeństwa projektu
+- `CLAUDE.md` - Instrukcje dla asystentów AI
+- `.env.example` - Szablon zmiennych środowiskowych
+
+**Uwaga**: Treść w `litecrewai-master-plan.md` jest identyczna z plikami w `masterplan/`, ale w jednym dokumencie dla wygody.
 
 ## 🚀 Quick Start
 
