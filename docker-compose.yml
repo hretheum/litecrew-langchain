@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  # Główna aplikacja LiteCrewAI w kontenerze
+  litecrewai:
+    build: .
+    container_name: litecrewai_app
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=sqlite:///data/litecrewai.db
+      - REDIS_URL=redis://host.docker.internal:6379/0
+      - OLLAMA_HOST=http://host.docker.internal:11434
+      - SECRET_KEY=${SECRET_KEY}
+      - JWT_SECRET=${JWT_SECRET}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - GROQ_API_KEY=${GROQ_API_KEY}
+      - DEBUG=${DEBUG:-false}
+    volumes:
+      - ./app:/app
+      - ./data:/data
+      - ./logs:/logs
+      - ./config:/config
+    restart: unless-stopped
+    network_mode: bridge
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+# Redis, Ollama, Nginx działają natywnie na hoście
+# Komunikacja przez host.docker.internal
