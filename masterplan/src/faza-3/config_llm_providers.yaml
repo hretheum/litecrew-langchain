@@ -1,0 +1,18 @@
+llm_providers:
+  primary: ollama/mistral  # Free, local
+  fallback1: groq/mixtral  # Fast, cheap
+  fallback2: openai/gpt-3.5-turbo  # Reliable
+  
+  config:
+    openai:
+      api_key: ${OPENAI_API_KEY}
+      organization: ${OPENAI_ORG}
+      max_retries: 3
+    
+    groq:
+      api_key: ${GROQ_API_KEY}
+      timeout: 30
+    
+    rate_limits:
+      openai: 60/min
+      groq: 100/min
