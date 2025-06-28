@@ -3,8 +3,8 @@ LiteCrewAI Metrics Collection
 """
 
 from prometheus_client import Counter, Histogram, Gauge, Info
-from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
-from typing import Dict, Any
+from prometheus_client import generate_latest
+from typing import Dict
 import psutil
 import time
 

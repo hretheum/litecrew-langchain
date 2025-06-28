@@ -16,7 +16,8 @@ from app.core.logging import (
     generate_request_id,
     request_id_var,
 )
-from app.core.metrics import metrics_collector, cost_tracker, CONTENT_TYPE_LATEST
+from app.core.metrics import metrics_collector, cost_tracker
+from prometheus_client import CONTENT_TYPE_LATEST
 
 # Setup logging
 setup_logging(
