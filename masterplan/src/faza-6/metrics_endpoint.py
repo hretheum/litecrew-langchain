@@ -10,13 +10,23 @@ security = HTTPBasic()
 
 def verify_metrics_auth(credentials: HTTPBasicCredentials = Depends(security)):
     """Verify metrics endpoint authentication"""
+    # Security: Require environment variables, no defaults
+    metrics_username = os.getenv("METRICS_USERNAME")
+    metrics_password = os.getenv("METRICS_PASSWORD")
+    
+    if not metrics_username or not metrics_password:
+        raise HTTPException(
+            status_code=500,
+            detail="Metrics authentication not configured"
+        )
+    
     correct_username = secrets.compare_digest(
         credentials.username, 
-        os.getenv("METRICS_USERNAME", "admin")
+        metrics_username
     )
     correct_password = secrets.compare_digest(
         credentials.password,
-        os.getenv("METRICS_PASSWORD", "changeme")
+        metrics_password
     )
     
     if not (correct_username and correct_password):

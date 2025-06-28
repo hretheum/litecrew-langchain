@@ -1,6 +1,23 @@
 # WebSocket endpoint for real-time updates
 @app.websocket("/ws")
-async def websocket_endpoint(websocket: WebSocket):
+async def websocket_endpoint(websocket: WebSocket, token: str = Query(...)):
+    # Verify authentication before accepting connection
+    try:
+        # TODO: Implement your token verification logic here
+        # user = await verify_jwt_token(token)
+        # if not user:
+        #     await websocket.close(code=1008, reason="Unauthorized")
+        #     return
+        
+        # For now, check if token is provided and not empty
+        if not token or len(token) < 10:
+            await websocket.close(code=1008, reason="Invalid token")
+            return
+            
+    except Exception:
+        await websocket.close(code=1008, reason="Authentication failed")
+        return
+    
     await websocket.accept()
     
     # Subscribe to events
