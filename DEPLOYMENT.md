@@ -78,6 +78,12 @@ docker compose up -d
 
 ## 📊 Monitoring
 
+### Deploy systemu monitorowania:
+```bash
+# Wykonaj lokalnie aby wdrożyć monitoring na droplet
+./scripts/deploy_monitoring.sh
+```
+
 ### Sprawdzenie statusu:
 ```bash
 docker compose ps
@@ -85,9 +91,40 @@ docker compose logs -f litecrewai
 curl http://localhost:8000/health
 ```
 
-### Metryki:
-- Prometheus: http://DROPLET_IP:9090
-- Application metrics: http://DROPLET_IP:8000/metrics
+### Dashboard i metryki:
+- Dashboard: http://46.101.181.183:8000/dashboard
+- Health check: http://46.101.181.183:8000/health/detailed
+- Prometheus metrics: http://46.101.181.183:8000/metrics
+
+### Logi i raporty:
+```bash
+# Dashboard raport (generowany co godzinę)
+ssh -i ~/.ssh/id_rag root@46.101.181.183 'cat /opt/litecrewai/logs/dashboard_report.txt'
+
+# Sprawdź logi aplikacji
+ssh -i ~/.ssh/id_rag root@46.101.181.183 'tail -f /opt/litecrewai/logs/app.log'
+
+# Sprawdź błędy
+ssh -i ~/.ssh/id_rag root@46.101.181.183 'tail -f /opt/litecrewai/logs/error.log'
+```
+
+### Walidacja systemów:
+```bash
+# Walidacja logowania
+ssh -i ~/.ssh/id_rag root@46.101.181.183 '/opt/litecrewai/venv/bin/python /opt/litecrewai/masterplan/src/faza-0/validate_logging.py'
+
+# Walidacja monitoringu
+ssh -i ~/.ssh/id_rag root@46.101.181.183 '/opt/litecrewai/venv/bin/python /opt/litecrewai/masterplan/src/faza-0/validate_monitoring.py'
+```
+
+### Agregacja metryk:
+```bash
+# Status timera agregacji
+ssh -i ~/.ssh/id_rag root@46.101.181.183 'sudo systemctl status litecrewai-metrics-aggregation.timer'
+
+# Ręczna agregacja
+ssh -i ~/.ssh/id_rag root@46.101.181.183 '/opt/litecrewai/venv/bin/python /opt/litecrewai/scripts/aggregate_metrics.py'
+```
 
 ## 🔧 Troubleshooting
 
