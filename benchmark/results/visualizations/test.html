@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+:root {
+    --primary: #2ecc71;
+    --secondary: #e74c3c;
+    --background: #f8f9fa;
+    --text: #2c3e50;
+}
+
+body {
+    font-family: 'Segoe UI', system-ui;
+    background: var(--background);
+    padding: 2rem;
+    display: flex;
+    justify-content: center;
+}
+
+.container {
+    background: white;
+    padding: 2rem;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    max-width: 800px;
+}
+
+.header {
+    text-align: center;
+    color: var(--text);
+    margin-bottom: 2rem;
+}
+
+.comparison {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    margin: 2rem 0;
+}
+
+.card {
+    padding: 1.5rem;
+    border-radius: 10px;
+    text-align: center;
+    transition: transform 0.3s ease;
+}
+
+.original {
+    background: #fff5f5;
+    border: 2px solid var(--secondary);
+}
+
+.slim {
+    background: #f0fff4;
+    border: 2px solid var(--primary);
+}
+
+.number {
+    font-size: 2.5em;
+    font-weight: bold;
+    margin: 1rem 0;
+}
+
+.reduction {
+    color: var(--primary);
+    text-align: center;
+    font-size: 1.2em;
+    margin: 2rem 0;
+}
+
+.icon {
+    font-size: 3em;
+    margin: 1rem 0;
+}
+
+@media (max-width: 600px) {
+    .comparison {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>Dependency Comparison</h1>
+        <p>98.4% Size Reduction Achieved</p>
+    </div>
+
+    <div class="comparison">
+        <div class="card original">
+            <div class="icon">📦</div>
+            <div class="number">595.7 MB</div>
+            <div>CrewAI Dependencies</div>
+        </div>
+        
+        <div class="card slim">
+            <div class="icon">🚀</div>
+            <div class="number">9.6 MB</div>
+            <div>LiteCrew Slim Dependencies</div>
+        </div>
+    </div>
+
+    <div class="reduction">
+        <h2>✅ 98.4% Reduction</h2>
+        <p>From 595.7 MB to just 9.6 MB</p>
+    </div>
+</div>
+
+<script>
+document.querySelectorAll('.card').forEach(card => {
+    card.addEventListener('mouseover', () => {
+        card.style.transform = 'translateY(-5px)';
+    });
+    card.addEventListener('mouseout', () => {
+        card.style.transform = 'none';
+    });
+});
+</script>
+</body>
+</html>
