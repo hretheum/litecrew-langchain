@@ -55,17 +55,19 @@ import os
 start_time = time.time()
 
 try:
-    if "crewai" in sys.prefix:
+    # Determine which framework to test based on venv path
+    venv_name = os.path.basename(sys.prefix)
+    
+    if venv_name == "crewai_official":
         import crewai
         framework = "crewai"
-    elif "langchain" in sys.prefix:
+    elif venv_name == "langchain":
         import langchain
         framework = "langchain"
-    elif "pyautogen" in sys.prefix:
+    elif venv_name == "pyautogen":
         import autogen
         framework = "pyautogen"
-    elif "litecrew" in sys.prefix:
-        # This would be the fork
+    elif venv_name == "litecrew_fork":
         import crewai  # litecrew is a fork of crewai
         framework = "litecrew"
     else:
