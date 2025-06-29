@@ -1,0 +1,79 @@
+{
+  "timestamp": "2025-06-29 20:24:44",
+  "results": [
+    {
+      "framework": "pyautogen",
+      "import_time": 0,
+      "package_size_mb": 0,
+      "memory_mb": 0,
+      "cpu_percent": 0,
+      "duration_seconds": 0,
+      "dependencies_count": 0,
+      "success": false,
+      "error": "A module needed for autogen.oai.client.create_openai_client is missing:\n - 'openai' is not installed.\nPlease install it using:\n'pip install ag2[openai]'"
+    },
+    {
+      "framework": "unknown",
+      "import_time": 3.0994415283203125e-06,
+      "package_size_mb": 21.006136894226074,
+      "memory_mb": 0.0,
+      "cpu_percent": 0.0,
+      "duration_seconds": 9.5367431640625e-07,
+      "dependencies_count": 19,
+      "success": true
+    },
+    {
+      "framework": "langchain",
+      "import_time": 0,
+      "package_size_mb": 0,
+      "memory_mb": 0,
+      "cpu_percent": 0,
+      "duration_seconds": 0,
+      "dependencies_count": 0,
+      "success": false,
+      "error": "No module named 'langchain'"
+    },
+    {
+      "framework": "crewai_official",
+      "import_time": 0,
+      "package_size_mb": 0,
+      "memory_mb": 0,
+      "cpu_percent": 0,
+      "duration_seconds": 0,
+      "dependencies_count": 0,
+      "success": false,
+      "error": "No module named 'crewai'"
+    },
+    {
+      "framework": "unknown",
+      "import_time": 3.814697265625e-06,
+      "package_size_mb": 21.001479148864746,
+      "memory_mb": 0.0,
+      "cpu_percent": 0.0,
+      "duration_seconds": 9.5367431640625e-07,
+      "dependencies_count": 19,
+      "success": true
+    },
+    {
+      "framework": "crewai_full",
+      "import_time": 1.5501439571380615,
+      "package_size_mb": 633.2054872512817,
+      "memory_mb": 0.609375,
+      "cpu_percent": 0.0,
+      "duration_seconds": 0.0037741661071777344,
+      "dependencies_count": 175,
+      "success": true
+    },
+    {
+      "framework": "litecrew_slim",
+      "import_time": 0,
+      "package_size_mb": 0,
+      "memory_mb": 0,
+      "cpu_percent": 0,
+      "duration_seconds": 0,
+      "dependencies_count": 0,
+      "success": false,
+      "error": "Task.__init__() got an unexpected keyword argument 'expected_output'"
+    }
+  ]
+}

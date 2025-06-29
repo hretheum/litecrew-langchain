@@ -148,7 +148,8 @@ try:
         # Create task
         task = Task(
             description="Analyze the number 42",
-            agent=agent
+            agent=agent,
+            expected_output="Analysis of the number 42"
         )
         
         # Create crew (but don't execute with real LLM)
@@ -227,8 +228,15 @@ try:
                     total_size += os.path.getsize(os.path.join(root, f))
     
     # Count dependencies
-    import pkg_resources
-    installed_packages = [d for d in pkg_resources.working_set]
+    try:
+        import pkg_resources
+        installed_packages = [d for d in pkg_resources.working_set]
+        dependencies_count = len(installed_packages)
+    except ImportError:
+        # Fallback for newer Python versions
+        import importlib.metadata
+        installed_packages = list(importlib.metadata.distributions())
+        dependencies_count = len(installed_packages)
     
     result = {
         "framework": framework,

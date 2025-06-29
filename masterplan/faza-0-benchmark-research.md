@@ -1720,7 +1720,7 @@ Ten benchmark został zaprojektowany do wykonania na **DigitalOcean CPU-Optimize
 - **LangChain 0.2.1**: ~400MB pamięci (35k⭐, najpopularniejszy)
 - **AutoGPT 0.5.0**: ~600MB pamięci (165k⭐, autonomous pioneer)
 
-### Fair Comparison Goals:
+### Fair Comparison Goals:a 
 1. **Obiektywny wybór**: Najlepszy framework wygrywa (niekoniecznie CrewAI!)
 2. **Analiza potencjału**: Który framework można najłatwiej zoptymalizować?
 3. **Rekomendacja**: Który używać w projektach produkcyjnych?
