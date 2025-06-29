@@ -5,10 +5,10 @@ echo "🔍 Validating CI/CD setup..."
 
 # Check git remote
 cd /opt/litecrewai
-git remote -v | grep -q "github.com" || { echo "❌ No GitHub remote"; exit 1; }
+git remote -v | grep -q "gitlab.com" || { echo "❌ No GitLab remote"; exit 1; }
 
 # Check workflows exist
-workflows=(".github/workflows/test.yml" ".github/workflows/deploy.yml" ".github/workflows/scheduled-backup.yml")
+workflows=(".gitlab-ci.yml")
 for workflow in "${workflows[@]}"; do
     [ -f "$workflow" ] || { echo "❌ Missing workflow: $workflow"; exit 1; }
 done

@@ -84,7 +84,7 @@ cd /root
 
 # 7. Clone repository (placeholder - update with actual repo)
 echo "📥 Cloning benchmark repository..."
-# git clone https://github.com/[YOUR_USERNAME]/bezrobocie.git /root/bezrobocie
+# git clone https://gitlab.com/eof3/litecrewai.git /root/bezrobocie
 
 # 8. Create Python virtual environment
 echo "🔧 Creating Python virtual environment..."

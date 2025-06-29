@@ -222,7 +222,7 @@ systemctl start docker
 pip3 install glances
 
 # Clone repository
-git clone https://github.com/[YOUR_USERNAME]/bezrobocie.git /root/bezrobocie
+git clone https://gitlab.com/eof3/litecrewai.git /root/bezrobocie
 cd /root/bezrobocie/benchmark
 
 # Create Python environment
