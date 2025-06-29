@@ -102,9 +102,10 @@ try:
                 self.goal = goal
                 self.backstory = backstory
         class Task:
-            def __init__(self, description, agent):
+            def __init__(self, description, agent, expected_output=None):
                 self.description = description
                 self.agent = agent
+                self.expected_output = expected_output
         class Crew:
             def __init__(self, agents, tasks):
                 self.agents = agents
