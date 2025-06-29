@@ -34,6 +34,14 @@ def run_benchmark_in_venv(framework: str, test_script: str):
     return result
 
 def main():
+    import argparse
+    
+    parser = argparse.ArgumentParser(description='Visual benchmark for agent frameworks')
+    parser.add_argument('frameworks', nargs='*', 
+                       choices=['crewai', 'langchain', 'pyautogen', 'litecrew'],
+                       help='Frameworks to test (default: all)')
+    args = parser.parse_args()
+    
     console.print("[bold cyan]🚀 VISUAL BENCHMARK USING EXISTING INFRASTRUCTURE[/bold cyan]\n")
     
     # Check if envs exist
@@ -104,7 +112,22 @@ print(json.dumps(result))
     
     # Run tests with visual progress
     results = []
-    frameworks = ["crewai_official", "langchain", "autogpt", "litecrew_fork"]
+    
+    # Map framework names to env names
+    framework_map = {
+        'crewai': 'crewai_official',
+        'langchain': 'langchain',
+        'pyautogen': 'autogpt',
+        'litecrew': 'litecrew_fork'
+    }
+    
+    # Determine which frameworks to test
+    if args.frameworks:
+        frameworks = [framework_map[f] for f in args.frameworks]
+        console.print(f"[yellow]Testing selected frameworks: {', '.join(args.frameworks)}[/yellow]\n")
+    else:
+        frameworks = ["crewai_official", "langchain", "autogpt", "litecrew_fork"]
+        console.print("[yellow]Testing all frameworks[/yellow]\n")
     
     for env in track(frameworks, description="Testing frameworks..."):
         console.print(f"\n[cyan]Testing {env}...[/cyan]")
