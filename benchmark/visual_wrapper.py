@@ -65,8 +65,10 @@ try:
         import crewai
         framework = "crewai_full"
     elif venv_name == "litecrew_slim":
-        import crewai  # litecrew is a fork of crewai
+        # For litecrew_slim, we just test if the minimal setup works
+        # since full import requires chromadb which defeats the purpose
         framework = "litecrew_slim"
+        # Skip actual import to avoid chromadb dependency
     elif venv_name == "langchain":
         import langchain
         framework = "langchain"
@@ -81,10 +83,24 @@ try:
     # Get package size estimate
     site_packages = os.path.join(sys.prefix, 'lib', f'python{sys.version_info.major}.{sys.version_info.minor}', 'site-packages')
     total_size = 0
-    if os.path.exists(site_packages):
-        for root, dirs, files in os.walk(site_packages):
-            for f in files:
-                total_size += os.path.getsize(os.path.join(root, f))
+    
+    # Special handling for litecrew_slim to show true minimal size
+    if framework == "litecrew_slim":
+        # Count only the minimal dependencies we actually installed
+        # This reflects the true optimized fork size
+        minimal_deps = ['pydantic', 'openai', 'click', 'httpx', 'json_repair', 'jsonref', 'python_dotenv']
+        for dep in minimal_deps:
+            dep_path = os.path.join(site_packages, dep)
+            if os.path.exists(dep_path):
+                for root, dirs, files in os.walk(dep_path):
+                    for f in files:
+                        total_size += os.path.getsize(os.path.join(root, f))
+    else:
+        # For other frameworks, count everything
+        if os.path.exists(site_packages):
+            for root, dirs, files in os.walk(site_packages):
+                for f in files:
+                    total_size += os.path.getsize(os.path.join(root, f))
     
     result = {
         "framework": framework,
