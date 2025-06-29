@@ -1,6 +1,6 @@
 # Benchmark requirements
-# Framework versions (06/2025)
-crewai==0.30.11
+# Framework versions - najnowsze dostępne
+crewai==0.134.0  # Najnowsza wersja!
 langchain==0.2.1
 langchain-openai==0.1.8
 # Dodatkowe frameworki
