@@ -20,6 +20,7 @@ def main():
     parser = argparse.ArgumentParser(description='Visual benchmark for agent frameworks')
     parser.add_argument('frameworks', nargs='*', 
                        choices=['crewai', 'langchain', 'pyautogen', 'litecrew'],
+                       default=[],
                        help='Frameworks to test (default: all)')
     args = parser.parse_args()
     
