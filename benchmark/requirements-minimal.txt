@@ -1,0 +1,13 @@
+# Minimal requirements - let pip resolve versions
+crewai
+langchain
+langchain-openai
+pyautogen
+
+# Benchmarking essentials
+psutil
+memory-profiler
+rich
+tqdm
+
+# Let pip handle transitive dependencies
