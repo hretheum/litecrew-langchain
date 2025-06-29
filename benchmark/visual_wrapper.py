@@ -19,11 +19,11 @@ def main():
     
     parser = argparse.ArgumentParser(description='Visual benchmark for agent frameworks')
     parser.add_argument('frameworks', nargs='*',
-                       help='Frameworks to test: crewai, langchain, pyautogen, litecrew (default: all)')
+                       help='Frameworks to test: crewai, crewai_full, litecrew_slim, langchain, pyautogen (default: all)')
     args = parser.parse_args()
     
     # Validate framework choices
-    valid_frameworks = ['crewai', 'langchain', 'pyautogen', 'litecrew']
+    valid_frameworks = ['crewai', 'crewai_full', 'litecrew_slim', 'langchain', 'pyautogen']
     if args.frameworks:
         for f in args.frameworks:
             if f not in valid_frameworks:
@@ -60,16 +60,19 @@ try:
     
     if venv_name == "crewai_official":
         import crewai
-        framework = "crewai"
+        framework = "crewai_official"
+    elif venv_name == "crewai_full":
+        import crewai
+        framework = "crewai_full"
+    elif venv_name == "litecrew_slim":
+        import crewai  # litecrew is a fork of crewai
+        framework = "litecrew_slim"
     elif venv_name == "langchain":
         import langchain
         framework = "langchain"
     elif venv_name == "pyautogen":
         import autogen
         framework = "pyautogen"
-    elif venv_name == "litecrew_fork":
-        import crewai  # litecrew is a fork of crewai
-        framework = "litecrew"
     else:
         framework = "unknown"
         
@@ -111,9 +114,10 @@ print(json.dumps(result))
     # Map framework names to env names
     framework_map = {
         'crewai': 'crewai_official',
+        'crewai_full': 'crewai_full',
+        'litecrew_slim': 'litecrew_slim',
         'langchain': 'langchain',
-        'pyautogen': 'pyautogen',
-        'litecrew': 'litecrew_fork'
+        'pyautogen': 'pyautogen'
     }
     
     # Determine which frameworks to test
@@ -121,7 +125,7 @@ print(json.dumps(result))
         frameworks = [framework_map[f] for f in args.frameworks]
         console.print(f"[yellow]Testing selected frameworks: {', '.join(args.frameworks)}[/yellow]\n")
     else:
-        frameworks = ["crewai_official", "langchain", "pyautogen", "litecrew_fork"]
+        frameworks = ["crewai_official", "crewai_full", "litecrew_slim", "langchain", "pyautogen"]
         console.print("[yellow]Testing all frameworks[/yellow]\n")
     
     for env in track(frameworks, description="Testing frameworks..."):
