@@ -71,10 +71,10 @@ deploy:production:
     - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
     - mkdir -p ~/.ssh
     - chmod 700 ~/.ssh
-    - ssh-keyscan -H $DROPLET_IP >> ~/.ssh/known_hosts
+    - ssh-keyscan -H -p 2222 $DROPLET_IP >> ~/.ssh/known_hosts
   script:
     - |
-      ssh litecrewai@$DROPLET_IP << 'EOF'
+      ssh -p 2222 litecrewai@$DROPLET_IP << 'EOF'
         set -e
         echo "🚀 Starting deployment..."
         
@@ -100,9 +100,25 @@ deploy:production:
         # Start new version
         docker compose up -d
         
-        # Health check
+        # Health check with automatic rollback on failure
         sleep 10
-        curl -f http://localhost:8000/health || exit 1
+        if ! curl -f http://localhost:8000/health; then
+          echo "❌ Health check failed! Starting automatic rollback..."
+          
+          # Find latest backup
+          LATEST_BACKUP=$(ls -t /opt/litecrewai/backups/*.tar.gz | head -1)
+          
+          if [ ! -z "$LATEST_BACKUP" ]; then
+            docker compose down
+            sudo tar -xzf "$LATEST_BACKUP" -C /opt/litecrewai
+            docker compose up -d
+            echo "✅ Automatic rollback completed!"
+          else
+            echo "❌ No backup found for rollback!"
+          fi
+          
+          exit 1
+        fi
         
         echo "✅ Deployment successful!"
       EOF
@@ -124,10 +140,10 @@ rollback:production:
     - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
     - mkdir -p ~/.ssh
     - chmod 700 ~/.ssh
-    - ssh-keyscan -H $DROPLET_IP >> ~/.ssh/known_hosts
+    - ssh-keyscan -H -p 2222 $DROPLET_IP >> ~/.ssh/known_hosts
   script:
     - |
-      ssh litecrewai@$DROPLET_IP << 'EOF'
+      ssh -p 2222 litecrewai@$DROPLET_IP << 'EOF'
         set -e
         echo "🔄 Starting rollback..."
         
@@ -166,10 +182,10 @@ backup:daily:
     - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
     - mkdir -p ~/.ssh
     - chmod 700 ~/.ssh
-    - ssh-keyscan -H $DROPLET_IP >> ~/.ssh/known_hosts
+    - ssh-keyscan -H -p 2222 $DROPLET_IP >> ~/.ssh/known_hosts
   script:
     - |
-      ssh litecrewai@$DROPLET_IP << 'EOF'
+      ssh -p 2222 litecrewai@$DROPLET_IP << 'EOF'
         set -e
         echo "📦 Starting backup..."
         

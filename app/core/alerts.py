@@ -192,12 +192,23 @@ class AlertManager:
             await asyncio.sleep(interval_seconds)
 
 
+# Import Telegram sender if available
+try:
+    from scripts.telegram_alerts import send_telegram_notification
+except ImportError:
+    send_telegram_notification = None
+
 # Webhook notifier
 async def send_webhook_notification(webhook_url: str, alerts: List[Dict]):
     """Send alert notifications to webhook"""
     import aiohttp
     
     if not alerts:
+        return
+    
+    # Check if we should use Telegram instead
+    if webhook_url == "telegram" and send_telegram_notification:
+        await send_telegram_notification(alerts)
         return
         
     # Format for Discord/Slack
