@@ -1,4 +1,4 @@
-# LiteCrewAI - Instrukcje dla Claude
+# litecrew - Instrukcje dla Claude
 
 ## 🔒 Bezpieczeństwo - KRYTYCZNE
 
@@ -29,7 +29,7 @@ SECRET_KEY=long-random-string-here
 ## 📁 Struktura projektu
 
 ```
-/Users/hretheum/dev/bezrobocie/crewAI/
+/Users/hretheum/dev/bezrobocie/litecrew/
 ├── masterplan/          # Dokumentacja techniczna (8 faz)
 │   ├── src/            # Wyekstrahowany kod źródłowy
 │   │   ├── faza-0/     # Skrypty walidacyjne infrastruktury ✅
@@ -96,7 +96,7 @@ SECRET_KEY=long-random-string-here
   - Uproszczenie do single-user mode
 
 ### W trakcie:
-- **Faza 1 Blok 1.2**: Dependency Optimization
+- **Faza 0 Blok 0.2**: Przygotowanie litecrew Fork do Benchmarku
 
 ### Status bezpieczeństwa:
 - metrics_endpoint.py - wymaga METRICS_USERNAME/PASSWORD z .env
