@@ -53,7 +53,7 @@ Projekt LiteCrewAI (30 dni)
 Stwórz skrypt do forkowania CrewAI z pełnym cleanup.
 
 Kroki:
-1. Fork CrewAI na GitHub (instrukcje manualne)
+1. Fork CrewAI na GitLab (instrukcje manualne)
 2. Clone do /opt/litecrewai/app
 3. Zachowaj historię ale usuń wszystkie remote branches
 4. Stwórz branch 'lite-personal' od main
@@ -308,7 +308,7 @@ Komponenty:
    - Optimal layer ordering
    - Cache mount points
 
-3. GitHub Actions cache:
+3. gitlab Actions cache:
    - Cache pip packages
    - Cache venv
    - Restore keys strategy

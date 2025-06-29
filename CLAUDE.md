@@ -78,6 +78,7 @@ SECRET_KEY=long-random-string-here
 3. Testuj lokalnie z .env
 4. Nigdy nie commituj prawdziwych sekretów
 5. Zawsze waliduj dane wejściowe
+6. przed wykonaniem commit+push zawsze aktualizuj plik project-context.md
 
 ## ✅ Status bezpieczeństwa
 
