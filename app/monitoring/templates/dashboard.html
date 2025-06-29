@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }}</title>
+    <script src="https://unpkg.com/htmx.org@1.9.6"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f5f5f7;
+            color: #1d1d1f;
+            line-height: 1.5;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .header h1 {
+            font-size: 1.75rem;
+            font-weight: 600;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            border: 1px solid #e5e5e7;
+        }
+        
+        .card h2 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #1d1d1f;
+        }
+        
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .metric:last-child {
+            border-bottom: none;
+        }
+        
+        .metric-label {
+            font-weight: 500;
+            color: #6e6e73;
+        }
+        
+        .metric-value {
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+        
+        .status-healthy {
+            color: #34c759;
+        }
+        
+        .status-degraded {
+            color: #ff9500;
+        }
+        
+        .status-unhealthy {
+            color: #ff3b30;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background-color: #f0f0f0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 0.5rem;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+        
+        .progress-normal {
+            background-color: #34c759;
+        }
+        
+        .progress-warning {
+            background-color: #ff9500;
+        }
+        
+        .progress-critical {
+            background-color: #ff3b30;
+        }
+        
+        .alert {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            border-left: 4px solid;
+        }
+        
+        .alert-warning {
+            background-color: #fff8e1;
+            border-color: #ff9500;
+            color: #8b5a00;
+        }
+        
+        .alert-critical {
+            background-color: #ffebee;
+            border-color: #ff3b30;
+            color: #c62828;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-top: 1rem;
+        }
+        
+        .refresh-button {
+            background: #007aff;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .refresh-button:hover {
+            background: #0051d0;
+        }
+        
+        .auto-refresh {
+            font-size: 0.875rem;
+            color: #6e6e73;
+            margin-top: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <h1>{{ title }}</h1>
+    </header>
+    
+    <div class="container">
+        <!-- Health Status -->
+        <div class="card" hx-get="/api/health" hx-trigger="load, every 30s" hx-target="#health-status">
+            <h2>System Health</h2>
+            <div id="health-status">
+                <div class="metric">
+                    <span class="metric-label">Status</span>
+                    <span class="metric-value status-healthy">Loading...</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Alerts -->
+        <div class="card" hx-get="/api/alerts" hx-trigger="load, every 60s" hx-target="#alerts-container">
+            <h2>Alerts</h2>
+            <div id="alerts-container">
+                <p>Loading alerts...</p>
+            </div>
+        </div>
+        
+        <div class="grid">
+            <!-- System Metrics -->
+            <div class="card" hx-get="/api/metrics/latest" hx-trigger="load, every 30s" hx-target="#system-metrics">
+                <h2>System Resources</h2>
+                <div id="system-metrics">
+                    <p>Loading system metrics...</p>
+                </div>
+            </div>
+            
+            <!-- Application Metrics -->
+            <div class="card" hx-get="/api/metrics/latest" hx-trigger="load, every 30s" hx-target="#app-metrics">
+                <h2>Application Status</h2>
+                <div id="app-metrics">
+                    <p>Loading application metrics...</p>
+                </div>
+            </div>
+            
+            <!-- System Information -->
+            <div class="card" hx-get="/api/system/info" hx-trigger="load" hx-target="#system-info">
+                <h2>System Information</h2>
+                <div id="system-info">
+                    <p>Loading system information...</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Performance Charts -->
+        <div class="card">
+            <h2>Performance History</h2>
+            <div class="chart-container">
+                <canvas id="performanceChart"></canvas>
+            </div>
+            <button class="refresh-button" onclick="updateChart()">Refresh Chart</button>
+            <div class="auto-refresh">Charts update every 5 minutes</div>
+        </div>
+    </div>
+    
+    <script>
+        // Initialize performance chart
+        const ctx = document.getElementById('performanceChart').getContext('2d');
+        let performanceChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [
+                    {
+                        label: 'CPU Usage (%)',
+                        data: [],
+                        borderColor: '#007aff',
+                        backgroundColor: 'rgba(0, 122, 255, 0.1)',
+                        tension: 0.1
+                    },
+                    {
+                        label: 'Memory Usage (%)',
+                        data: [],
+                        borderColor: '#34c759',
+                        backgroundColor: 'rgba(52, 199, 89, 0.1)',
+                        tension: 0.1
+                    },
+                    {
+                        label: 'Active Tasks',
+                        data: [],
+                        borderColor: '#ff9500',
+                        backgroundColor: 'rgba(255, 149, 0, 0.1)',
+                        tension: 0.1,
+                        yAxisID: 'y1'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false,
+                },
+                scales: {
+                    x: {
+                        display: true,
+                        title: {
+                            display: true,
+                            text: 'Time'
+                        }
+                    },
+                    y: {
+                        type: 'linear',
+                        display: true,
+                        position: 'left',
+                        title: {
+                            display: true,
+                            text: 'Percentage (%)'
+                        },
+                        min: 0,
+                        max: 100
+                    },
+                    y1: {
+                        type: 'linear',
+                        display: true,
+                        position: 'right',
+                        title: {
+                            display: true,
+                            text: 'Tasks'
+                        },
+                        grid: {
+                            drawOnChartArea: false,
+                        },
+                    }
+                }
+            }
+        });
+        
+        // Update chart with latest data
+        async function updateChart() {
+            try {
+                const response = await fetch('/api/metrics/history?hours=1');
+                const data = await response.json();
+                
+                const labels = [];
+                const cpuData = [];
+                const memoryData = [];
+                const tasksData = [];
+                
+                // Take every 5th data point to avoid overcrowding
+                const filteredData = data.filter((_, index) => index % 5 === 0);
+                
+                filteredData.forEach(entry => {
+                    const time = new Date(entry.timestamp).toLocaleTimeString();
+                    labels.push(time);
+                    cpuData.push(entry.system.cpu_percent);
+                    memoryData.push(entry.system.memory_percent);
+                    tasksData.push(entry.application.active_tasks);
+                });
+                
+                performanceChart.data.labels = labels;
+                performanceChart.data.datasets[0].data = cpuData;
+                performanceChart.data.datasets[1].data = memoryData;
+                performanceChart.data.datasets[2].data = tasksData;
+                performanceChart.update();
+            } catch (error) {
+                console.error('Error updating chart:', error);
+            }
+        }
+        
+        // Initial chart load and periodic updates
+        updateChart();
+        setInterval(updateChart, 5 * 60 * 1000); // Update every 5 minutes
+        
+        // Custom HTMX event handlers for dynamic content
+        document.body.addEventListener('htmx:afterRequest', function(event) {
+            if (event.detail.target.id === 'health-status') {
+                const response = JSON.parse(event.detail.xhr.response);
+                const statusClass = `status-${response.status}`;
+                event.detail.target.innerHTML = `
+                    <div class="metric">
+                        <span class="metric-label">Status</span>
+                        <span class="metric-value ${statusClass}">${response.status.toUpperCase()}</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Message</span>
+                        <span class="metric-value">${response.message}</span>
+                    </div>
+                `;
+            }
+            
+            if (event.detail.target.id === 'system-metrics') {
+                const response = JSON.parse(event.detail.xhr.response);
+                const system = response.system;
+                
+                function getProgressClass(percent) {
+                    if (percent > 80) return 'progress-critical';
+                    if (percent > 60) return 'progress-warning';
+                    return 'progress-normal';
+                }
+                
+                event.detail.target.innerHTML = `
+                    <div class="metric">
+                        <span class="metric-label">CPU Usage</span>
+                        <span class="metric-value">${system.cpu_percent.toFixed(1)}%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill ${getProgressClass(system.cpu_percent)}" 
+                             style="width: ${system.cpu_percent}%"></div>
+                    </div>
+                    
+                    <div class="metric">
+                        <span class="metric-label">Memory Usage</span>
+                        <span class="metric-value">${system.memory_percent.toFixed(1)}%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill ${getProgressClass(system.memory_percent)}" 
+                             style="width: ${system.memory_percent}%"></div>
+                    </div>
+                    
+                    <div class="metric">
+                        <span class="metric-label">Disk Usage</span>
+                        <span class="metric-value">${system.disk_percent.toFixed(1)}%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill ${getProgressClass(system.disk_percent)}" 
+                             style="width: ${system.disk_percent}%"></div>
+                    </div>
+                `;
+            }
+            
+            if (event.detail.target.id === 'app-metrics') {
+                const response = JSON.parse(event.detail.xhr.response);
+                const app = response.application;
+                
+                event.detail.target.innerHTML = `
+                    <div class="metric">
+                        <span class="metric-label">Active Agents</span>
+                        <span class="metric-value">${app.active_agents}</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Active Tasks</span>
+                        <span class="metric-value">${app.active_tasks}</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Completed Tasks</span>
+                        <span class="metric-value">${app.completed_tasks}</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Failed Tasks</span>
+                        <span class="metric-value">${app.failed_tasks}</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Requests/min</span>
+                        <span class="metric-value">${app.requests_per_minute}</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Avg Response Time</span>
+                        <span class="metric-value">${app.average_response_time.toFixed(2)}s</span>
+                    </div>
+                `;
+            }
+            
+            if (event.detail.target.id === 'system-info') {
+                const response = JSON.parse(event.detail.xhr.response);
+                
+                event.detail.target.innerHTML = `
+                    <div class="metric">
+                        <span class="metric-label">Hostname</span>
+                        <span class="metric-value">${response.hostname}</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Platform</span>
+                        <span class="metric-value">${response.platform}</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Architecture</span>
+                        <span class="metric-value">${response.architecture}</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">CPU Cores</span>
+                        <span class="metric-value">${response.cpu_count}</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Uptime</span>
+                        <span class="metric-value">${Math.floor(response.uptime / 3600)}h ${Math.floor((response.uptime % 3600) / 60)}m</span>
+                    </div>
+                `;
+            }
+            
+            if (event.detail.target.id === 'alerts-container') {
+                const alerts = JSON.parse(event.detail.xhr.response);
+                
+                if (alerts.length === 0) {
+                    event.detail.target.innerHTML = '<p style="color: #34c759; font-weight: 500;">No active alerts</p>';
+                } else {
+                    event.detail.target.innerHTML = alerts.map(alert => `
+                        <div class="alert alert-${alert.severity}">
+                            <strong>${alert.severity.toUpperCase()}:</strong> ${alert.message}
+                            <div style="font-size: 0.875rem; margin-top: 0.5rem; opacity: 0.8;">
+                                ${new Date(alert.timestamp).toLocaleString()}
+                            </div>
+                        </div>
+                    `).join('');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

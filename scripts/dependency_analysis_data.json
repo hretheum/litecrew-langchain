@@ -1,0 +1,199 @@
+{
+  "analysis_date": "2025-06-29T13:15:20.382039",
+  "dependencies": {
+    "main": {
+      "pydantic": ">=2.4.2",
+      "openai": ">=1.13.3",
+      "litellm": "==1.72.6",
+      "instructor": ">=1.3.3",
+      "pdfplumber": ">=0.11.4",
+      "regex": ">=2024.9.11",
+      "chromadb": ">=0.5.23",
+      "tokenizers": ">=0.20.3",
+      "onnxruntime": "==1.22.0",
+      "openpyxl": ">=3.1.5",
+      "pyvis": ">=0.3.2",
+      "python-dotenv": ">=1.0.0",
+      "click": ">=8.1.7",
+      "appdirs": ">=1.4.4",
+      "jsonref": ">=1.1.0",
+      "json-repair": ">=0.25.2",
+      "uv": ">=0.4.25",
+      "tomli-w": ">=1.1.0",
+      "tomli": ">=2.0.2",
+      "blinker": ">=1.9.0",
+      "json5": ">=0.10.0"
+    },
+    "dev": {
+      "ruff": ">=0.8.2",
+      "mypy": ">=1.10.0",
+      "pre-commit": ">=3.6.0",
+      "pillow": ">=10.2.0",
+      "cairosvg": ">=2.7.1",
+      "pytest": ">=8.0.0",
+      "python-dotenv": ">=1.0.0",
+      "pytest-asyncio": ">=0.23.7",
+      "pytest-subprocess": ">=1.5.2",
+      "pytest-recording": ">=0.13.2",
+      "pytest-randomly": ">=3.16.0",
+      "pytest-timeout": ">=2.3.1"
+    }
+  },
+  "categorized": {
+    "CORE": {
+      "pydantic": {
+        "version": ">=2.4.2",
+        "reason": "Data validation and settings management - CORE framework requirement",
+        "size_bytes": 2621440,
+        "size_mb": 2.5
+      },
+      "python-dotenv": {
+        "version": ">=1.0.0",
+        "reason": "Environment variable management - security requirement",
+        "size_bytes": 20971,
+        "size_mb": 0.02
+      },
+      "click": {
+        "version": ">=8.1.7",
+        "reason": "CLI framework - required for crewai command",
+        "size_bytes": 629145,
+        "size_mb": 0.6
+      },
+      "jsonref": {
+        "version": ">=1.1.0",
+        "reason": "JSON reference resolution - required for configuration",
+        "size_bytes": 20971,
+        "size_mb": 0.02
+      },
+      "tomli-w": {
+        "version": ">=1.1.0",
+        "reason": "TOML writing capability",
+        "size_bytes": 10485,
+        "size_mb": 0.01
+      },
+      "tomli": {
+        "version": ">=2.0.2",
+        "reason": "TOML parsing for Python < 3.11",
+        "size_bytes": 20971,
+        "size_mb": 0.02
+      },
+      "blinker": {
+        "version": ">=1.9.0",
+        "reason": "Event dispatching system - core functionality",
+        "size_bytes": 20971,
+        "size_mb": 0.02
+      }
+    },
+    "OPTIONAL": {
+      "openai": {
+        "version": ">=1.13.3",
+        "reason": "OpenAI API integration - can use other LLMs",
+        "size_bytes": 838860,
+        "size_mb": 0.8
+      },
+      "instructor": {
+        "version": ">=1.3.3",
+        "reason": "Structured output from LLMs - optional feature",
+        "size_bytes": 524288,
+        "size_mb": 0.5
+      },
+      "regex": {
+        "version": ">=2024.9.11",
+        "reason": "Advanced regex - could use standard re module",
+        "size_bytes": 419430,
+        "size_mb": 0.4
+      },
+      "tokenizers": {
+        "version": ">=0.20.3",
+        "reason": "Text tokenization - optional for embeddings",
+        "size_bytes": 15728640,
+        "size_mb": 15.0
+      }
+    },
+    "REPLACEABLE": {
+      "litellm": {
+        "version": "==1.72.6",
+        "reason": "Large LLM abstraction",
+        "alternatives": [
+          "direct API calls",
+          "minimal wrapper"
+        ],
+        "size_reduction": "~80%",
+        "size_bytes": 15728640,
+        "size_mb": 15.0
+      },
+      "pdfplumber": {
+        "version": ">=0.11.4",
+        "reason": "Heavy PDF processing",
+        "alternatives": [
+          "pypdf",
+          "pdftotext"
+        ],
+        "size_reduction": "~50%",
+        "size_bytes": 5242880,
+        "size_mb": 5.0
+      },
+      "chromadb": {
+        "version": ">=0.5.23",
+        "reason": "Heavy vector database",
+        "alternatives": [
+          "faiss-cpu",
+          "annoy",
+          "simple in-memory solution"
+        ],
+        "size_reduction": "~90%",
+        "size_bytes": 47185920,
+        "size_mb": 45.0
+      },
+      "onnxruntime": {
+        "version": "==1.22.0",
+        "reason": "Large ML runtime",
+        "alternatives": [
+          "onnxruntime-mobile",
+          "custom implementation"
+        ],
+        "size_reduction": "~70%",
+        "size_bytes": 157286400,
+        "size_mb": 150.0
+      }
+    },
+    "REMOVABLE": {
+      "openpyxl": {
+        "version": ">=3.1.5",
+        "reason": "Excel processing - specific use case",
+        "size_bytes": 2621440,
+        "size_mb": 2.5
+      },
+      "pyvis": {
+        "version": ">=0.3.2",
+        "reason": "Network visualization - rarely used feature",
+        "size_bytes": 524288,
+        "size_mb": 0.5
+      },
+      "appdirs": {
+        "version": ">=1.4.4",
+        "reason": "App directory paths - can be hardcoded",
+        "size_bytes": 20971,
+        "size_mb": 0.02
+      },
+      "json-repair": {
+        "version": ">=0.25.2",
+        "reason": "JSON repair - edge case handling",
+        "size_bytes": 104857,
+        "size_mb": 0.1
+      },
+      "uv": {
+        "version": ">=0.4.25",
+        "reason": "Package installer - only needed for development",
+        "size_bytes": 26214400,
+        "size_mb": 25.0
+      },
+      "json5": {
+        "version": ">=0.10.0",
+        "reason": "JSON5 format support - rarely needed",
+        "size_bytes": 31457,
+        "size_mb": 0.03
+      }
+    }
+  }
+}
