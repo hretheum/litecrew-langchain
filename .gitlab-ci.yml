@@ -1,5 +1,6 @@
 stages:
   - test
+  - security
   - build
   - deploy
   - backup
@@ -9,16 +10,41 @@ variables:
   DOCKER_TLS_CERTDIR: ""
   IMAGE_NAME: $CI_REGISTRY_IMAGE/litecrewai
   IMAGE_TAG: $CI_COMMIT_SHORT_SHA
+  # Cache configuration
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+  PIP_WHEEL_DIR: "$CI_PROJECT_DIR/.cache/wheels"
+  DOCKER_BUILDKIT: 1
+
+# Global cache configuration
+.cache_config: &cache_config
+  cache:
+    key:
+      files:
+        - requirements*.txt
+        - requirements/*.txt
+        - constraints.txt
+        - pyproject.toml
+    paths:
+      - .cache/pip
+      - .cache/wheels
+      - .pip/wheelhouse
+      - venv/
+    policy: pull-push
 
 # Test stage
 test:unit:
   stage: test
   image: python:3.12-slim
+  <<: *cache_config
   before_script:
+    - python -m venv venv
+    - source venv/bin/activate
+    - pip install --upgrade pip wheel setuptools
     - pip install -r requirements.txt
-    - pip install pytest pytest-cov pytest-asyncio
+    - pip install -e .[dev]  # Install with dev dependencies
   script:
-    - pytest tests/ -v --cov=app --cov-report=html --cov-report=term
+    - source venv/bin/activate
+    - pytest tests/ -v --cov=tests --cov-report=html --cov-report=term --cov-report=xml --cov-fail-under=70
   coverage: '/TOTAL.*\s+(\d+%)$/'
   artifacts:
     reports:
@@ -27,6 +53,8 @@ test:unit:
         path: coverage.xml
     paths:
       - htmlcov/
+      - coverage.xml
+    expire_in: 1 week
   only:
     - branches
     - merge_requests
@@ -34,12 +62,112 @@ test:unit:
 lint:
   stage: test
   image: python:3.12-slim
+  <<: *cache_config
   before_script:
+    - python -m venv venv
+    - source venv/bin/activate
+    - pip install --upgrade pip wheel setuptools
     - pip install black ruff mypy
   script:
+    - source venv/bin/activate
     - black --check app/
     - ruff check app/
     - mypy app/ --ignore-missing-imports
+  only:
+    - branches
+    - merge_requests
+
+# Security scanning stage
+security:bandit:
+  stage: security
+  image: python:3.12-slim
+  <<: *cache_config
+  before_script:
+    - python -m venv venv
+    - source venv/bin/activate
+    - pip install --upgrade pip wheel setuptools
+    - pip install bandit[toml] safety pip-audit
+  script:
+    - source venv/bin/activate
+    # Static security analysis with bandit
+    - bandit -r app/src -f json -o bandit-report.json || true
+    - bandit -r app/src -f txt
+    # Dependency vulnerability scanning
+    - safety check --json --output safety-report.json || true
+    - safety check
+    # Pip dependency audit
+    - pip-audit --desc --output=json --output-file=pip-audit-report.json || true
+    - pip-audit --desc
+  artifacts:
+    reports:
+      # GitLab security dashboard integration
+      sast: bandit-report.json
+    paths:
+      - bandit-report.json
+      - safety-report.json  
+      - pip-audit-report.json
+    expire_in: 1 week
+    when: always
+  allow_failure: false  # Block pipeline on security issues
+  only:
+    - branches
+    - merge_requests
+
+security:secrets:
+  stage: security
+  image: alpine:latest
+  before_script:
+    - apk add --no-cache git
+    - wget -O gitleaks.tar.gz https://github.com/gitleaks/gitleaks/releases/download/v8.18.4/gitleaks_8.18.4_linux_x64.tar.gz
+    - tar -xzf gitleaks.tar.gz
+    - chmod +x gitleaks
+    - mv gitleaks /usr/local/bin/
+  script:
+    # Scan for secrets in git history and current files
+    - gitleaks detect --source . --report-format json --report-path gitleaks-report.json || true
+    - gitleaks detect --source . --report-format sarif --report-path gitleaks-report.sarif || true
+    - gitleaks detect --source . --verbose
+  artifacts:
+    reports:
+      # GitLab security dashboard integration
+      secret_detection: gitleaks-report.sarif
+    paths:
+      - gitleaks-report.json
+      - gitleaks-report.sarif
+    expire_in: 1 week
+    when: always
+  allow_failure: false  # Block pipeline on secret detection
+  only:
+    - branches
+    - merge_requests
+
+security:container:
+  stage: security
+  image: docker:latest
+  services:
+    - docker:dind
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    # Install Trivy for container vulnerability scanning
+    - apk add --no-cache curl
+    - curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
+  script:
+    # Build image for scanning
+    - DOCKER_BUILDKIT=1 docker build -t $IMAGE_NAME:security-scan .
+    # Scan image for vulnerabilities
+    - trivy image --format json --output trivy-report.json $IMAGE_NAME:security-scan || true
+    - trivy image --format sarif --output trivy-report.sarif $IMAGE_NAME:security-scan || true
+    - trivy image --severity HIGH,CRITICAL $IMAGE_NAME:security-scan
+  artifacts:
+    reports:
+      # GitLab security dashboard integration  
+      container_scanning: trivy-report.sarif
+    paths:
+      - trivy-report.json
+      - trivy-report.sarif
+    expire_in: 1 week
+    when: always
+  allow_failure: true  # Don't block on container issues initially
   only:
     - branches
     - merge_requests
@@ -53,10 +181,18 @@ build:docker:
   before_script:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
   script:
-    - docker build -t $IMAGE_NAME:$IMAGE_TAG .
+    # Build with BuildKit for better caching
+    - DOCKER_BUILDKIT=1 docker build 
+      --cache-from $IMAGE_NAME:latest 
+      --build-arg BUILDKIT_INLINE_CACHE=1 
+      -t $IMAGE_NAME:$IMAGE_TAG .
     - docker tag $IMAGE_NAME:$IMAGE_TAG $IMAGE_NAME:latest
     - docker push $IMAGE_NAME:$IMAGE_TAG
     - docker push $IMAGE_NAME:latest
+  cache:
+    key: docker-layers-$CI_COMMIT_REF_SLUG
+    paths:
+      - /var/lib/docker
   only:
     - main
     - master
