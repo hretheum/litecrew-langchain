@@ -41,14 +41,12 @@ def main():
     # Create test script that will run in each env
     test_script_content = '''
 import time
-import psutil
 import sys
 import json
+import os
 
 # Test framework import
 start_time = time.time()
-process = psutil.Process()
-mem_before = process.memory_info().rss / 1024 / 1024
 
 try:
     if "crewai" in sys.prefix:
@@ -57,29 +55,37 @@ try:
     elif "langchain" in sys.prefix:
         import langchain
         framework = "langchain"
-    elif "autogpt" in sys.prefix:
+    elif "pyautogen" in sys.prefix:
         import autogen
         framework = "pyautogen"
     elif "litecrew" in sys.prefix:
         # This would be the fork
+        import crewai  # litecrew is a fork of crewai
         framework = "litecrew"
     else:
         framework = "unknown"
         
     import_time = time.time() - start_time
-    mem_after = process.memory_info().rss / 1024 / 1024
+    
+    # Get package size estimate
+    site_packages = os.path.join(sys.prefix, 'lib', f'python{sys.version_info.major}.{sys.version_info.minor}', 'site-packages')
+    total_size = 0
+    if os.path.exists(site_packages):
+        for root, dirs, files in os.walk(site_packages):
+            for f in files:
+                total_size += os.path.getsize(os.path.join(root, f))
     
     result = {
         "framework": framework,
         "import_time": import_time,
-        "import_memory": mem_after - mem_before,
+        "package_size_mb": total_size / 1024 / 1024,
         "success": True
     }
 except Exception as e:
     result = {
-        "framework": framework if 'framework' in locals() else "unknown",
+        "framework": "unknown",
         "import_time": 0,
-        "import_memory": 0,
+        "package_size_mb": 0,
         "success": False,
         "error": str(e)
     }
@@ -98,7 +104,7 @@ print(json.dumps(result))
     framework_map = {
         'crewai': 'crewai_official',
         'langchain': 'langchain',
-        'pyautogen': 'autogpt',
+        'pyautogen': 'pyautogen',
         'litecrew': 'litecrew_fork'
     }
     
@@ -107,7 +113,7 @@ print(json.dumps(result))
         frameworks = [framework_map[f] for f in args.frameworks]
         console.print(f"[yellow]Testing selected frameworks: {', '.join(args.frameworks)}[/yellow]\n")
     else:
-        frameworks = ["crewai_official", "langchain", "autogpt", "litecrew_fork"]
+        frameworks = ["crewai_official", "langchain", "pyautogen", "litecrew_fork"]
         console.print("[yellow]Testing all frameworks[/yellow]\n")
     
     for env in track(frameworks, description="Testing frameworks..."):
@@ -129,7 +135,7 @@ print(json.dumps(result))
                 
                 if data["success"]:
                     console.print(f"  ✅ Import time: {data['import_time']:.3f}s")
-                    console.print(f"  ✅ Memory used: {data['import_memory']:.1f}MB")
+                    console.print(f"  ✅ Package size: {data['package_size_mb']:.1f}MB")
                 else:
                     console.print(f"  ❌ Failed: {data.get('error', 'Unknown error')}")
             else:
@@ -146,7 +152,7 @@ print(json.dumps(result))
     table = Table(title="Framework Comparison", box=box.ROUNDED)
     table.add_column("Framework", style="cyan")
     table.add_column("Import Time", style="green")
-    table.add_column("Memory Usage", style="yellow")
+    table.add_column("Package Size", style="yellow")
     table.add_column("Status", style="white")
     
     for r in results:
@@ -154,7 +160,7 @@ print(json.dumps(result))
             table.add_row(
                 r["framework"],
                 f"{r['import_time']:.3f}s",
-                f"{r['import_memory']:.1f}MB",
+                f"{r['package_size_mb']:.1f}MB",
                 "✅ Success"
             )
         else:
