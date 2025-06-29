@@ -3,7 +3,9 @@
 crewai==0.30.11
 langchain==0.2.1
 langchain-openai==0.1.8
-autogpt==0.5.0
+# Dodatkowe frameworki
+autogen==0.2.0  # Microsoft AutoGen
+# llamaindex==0.10.0  # Opcjonalnie
 
 # Benchmarking tools
 psutil==5.9.8
