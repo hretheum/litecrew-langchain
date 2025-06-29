@@ -23,13 +23,13 @@ from prometheus_client import CONTENT_TYPE_LATEST
 # Setup logging
 setup_logging(
     log_level=os.getenv("LOG_LEVEL", "INFO"),
-    log_file=os.getenv("LOG_FILE", "/logs/app.log"),
+    log_dir=os.getenv("LOG_DIR", "/opt/litecrewai/logs"),
 )
 
 logger = get_logger(__name__)
 
 # Initialize metrics storage
-metrics_storage = MetricsStorage()
+metrics_storage = MetricsStorage(db_path=os.getenv("METRICS_DB_PATH", "/opt/litecrewai/data/metrics.db"))
 metrics_collector.storage = metrics_storage
 metrics_collector.cost_tracker = cost_tracker
 

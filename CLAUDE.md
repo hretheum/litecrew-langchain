@@ -123,9 +123,9 @@ Przejdź do następnego zadania atomowego lub bloku zadań z roadmapy
 ## 🚀 DROPLET CONFIG - KURWA UŻYWAJ TEGO!
 
 **IP**: 46.101.181.183
-**USER**: root (na początku, potem litecrewai)
+**USER**: litecrewai
 **SSH KEY**: ~/.ssh/id_rag
-**SSH COMMAND**: `ssh -i ~/.ssh/id_rag root@46.101.181.183`
+**SSH COMMAND**: `ssh -p 2222 -i ~/.ssh/id_rag litecrewai@46.101.181.183`
 
 ⚠️ **NAKAZ**: ZAWSZE używaj powyższej konfiguracji SSH. NIE WYMYŚLAJ własnej!
 

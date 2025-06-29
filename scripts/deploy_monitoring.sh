@@ -11,8 +11,8 @@ NC='\033[0m'
 
 # Droplet configuration from CLAUDE.md
 DROPLET_IP="46.101.181.183"
-SSH_KEY="~/.ssh/id_rag"
-REMOTE_USER="root"
+SSH_KEY="$HOME/.ssh/id_rag"
+REMOTE_USER="litecrewai"
 
 echo -e "${GREEN}=== Deploying Monitoring & Logging to DigitalOcean ===${NC}"
 
