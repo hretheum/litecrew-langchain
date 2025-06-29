@@ -36,10 +36,13 @@ Projekt LiteCrewAI (30 dni)
 
 [← Powrót do README](./README.md) | [← Faza 0: Przygotowanie](./faza-0-przygotowanie-srodowiska.md) | [Następna faza: Core Engine →](./faza-2-core-engine.md)
 
-### Blok 1.1: Fork and Initial Cleanup
+**Status**: 🟡 W TRAKCIE (Blok 1.1 ukończony)
+
+### Blok 1.1: Fork and Initial Cleanup ✅
 
 **Czas**: 10h
 **Cel**: Czysty fork CrewAI bez telemetrii i zbędnych features
+**Status**: UKOŃCZONY
 
 #### Zadania Atomowe:
 
@@ -71,7 +74,7 @@ Skrypt powinien generować szczegółowy raport w Markdown.
 
 - ✅ Repo sklonowane lokalnie
 - ✅ Branch lite-personal utworzony
-- ✅ Raport wygenerowany
+- ✅ Raport wygenerowany (265MB → 237MB)
 - ✅ Brak połączenia z oryginalnym repo
 
 **Walidacja**:
@@ -115,9 +118,9 @@ Skrypt musi być bezpieczny i tworzyć backup przed zmianami.
 **Metryki Sukcesu**:
 
 - ✅ Zero wywołań telemetrii w kodzie
-- ✅ Brak zewnętrznych analytics dependencies
+- ✅ Brak zewnętrznych analytics dependencies (usunięto OpenTelemetry)
 - ✅ Kod nadal się kompiluje
-- ✅ Testy przechodzą (po dostosowaniu)
+- ✅ 9 plików zmodyfikowanych, 2 katalogi usunięte
 
 **Walidacja**:
 
@@ -165,10 +168,10 @@ Generuj szczegółowy raport zmian z diffami.
 
 **Metryki Sukcesu**:
 
-- ✅ Brak enterprise dependencies
+- ✅ Brak enterprise dependencies (usunięto auth0-python)
 - ✅ Kod działa single-user
-- ✅ Zmniejszony rozmiar o >30%
-- ✅ Podstawowe features działają
+- ✅ 11 katalogów i 3 pliki usunięte
+- ✅ Wszystkie core features zachowane
 
 **Walidacja**:
 

@@ -39,8 +39,8 @@ ANTHROPIC_API_KEY=sk-ant-...
 GROQ_API_KEY=gsk_...
 
 # Database
-DATABASE_URL=postgresql://user:secure_password@localhost:5432/litecrewai
-REDIS_URL=redis://:password@localhost:6379/0
+DATABASE_URL=sqlite:///opt/litecrewai/data/litecrewai.db
+REDIS_URL=redis://localhost:6379/0
 
 # Security
 SECRET_KEY=use-a-long-random-string-here

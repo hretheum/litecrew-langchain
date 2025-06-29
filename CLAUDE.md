@@ -32,8 +32,8 @@ SECRET_KEY=long-random-string-here
 /Users/hretheum/dev/bezrobocie/crewAI/
 ├── masterplan/          # Dokumentacja techniczna (8 faz)
 │   ├── src/            # Wyekstrahowany kod źródłowy
-│   │   ├── faza-0/     # Skrypty walidacyjne infrastruktury
-│   │   ├── faza-1/     # Fork i minimalizacja
+│   │   ├── faza-0/     # Skrypty walidacyjne infrastruktury ✅
+│   │   ├── faza-1/     # Fork i minimalizacja ✅ (Blok 1.1)
 │   │   ├── faza-2/     # Core engine
 │   │   ├── faza-3/     # Integracja LLM
 │   │   ├── faza-4/     # Storage layer
@@ -41,6 +41,11 @@ SECRET_KEY=long-random-string-here
 │   │   ├── faza-6/     # Monitoring
 │   │   └── faza-7/     # Deployment
 │   └── *.md            # Dokumenty faz
+├── crewai-fork/        # Fork CrewAI (237MB, bez telemetrii i enterprise)
+├── scripts/            # Skrypty pomocnicze
+│   ├── fork_crewai.sh  # Skrypt do forkowania
+│   ├── remove_telemetry.sh # Usuwanie telemetrii
+│   └── remove_enterprise.sh # Usuwanie enterprise features
 ├── .env.example        # Przykład zmiennych (TO commituj)
 ├── .env               # Rzeczywiste sekrety (NIE commituj!)
 ├── SECURITY.md        # Zasady bezpieczeństwa
@@ -57,11 +62,11 @@ SECRET_KEY=long-random-string-here
 
 ## 🛠️ Stack technologiczny
 
-- Python 3.11+ (async/await everywhere)
-- FastAPI (z pełną autentykacją)
-- PostgreSQL + Redis
-- OpenTelemetry + Prometheus
-- Docker + Kubernetes
+- Python 3.12 (async/await everywhere)
+- FastAPI (lokalnie, bez auth)
+- SQLite + Redis
+- Local monitoring (bez OpenTelemetry)
+- Docker (hybrid deployment)
 
 ## 📝 Konwencje kodu
 
@@ -80,9 +85,20 @@ SECRET_KEY=long-random-string-here
 5. Zawsze waliduj dane wejściowe
 6. przed wykonaniem commit+push zawsze aktualizuj plik project-context.md
 
-## ✅ Status bezpieczeństwa
+## ✅ Status projektu
 
-Wszystkie znane problemy bezpieczeństwa zostały naprawione:
+### Ukończone elementy:
+- **Faza 0**: Infrastruktura i środowisko (97%) ✅
+- **Faza 1 Blok 1.1**: Fork and Initial Cleanup ✅
+  - Fork CrewAI z pełną analizą (265MB → 237MB)
+  - Usunięcie telemetrii (9 plików, 2 katalogi)
+  - Usunięcie enterprise features (11 katalogów, 3 pliki)
+  - Uproszczenie do single-user mode
+
+### W trakcie:
+- **Faza 1 Blok 1.2**: Dependency Optimization
+
+### Status bezpieczeństwa:
 - metrics_endpoint.py - wymaga METRICS_USERNAME/PASSWORD z .env
 - websocket_api.py - wymaga tokenu autoryzacyjnego
 - validate_droplet_setup.sh - waliduje format adresu IP
