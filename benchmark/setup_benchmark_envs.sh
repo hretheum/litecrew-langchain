@@ -8,12 +8,13 @@ echo "Creating virtual environments..."
 python3 -m venv envs/crewai_official
 python3 -m venv envs/langchain
 python3 -m venv envs/pyautogen
-python3 -m venv envs/litecrew_fork
+python3 -m venv envs/crewai_full  # Pełny CrewAI dla porównania
+python3 -m venv envs/litecrew_slim  # Twój odchudzony fork
 
-# Install CrewAI
-echo "Installing CrewAI..."
+# Install CrewAI Official
+echo "Installing CrewAI Official..."
 source envs/crewai_official/bin/activate
-pip install crewai
+pip install crewai==0.134.0
 deactivate
 
 # Install LangChain
@@ -28,10 +29,32 @@ source envs/pyautogen/bin/activate
 pip install pyautogen
 deactivate
 
-# LiteCrew - for now just copy CrewAI
-echo "Setting up LiteCrew (simulated)..."
-source envs/litecrew_fork/bin/activate
-pip install crewai
+# CrewAI Full - identyczny jak official dla porównania
+echo "Setting up CrewAI Full (dla pewności)..."
+source envs/crewai_full/bin/activate
+pip install crewai==0.134.0
+deactivate
+
+# LiteCrew Slim - PRAWDZIWY odchudzony fork
+echo "Setting up LiteCrew Slim (YOUR OPTIMIZED FORK)..."
+source envs/litecrew_slim/bin/activate
+# Instalujemy z lokalnego forka
+if [ -d "/root/litecrewai" ]; then
+    pip install -e /root/litecrewai
+else
+    # Fallback - clone i install
+    cd /tmp
+    git clone https://gitlab.com/eof3/litecrewai.git litecrew-temp
+    cd litecrew-temp
+    pip install -e .
+    cd /root/litecrewai/benchmark
+fi
 deactivate
 
 echo "✅ All environments ready!"
+echo "📊 Mamy teraz:"
+echo "   - crewai_official: Oficjalny CrewAI z PyPI"
+echo "   - crewai_full: Ten sam CrewAI (dla double-check)" 
+echo "   - litecrew_slim: TWÓJ ODCHUDZONY FORK"
+echo "   - langchain: LangChain"
+echo "   - pyautogen: Microsoft AutoGen"
