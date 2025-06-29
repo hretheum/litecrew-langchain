@@ -16,10 +16,13 @@ LiteCrewAI to uproszczona wersja CrewAI zaprojektowana dla:
 - `masterplan/` - Kompletna dokumentacja techniczna projektu (8 faz rozwoju)
   - `src/common/` - Współdzielone skrypty walidacyjne
   - `src/faza-X/` - Kod źródłowy dla każdej fazy
+- `crewai-fork/` - Fork CrewAI (237MB, bez telemetrii i enterprise)
+- `scripts/` - Skrypty pomocnicze (fork, telemetry removal, enterprise removal)
 - `docs/` - Dokumentacja dodatkowa i materiały pomocnicze
 - `litecrewai-master-plan.md` - Monolityczny dokument ze wszystkimi fazami
 - `SECURITY.md` - Wytyczne bezpieczeństwa projektu
 - `CLAUDE.md` - Instrukcje dla asystentów AI
+- `project-context.md` - Kontekst projektu i status
 - `.env.example` - Szablon zmiennych środowiskowych
 
 **Uwaga**: Treść w `litecrewai-master-plan.md` jest identyczna z plikami w `masterplan/`, ale w jednym dokumencie dla wygody.
@@ -42,15 +45,18 @@ Szczegółowa dokumentacja znajduje się w folderze `masterplan/`:
 
 - ✅ Dokumentacja: 100% kompletna
 - ✅ Kod źródłowy: Wyekstrahowany do `masterplan/src/`
+- ✅ Faza 0: Infrastruktura i środowisko (97% ukończone)
+- ✅ Faza 1 Blok 1.1: Fork and Initial Cleanup (100% ukończone)
+- 🚧 Faza 1 Blok 1.2: Dependency Optimization (następny krok)
 - 🚧 Implementacja: W trakcie rozwoju
 
 ## 🛠️ Stack technologiczny
 
-- Python 3.11+
-- FastAPI
-- SQLite/PostgreSQL
-- Redis
-- Ollama/OpenAI/Anthropic
+- Python 3.12
+- FastAPI (local-only, bez auth)
+- SQLite (główna baza danych)
+- Redis (cache)
+- Ollama/OpenAI/Anthropic (LLM providers)
 
 ## 📝 Licencja
 
