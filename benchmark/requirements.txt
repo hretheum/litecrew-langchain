@@ -4,7 +4,7 @@ crewai==0.30.11
 langchain==0.2.1
 langchain-openai==0.1.8
 # Dodatkowe frameworki
-autogen==0.2.0  # Microsoft AutoGen
+pyautogen==0.2.0  # Microsoft AutoGen - właściwa nazwa pakietu!
 # llamaindex==0.10.0  # Opcjonalnie
 
 # Benchmarking tools
