@@ -12,26 +12,7 @@ from rich.table import Table
 from rich.progress import track
 from rich import box
 
-# Import existing schemas
-import sys
-sys.path.append('scripts')
-from benchmark_schema import BenchmarkResult, FrameworkResult, BenchmarkReport
-from run_framework import run_in_env
-
 console = Console()
-
-def run_benchmark_in_venv(framework: str, test_script: str):
-    """Run benchmark using existing virtualenv"""
-    env_name = {
-        "crewai": "crewai_official",
-        "langchain": "langchain", 
-        "pyautogen": "autogpt",
-        "litecrew": "litecrew_fork"
-    }.get(framework, framework)
-    
-    # Use existing run_framework.py
-    result = run_in_env(env_name, test_script)
-    return result
 
 def main():
     import argparse
