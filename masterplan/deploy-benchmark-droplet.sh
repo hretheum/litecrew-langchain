@@ -13,7 +13,7 @@ NC='\033[0m' # No Color
 
 # Configuration
 DROPLET_NAME="benchmark-litecrewai-$(date +%Y%m%d-%H%M%S)"
-DROPLET_SIZE="c-4-8gib"  # CPU-Optimized 8GB/4vCPU
+DROPLET_SIZE="c-4"  # CPU-Optimized 8GB/4vCPU
 DROPLET_IMAGE="ubuntu-22-04-x64"
 DROPLET_REGION="nyc3"  # Change if needed
 BENCHMARK_TIMEOUT="120m"  # 2 hours max
@@ -90,7 +90,7 @@ chmod +x setup-benchmark.sh
 EOF
     
     # Replace placeholder with actual repo
-    sed -i "s|GITLAB_REPO_PLACEHOLDER|$GITLAB_REPO|g" /tmp/user-data.sh
+    sed -i '' "s|GITLAB_REPO_PLACEHOLDER|$GITLAB_REPO|g" /tmp/user-data.sh
     
     # Create droplet
     doctl compute droplet create "$DROPLET_NAME" \
