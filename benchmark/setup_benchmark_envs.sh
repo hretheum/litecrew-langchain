@@ -38,16 +38,21 @@ deactivate
 # LiteCrew Slim - PRAWDZIWY odchudzony fork
 echo "Setting up LiteCrew Slim (YOUR OPTIMIZED FORK)..."
 source envs/litecrew_slim/bin/activate
-# Instalujemy z lokalnego forka
-if [ -d "/root/litecrewai" ]; then
-    pip install -e /root/litecrewai
+# Instalujemy tylko minimalne dependencies z requirements
+if [ -f "../litecrew_minimal_requirements.txt" ]; then
+    pip install -r ../litecrew_minimal_requirements.txt
 else
-    # Fallback - clone i install
-    cd /tmp
-    git clone https://gitlab.com/eof3/litecrewai.git litecrew-temp
-    cd litecrew-temp
-    pip install -e .
-    cd /root/litecrewai/benchmark
+    # Fallback - podstawowe dependencies
+    pip install pydantic httpx python-dotenv click instructor
+fi
+# Kopiujemy kod źródłowy forka
+if [ -d "../app/src/crewai" ]; then
+    # Tworzymy link symboliczny do kodu
+    site_packages=$(python -c "import site; print(site.getsitepackages()[0])")
+    ln -sf /root/litecrewai/app/src/crewai $site_packages/crewai
+    echo "✅ Linked optimized crewai fork to $site_packages/crewai"
+else
+    echo "❌ Fork source not found at ../app/src/crewai"
 fi
 deactivate
 
