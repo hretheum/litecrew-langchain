@@ -17,7 +17,7 @@ DROPLET_SIZE="c-4-8gib"  # CPU-Optimized 8GB/4vCPU
 DROPLET_IMAGE="ubuntu-22-04-x64"
 DROPLET_REGION="nyc3"  # Change if needed
 BENCHMARK_TIMEOUT="120m"  # 2 hours max
-GITHUB_REPO="https://github.com/[YOUR_USERNAME]/bezrobocie.git"
+GITLAB_REPO="https://gitlab.com/eof3/litecrewai.git"
 
 # Functions
 print_banner() {
@@ -83,14 +83,14 @@ apt-get install -y -qq git python3-pip
 
 # Clone and run setup
 cd /root
-git clone GITHUB_REPO_PLACEHOLDER /root/bezrobocie
+git clone GITLAB_REPO_PLACEHOLDER /root/bezrobocie
 cd /root/bezrobocie/benchmark
 chmod +x setup-benchmark.sh
 ./setup-benchmark.sh
 EOF
     
     # Replace placeholder with actual repo
-    sed -i "s|GITHUB_REPO_PLACEHOLDER|$GITHUB_REPO|g" /tmp/user-data.sh
+    sed -i "s|GITLAB_REPO_PLACEHOLDER|$GITLAB_REPO|g" /tmp/user-data.sh
     
     # Create droplet
     doctl compute droplet create "$DROPLET_NAME" \
