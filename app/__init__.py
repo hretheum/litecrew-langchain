@@ -1,1 +1,0 @@
-# LiteCrewAI Application

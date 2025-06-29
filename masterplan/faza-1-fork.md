@@ -43,7 +43,7 @@ Projekt LiteCrewAI (30 dni)
 
 #### Zadania Atomowe:
 
-##### Task 1.1.1: Fork CrewAI Repository (2h)
+##### Task 1.1.1: Fork CrewAI Repository (2h) ✅	
 
 **Cel**: Lokalny fork z pełną historią i właściwą strukturą
 
@@ -78,7 +78,7 @@ Skrypt powinien generować szczegółowy raport w Markdown.
 
 [→ Zobacz plik: validate_fork.py](./src/faza-1/validate_fork.py)
 
-##### Task 1.1.2: Remove Telemetry and Analytics (4h)
+##### Task 1.1.2: Remove Telemetry and Analytics (4h) ✅
 
 **Cel**: Kompletne usunięcie wszelkiego śledzenia
 
@@ -123,7 +123,7 @@ Skrypt musi być bezpieczny i tworzyć backup przed zmianami.
 
 [→ Zobacz plik: validate_no_telemetry.py](./src/faza-1/validate_no_telemetry.py)
 
-##### Task 1.1.3: Remove Enterprise Features (4h)
+##### Task 1.1.3: Remove Enterprise Features (4h) ✅
 
 **Cel**: Usunięcie funkcji enterprise i chmurowych
 

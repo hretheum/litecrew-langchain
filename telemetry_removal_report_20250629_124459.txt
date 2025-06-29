@@ -1,0 +1,35 @@
+CrewAI Telemetry Removal Report
+===============================
+Date: Sun Jun 29 12:45:01 CEST 2025
+
+Removed Files:
+--------------
+- src/crewai/telemetry/
+- tests/telemetry/
+
+Modified Files:
+---------------
+- src/crewai/security/fingerprint.py
+- src/crewai/utilities/events/event_listener.py
+- src/crewai/tools/tool_usage.py
+- src/crewai/cli/command.py
+- src/crewai/cli/deploy/main.py
+- src/crewai/tools/tool_usage.py
+- src/crewai/cli/command.py
+- src/crewai/cli/create_flow.py
+- src/crewai/utilities/events/event_listener.py
+
+Summary:
+--------
+- Removed 2 files/directories
+- Modified 9 files
+
+Actions taken:
+1. Removed telemetry directory and test files
+2. Replaced fingerprint.py with stub implementation
+3. Removed telemetry imports and calls from all Python files
+4. Modified event_listener.py to remove telemetry functionality
+5. Modified tool_usage.py to remove telemetry tracking
+6. Modified CLI command files to remove telemetry initialization
+
+Backup location: /Users/hretheum/dev/bezrobocie/crewAI/crewai-fork/../telemetry_backup_20250629_124459
