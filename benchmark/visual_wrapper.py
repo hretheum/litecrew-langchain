@@ -18,11 +18,16 @@ def main():
     import argparse
     
     parser = argparse.ArgumentParser(description='Visual benchmark for agent frameworks')
-    parser.add_argument('frameworks', nargs='*', 
-                       choices=['crewai', 'langchain', 'pyautogen', 'litecrew'],
-                       default=[],
-                       help='Frameworks to test (default: all)')
+    parser.add_argument('frameworks', nargs='*',
+                       help='Frameworks to test: crewai, langchain, pyautogen, litecrew (default: all)')
     args = parser.parse_args()
+    
+    # Validate framework choices
+    valid_frameworks = ['crewai', 'langchain', 'pyautogen', 'litecrew']
+    if args.frameworks:
+        for f in args.frameworks:
+            if f not in valid_frameworks:
+                parser.error(f"Invalid framework: {f}. Choose from: {', '.join(valid_frameworks)}")
     
     console.print("[bold cyan]🚀 VISUAL BENCHMARK USING EXISTING INFRASTRUCTURE[/bold cyan]\n")
     
