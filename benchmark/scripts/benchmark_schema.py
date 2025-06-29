@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # benchmark/scripts/benchmark_schema.py
 from pydantic import BaseModel
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Any
 from datetime import datetime
 
 class TestResult(BaseModel):
@@ -19,7 +19,7 @@ class FrameworkResult(BaseModel):
     dependencies_count: int
     import_time_seconds: float
     tests: List[TestResult]
-    metadata: Dict[str, any]
+    metadata: Dict[str, Any]
     
 class BenchmarkReport(BaseModel):
     timestamp: datetime
