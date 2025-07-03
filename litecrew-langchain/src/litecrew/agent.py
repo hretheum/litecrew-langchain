@@ -4,7 +4,7 @@ LiteAgent - CrewAI-compatible agent built on LangChain
 
 import time
 import asyncio
-from typing import Any, List, Optional, Dict, Union, TYPE_CHECKING
+from typing import Any, List, Optional, Dict, Union, TYPE_CHECKING, AsyncIterator, Callable
 from langchain.agents import AgentExecutor, create_react_agent
 from langchain.memory import ConversationBufferMemory
 from langchain.schema import BaseMessage
@@ -52,6 +52,11 @@ class LiteAgent:
         llm_config: Optional[Union[Dict[str, Any], LLMConfig]] = None,
         cache_responses: bool = True,
         fallback_providers: Optional[List[Union[str, LLMProvider]]] = None,
+        streaming: bool = False,
+        on_progress: Optional[Callable[[str, float], None]] = None,
+        on_chunk: Optional[Callable[[str], None]] = None,
+        on_token: Optional[Callable[[str], None]] = None,
+        async_execution: bool = True,
     ):
         self.role = role
         self.goal = goal
@@ -62,6 +67,12 @@ class LiteAgent:
         self.allow_delegation = allow_delegation
         self.max_execution_time = max_execution_time
         self.cache_responses = cache_responses
+        self.streaming = streaming
+        self.on_progress = on_progress
+        self.on_chunk = on_chunk
+        self.on_token = on_token
+        self.async_execution = async_execution
+        self.on_partial_response = None
         
         # Performance metrics
         self._creation_time = time.perf_counter()
@@ -356,9 +367,67 @@ Question: {{input}}
         Returns:
             The agent's response
         """
-        # Run the synchronous execute in a thread pool
-        loop = asyncio.get_event_loop()
-        return await loop.run_in_executor(None, self.execute, task_description, context)
+        self._execution_count += 1
+        
+        # Report progress
+        if self.on_progress:
+            self.on_progress("Starting task", 0)
+        
+        # Build full prompt
+        full_prompt = ""
+        if context:
+            full_prompt += f"Context from previous tasks:\n{context}\n\n"
+        full_prompt += f"Current task: {task_description}"
+        
+        # Check cache
+        if self._response_cache:
+            cached = self._response_cache.get(
+                full_prompt,
+                provider=self.llm.__class__.__name__
+            )
+            if cached:
+                if self.verbose:
+                    print(f"Using cached response for agent {self.role}")
+                if self.on_progress:
+                    self.on_progress("Completed (cached)", 100)
+                return cached
+        
+        if self.on_progress:
+            self.on_progress("Executing LLM", 25)
+        
+        # Execute asynchronously
+        try:
+            # For now, run sync code in executor
+            # TODO: Use native async when langchain supports it better
+            loop = asyncio.get_event_loop()
+            result = await loop.run_in_executor(
+                None,
+                self._agent_executor.invoke,
+                {"input": full_prompt}
+            )
+            response = result.get("output", "")
+            
+            if self.on_progress:
+                self.on_progress("Processing response", 75)
+            
+            # Cache response
+            if self._response_cache and response:
+                self._response_cache.add(
+                    full_prompt,
+                    response,
+                    provider=self.llm.__class__.__name__
+                )
+            
+            if self.on_progress:
+                self.on_progress("Completed", 100)
+                
+            return response
+        except Exception as e:
+            if self.verbose:
+                print(f"Agent {self.role} encountered error: {e}")
+            if self.on_progress:
+                self.on_progress("Error", 100)
+            return f"Error executing task: {str(e)}"
     
     def __repr__(self) -> str:
         """String representation of the agent."""
@@ -372,6 +441,70 @@ Question: {{input}}
             f"tools={len(self.tools)}, "
             f"llm={self.llm.__class__.__name__})"
         )
+    
+    async def stream_execute(self, task_description: str, context: str = "") -> AsyncIterator[str]:
+        """
+        Stream execution of a task.
+        
+        Args:
+            task_description: The task to execute
+            context: Additional context
+            
+        Yields:
+            Chunks of the response as they become available
+        """
+        if hasattr(self, '_stream_execute'):
+            async for chunk in self._stream_execute(task_description, context):
+                if self.on_chunk:
+                    self.on_chunk(chunk)
+                if self.on_token:
+                    # Simple token splitting
+                    for token in chunk.split():
+                        self.on_token(token)
+                yield chunk
+        else:
+            # Fallback: simulate streaming by chunking the response
+            response = await self.aexecute(task_description, context)
+            words = response.split()
+            for i in range(0, len(words), 3):
+                chunk = " ".join(words[i:i+3])
+                if i + 3 < len(words):
+                    chunk += " "
+                if self.on_chunk:
+                    self.on_chunk(chunk)
+                yield chunk
+                await asyncio.sleep(0.01)  # Simulate streaming delay
+    
+    async def batch_execute(self, tasks: List[str], context: str = "") -> List[str]:
+        """
+        Execute multiple tasks in batch.
+        
+        Args:
+            tasks: List of task descriptions
+            context: Shared context for all tasks
+            
+        Returns:
+            List of results in the same order as tasks
+        """
+        # Execute all tasks concurrently
+        async_tasks = [self.aexecute(task, context) for task in tasks]
+        results = await asyncio.gather(*async_tasks)
+        return results
+    
+    def _execute_with_partials(self, task_description: str, context: str = "") -> str:
+        """
+        Execute with partial response handling.
+        
+        Args:
+            task_description: The task to execute
+            context: Additional context
+            
+        Returns:
+            Complete response
+        """
+        # This would integrate with LLM-specific partial response handling
+        # For now, just execute normally
+        return self.execute(task_description, context)
     
     @property
     def metrics(self) -> Dict[str, Any]:
