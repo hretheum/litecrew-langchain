@@ -16,11 +16,11 @@ class DelegationTool(Tool):
         Args:
             agents: List of agents that can be delegated to
         """
-        self.agents = {agent.role: agent for agent in agents}
+        self._agents = {agent.role: agent for agent in agents}
         
         super().__init__(
             name="delegate_task",
-            description=f"Delegate a task to another agent. Available agents: {', '.join(self.agents.keys())}. Input format: 'Ask the [Role] to [task description]'",
+            description=f"Delegate a task to another agent. Available agents: {', '.join(self._agents.keys())}. Input format: 'Ask the [Role] to [task description]'",
             func=self._delegate
         )
         
@@ -37,12 +37,12 @@ class DelegationTool(Tool):
         # Parse delegation request
         role, task = self._parse_delegation(query)
         
-        if role in self.agents:
-            agent = self.agents[role]
+        if role in self._agents:
+            agent = self._agents[role]
             result = agent.execute(task)
             return f"Delegation result from {role}: {result}"
         else:
-            available = ", ".join(self.agents.keys())
+            available = ", ".join(self._agents.keys())
             return f"Agent role '{role}' not found. Available agents: {available}"
             
     def _parse_delegation(self, query: str) -> tuple[str, str]:

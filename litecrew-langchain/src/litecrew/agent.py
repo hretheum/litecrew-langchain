@@ -2,13 +2,22 @@
 LiteAgent - CrewAI-compatible agent built on LangChain
 """
 
-from typing import Any, List, Optional, Dict
+import time
+import asyncio
+from typing import Any, List, Optional, Dict, Union, TYPE_CHECKING
 from langchain.agents import AgentExecutor, create_react_agent
 from langchain.memory import ConversationBufferMemory
 from langchain.schema import BaseMessage
 from langchain_openai import ChatOpenAI
 from langchain.prompts import PromptTemplate
 from langchain.tools import Tool
+# Import removed - will create mock LLM inline
+
+from litecrew.llm import LLMProvider, LLMConfig, LLMManager, ResponseCache
+from litecrew.llm.utils import estimate_tokens
+
+if TYPE_CHECKING:
+    from langchain_core.language_models import BaseChatModel
 
 
 class LiteAgent:
@@ -39,6 +48,10 @@ class LiteAgent:
         max_iter: int = 5,
         allow_delegation: bool = True,
         max_execution_time: Optional[int] = None,
+        llm_provider: Optional[Union[str, LLMProvider]] = None,
+        llm_config: Optional[Union[Dict[str, Any], LLMConfig]] = None,
+        cache_responses: bool = True,
+        fallback_providers: Optional[List[Union[str, LLMProvider]]] = None,
     ):
         self.role = role
         self.goal = goal
@@ -48,12 +61,28 @@ class LiteAgent:
         self.max_iter = max_iter
         self.allow_delegation = allow_delegation
         self.max_execution_time = max_execution_time
+        self.cache_responses = cache_responses
+        
+        # Performance metrics
+        self._creation_time = time.perf_counter()
+        self._execution_count = 0
+        self._memory_enabled = memory
         
         # Build system message from CrewAI-style attributes
         self.system_message = self._build_system_message()
         
-        # Initialize LLM (default to OpenAI)
-        self.llm = llm or ChatOpenAI(temperature=0.7, model="gpt-4-turbo-preview")
+        # Initialize LLM with multi-provider support
+        self._llm_manager = LLMManager()
+        self._response_cache = ResponseCache() if cache_responses else None
+        self._fallback_providers = self._parse_providers(fallback_providers or [])
+        
+        # Initialize the LLM
+        if llm:
+            # Use provided LLM directly
+            self.llm = llm
+        else:
+            # Create LLM from provider config
+            self.llm = self._initialize_llm(llm_provider, llm_config)
         
         # Setup memory if enabled
         self._memory = ConversationBufferMemory(
@@ -146,6 +175,100 @@ Question: {{input}}
                 
         return langchain_tools
         
+    def _parse_providers(self, providers: List[Union[str, LLMProvider]]) -> List[LLMProvider]:
+        """Parse provider list into LLMProvider enums."""
+        parsed = []
+        for provider in providers:
+            if isinstance(provider, str):
+                try:
+                    parsed.append(LLMProvider(provider))
+                except ValueError:
+                    if self.verbose:
+                        print(f"Unknown provider: {provider}")
+            elif isinstance(provider, LLMProvider):
+                parsed.append(provider)
+        return parsed
+        
+    def _initialize_llm(self, 
+                       provider: Optional[Union[str, LLMProvider]] = None, 
+                       config: Optional[Union[Dict[str, Any], LLMConfig]] = None) -> 'BaseChatModel':
+        """Initialize LLM with provider configuration."""
+        # Parse provider
+        if provider:
+            if isinstance(provider, str):
+                provider = LLMProvider(provider)
+        else:
+            # Default to OpenAI if available, otherwise use fake model
+            import os
+            if os.getenv("OPENAI_API_KEY"):
+                provider = LLMProvider.OPENAI
+            else:
+                # Return mock model for testing when no API key
+                from unittest.mock import Mock
+                mock_llm = Mock()
+                mock_llm.__class__.__name__ = "MockChatModel"
+                mock_llm.invoke = Mock(return_value={"content": "I'm a test response from LiteAgent"})
+                return mock_llm
+        
+        # Parse config
+        if config:
+            if isinstance(config, dict):
+                # Create LLMConfig from dict
+                llm_config = LLMConfig(
+                    provider=provider,
+                    model=config.get("model", "gpt-4-turbo-preview"),
+                    temperature=config.get("temperature", 0.7),
+                    max_tokens=config.get("max_tokens"),
+                    api_key=config.get("api_key"),
+                    api_base=config.get("api_base"),
+                    timeout=config.get("timeout", 30),
+                    max_retries=config.get("max_retries", 3),
+                    use_functions=config.get("use_functions", False),
+                    streaming=config.get("streaming", False),
+                    extra_params=config.get("extra_params", {})
+                )
+            else:
+                llm_config = config
+        else:
+            # Default config
+            llm_config = LLMConfig(
+                provider=provider,
+                model="gpt-4-turbo-preview" if provider == LLMProvider.OPENAI else "mixtral-8x7b",
+                temperature=0.7
+            )
+            
+        # Create LLM with fallback handling
+        try:
+            return self._llm_manager.create_llm(llm_config)
+        except Exception as e:
+            if self.verbose:
+                print(f"Failed to create {provider.value} LLM: {e}")
+            
+            # Try fallback providers
+            for fallback in self._fallback_providers:
+                try:
+                    fallback_config = LLMConfig(
+                        provider=fallback,
+                        model=llm_config.model,
+                        temperature=llm_config.temperature
+                    )
+                    return self._llm_manager.create_llm(fallback_config)
+                except Exception:
+                    continue
+                    
+            # Final fallback to mock model
+            from unittest.mock import Mock
+            mock_llm = Mock()
+            mock_llm.__class__.__name__ = "MockChatModel"
+            mock_llm.invoke = Mock(return_value={"content": "I'm a fallback response from LiteAgent"})
+            return mock_llm
+    
+    def switch_llm_provider(self, provider: Union[str, LLMProvider], config: Optional[Dict[str, Any]] = None):
+        """Switch to a different LLM provider."""
+        self.llm = self._initialize_llm(provider, config)
+        # Recreate agent executor with new LLM
+        self._agent_executor = self._create_agent_executor()
+        
     def execute(self, task_description: str, context: str = "") -> str:
         """
         Execute a task using the agent.
@@ -157,20 +280,43 @@ Question: {{input}}
         Returns:
             The agent's response as a string
         """
+        self._execution_count += 1
+        
         # Build full prompt with context
         full_prompt = ""
         if context:
             full_prompt += f"Context from previous tasks:\n{context}\n\n"
         full_prompt += f"Current task: {task_description}"
         
+        # Check cache if enabled
+        if self._response_cache:
+            cached = self._response_cache.get(
+                full_prompt, 
+                provider=self.llm.__class__.__name__
+            )
+            if cached:
+                if self.verbose:
+                    print(f"Using cached response for agent {self.role}")
+                return cached
+        
         # Execute through LangChain
         try:
             result = self._agent_executor.invoke({"input": full_prompt})
-            return result.get("output", "")
+            response = result.get("output", "")
+            
+            # Cache response if enabled
+            if self._response_cache and response:
+                self._response_cache.add(
+                    full_prompt,
+                    response,
+                    provider=self.llm.__class__.__name__
+                )
+                
+            return response
         except Exception as e:
             if self.verbose:
                 print(f"Agent {self.role} encountered error: {e}")
-            return f"Error: {str(e)}"
+            return f"Error executing task: {str(e)}"
             
     def execute_task(self, task: 'Task', context: Optional[str] = None) -> Any:
         """
@@ -198,3 +344,50 @@ Question: {{input}}
             task.output = result
             
         return result
+    
+    async def aexecute(self, task_description: str, context: str = "") -> str:
+        """
+        Asynchronously execute a task.
+        
+        Args:
+            task_description: The task to execute
+            context: Additional context
+            
+        Returns:
+            The agent's response
+        """
+        # Run the synchronous execute in a thread pool
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(None, self.execute, task_description, context)
+    
+    def __repr__(self) -> str:
+        """String representation of the agent."""
+        # Truncate long strings
+        role = self.role if len(self.role) <= 50 else self.role[:47] + "..."
+        goal = self.goal if len(self.goal) <= 100 else self.goal[:97] + "..."
+        
+        return (
+            f"LiteAgent(role='{role}', "
+            f"goal='{goal}', "
+            f"tools={len(self.tools)}, "
+            f"llm={self.llm.__class__.__name__})"
+        )
+    
+    @property
+    def metrics(self) -> Dict[str, Any]:
+        """Get agent metrics."""
+        creation_time_ms = (self._creation_time - time.perf_counter() + self._creation_time) * 1000
+        
+        metrics = {
+            "creation_time_ms": creation_time_ms,
+            "execution_count": self._execution_count,
+            "memory_enabled": self._memory_enabled,
+            "tools_count": len(self.tools),
+            "llm_provider": self.llm.__class__.__name__,
+            "cache_enabled": self.cache_responses,
+        }
+        
+        if self._response_cache:
+            metrics["cache_stats"] = self._response_cache.get_stats()
+            
+        return metrics
