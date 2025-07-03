@@ -72,9 +72,11 @@ class LLMManager:
             return llm
             
         except ImportError as e:
+            install_instructions = self._get_install_instructions(config.provider)
             raise ImportError(
-                f"Provider {config.provider.value} requires additional dependencies. "
-                f"Install with: pip install langchain-{config.provider.value}"
+                f"Provider {config.provider.value} requires additional dependencies.\n"
+                f"{install_instructions}\n"
+                f"Original error: {str(e)}"
             ) from e
             
     def _create_openai(self, config: LLMConfig) -> Any:
@@ -262,3 +264,77 @@ class LLMManager:
     def get_metrics(self) -> Dict[str, Any]:
         """Get LLM manager metrics."""
         return self._metrics.copy()
+    
+    def _get_install_instructions(self, provider: LLMProvider) -> str:
+        """Get installation instructions for a provider."""
+        instructions = {
+            LLMProvider.OPENAI: (
+                "To use OpenAI:\n"
+                "1. Install: pip install langchain-openai\n"
+                "2. Set API key: export OPENAI_API_KEY='your-api-key'\n"
+                "3. Get key from: https://platform.openai.com/api-keys"
+            ),
+            LLMProvider.ANTHROPIC: (
+                "To use Anthropic:\n"
+                "1. Install: pip install langchain-anthropic\n"
+                "2. Set API key: export ANTHROPIC_API_KEY='your-api-key'\n"
+                "3. Get key from: https://console.anthropic.com/"
+            ),
+            LLMProvider.GROQ: (
+                "To use Groq:\n"
+                "1. Install: pip install langchain-groq\n"
+                "2. Set API key: export GROQ_API_KEY='your-api-key'\n"
+                "3. Get key from: https://console.groq.com/"
+            ),
+            LLMProvider.OLLAMA: (
+                "To use Ollama:\n"
+                "1. Install: pip install langchain-community\n"
+                "2. Install Ollama: https://ollama.ai/download\n"
+                "3. Pull model: ollama pull llama2\n"
+                "4. Run server: ollama serve"
+            ),
+            LLMProvider.COHERE: (
+                "To use Cohere:\n"
+                "1. Install: pip install langchain-cohere\n"
+                "2. Set API key: export COHERE_API_KEY='your-api-key'\n"
+                "3. Get key from: https://dashboard.cohere.ai/"
+            ),
+            LLMProvider.AZURE_OPENAI: (
+                "To use Azure OpenAI:\n"
+                "1. Install: pip install langchain-openai\n"
+                "2. Set environment variables:\n"
+                "   - AZURE_OPENAI_API_KEY='your-api-key'\n"
+                "   - AZURE_OPENAI_ENDPOINT='your-endpoint'\n"
+                "   - AZURE_OPENAI_DEPLOYMENT_NAME='your-deployment'\n"
+                "3. Deploy model in Azure Portal"
+            ),
+            LLMProvider.BEDROCK: (
+                "To use AWS Bedrock:\n"
+                "1. Install: pip install langchain-aws boto3\n"
+                "2. Configure AWS: aws configure\n"
+                "3. Enable models in AWS Console:\n"
+                "   https://console.aws.amazon.com/bedrock/\n"
+                "4. Set region: export AWS_DEFAULT_REGION='us-east-1'"
+            ),
+            LLMProvider.VERTEXAI: (
+                "To use Google Vertex AI:\n"
+                "1. Install: pip install langchain-google-vertexai\n"
+                "2. Authenticate: gcloud auth application-default login\n"
+                "3. Set project: gcloud config set project YOUR_PROJECT_ID\n"
+                "4. Enable API: https://console.cloud.google.com/vertex-ai"
+            ),
+            LLMProvider.HUGGINGFACE: (
+                "To use HuggingFace:\n"
+                "1. Install: pip install langchain-huggingface\n"
+                "2. Set token: export HUGGINGFACEHUB_API_TOKEN='your-token'\n"
+                "3. Get token from: https://huggingface.co/settings/tokens\n"
+                "4. For local models: pip install transformers torch"
+            ),
+            LLMProvider.TOGETHER: (
+                "To use Together AI:\n"
+                "1. Install: pip install langchain-together\n"
+                "2. Set API key: export TOGETHER_API_KEY='your-api-key'\n"
+                "3. Get key from: https://api.together.xyz/"
+            ),
+        }
+        return instructions.get(provider, f"Install with: pip install langchain-{provider.value}")
