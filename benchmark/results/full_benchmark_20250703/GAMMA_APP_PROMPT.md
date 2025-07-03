@@ -155,3 +155,6 @@ Visual: GitLab logo with document icons
 6. **The ecosystem needs better solutions** - Current options all have issues
 
 Make this presentation compelling for CTOs, Engineering Managers, and AI practitioners by being refreshingly honest about what worked, what didn't, and what we learned along the way.
+
+## Quick Visual Style Summary
+**Anti-corporate hacker aesthetic**: Dark backgrounds with neon accents (electric blue, hot pink, lime green). Hand-drawn charts like whiteboard sketches. Visual metaphors: memory leaks as water, slow frameworks as snails, burning money for costs. Include coffee stains, "WTF?!" annotations, and tired developer characters. Think 3 AM garage startup presentation, not boardroom deck.
