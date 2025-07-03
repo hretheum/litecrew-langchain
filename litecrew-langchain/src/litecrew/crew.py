@@ -114,9 +114,46 @@ class LiteCrew(BaseModel):
                 task.agent = self.agents[i % len(self.agents)]
                 
     def _setup_delegation(self):
-        """Setup delegation tools for agents."""
-        # TODO: Implement delegation tools
-        pass
+        """Setup delegation tools for agents with enhanced delegation system."""
+        if len(self.agents) <= 1:
+            return  # No delegation needed for single agent
+        
+        from .tools import DelegationTool
+        from .delegation import DelegationManager, DelegationValidator
+        
+        # Create delegation validator with crew-level constraints
+        validator = DelegationValidator(
+            max_depth=3,  # Allow 3 levels of delegation
+            allowed_agents=[agent.role for agent in self.agents],
+            prevent_cycles=True
+        )
+        
+        # Create shared delegation manager for the crew
+        delegation_manager = DelegationManager(
+            available_agents={agent.role: agent for agent in self.agents},
+            validator=validator
+        )
+        
+        # Add delegation tool to each agent that allows delegation
+        for agent in self.agents:
+            if agent.allow_delegation:
+                # Create delegation tool for this agent
+                delegation_tool = DelegationTool(
+                    agents=self.agents,
+                    delegation_manager=delegation_manager
+                )
+                
+                # Set current agent context
+                delegation_tool.set_current_agent(agent)
+                
+                # Add tool to agent's tools list
+                if hasattr(agent, 'tools') and agent.tools:
+                    agent.tools.append(delegation_tool)
+                else:
+                    agent.tools = [delegation_tool]
+        
+        # Store delegation manager for crew-level access (private to avoid Pydantic issues)
+        self._delegation_manager = delegation_manager
     
     def kickoff(self, inputs: Optional[Dict[str, Any]] = None) -> CrewOutput:
         """
@@ -287,6 +324,24 @@ Respond with task assignments in format: "Task N -> Agent Role"
             "completion_tokens": 0,
             "successful_requests": len(self.tasks)
         }
+    
+    def get_delegation_metrics(self) -> Dict[str, Any]:
+        """Get delegation metrics from the crew's delegation manager."""
+        if hasattr(self, '_delegation_manager'):
+            return self._delegation_manager.get_delegation_metrics()
+        return {
+            "total_delegations": 0,
+            "successful_delegations": 0,
+            "failed_delegations": 0,
+            "average_execution_time": 0.0,
+            "success_rate": 0.0
+        }
+    
+    def get_delegation_history(self, limit: Optional[int] = None):
+        """Get delegation history from the crew's delegation manager."""
+        if hasattr(self, '_delegation_manager'):
+            return self._delegation_manager.get_delegation_history(limit)
+        return []
     
     async def kickoff_async(self, inputs: Optional[Dict[str, Any]] = None) -> CrewOutput:
         """Execute crew asynchronously."""
