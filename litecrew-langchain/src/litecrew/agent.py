@@ -15,6 +15,7 @@ from langchain.tools import Tool
 
 from litecrew.llm import LLMProvider, LLMConfig, LLMManager, ResponseCache
 from litecrew.llm.utils import estimate_tokens
+from litecrew.memory import ConversationMemory
 
 if TYPE_CHECKING:
     from langchain_core.language_models import BaseChatModel
@@ -78,6 +79,10 @@ class LiteAgent:
         self._creation_time = time.perf_counter()
         self._execution_count = 0
         self._memory_enabled = memory
+        
+        # Initialize conversation memory
+        self._conversation_memory = ConversationMemory() if memory else None
+        self._use_crew_memory = False  # Will be set by crew if shared memory
         
         # Build system message from CrewAI-style attributes
         self.system_message = self._build_system_message()
@@ -293,11 +298,22 @@ Question: {{input}}
         """
         self._execution_count += 1
         
-        # Build full prompt with context
+        # Build full prompt with context and memory
         full_prompt = ""
+        
+        # Add memory context if available
+        if self._conversation_memory and not self._use_crew_memory:
+            memory_context = self._conversation_memory.build_context(max_tokens=500)
+            if memory_context:
+                full_prompt += f"Previous conversation:\n{memory_context}\n\n"
+        
         if context:
             full_prompt += f"Context from previous tasks:\n{context}\n\n"
         full_prompt += f"Current task: {task_description}"
+        
+        # Add to memory
+        if self._conversation_memory:
+            self._conversation_memory.add_turn("user", task_description)
         
         # Check cache if enabled
         if self._response_cache:
@@ -322,6 +338,10 @@ Question: {{input}}
                     response,
                     provider=self.llm.__class__.__name__
                 )
+            
+            # Add to memory
+            if self._conversation_memory and response:
+                self._conversation_memory.add_turn("assistant", response)
                 
             return response
         except Exception as e:
@@ -373,11 +393,22 @@ Question: {{input}}
         if self.on_progress:
             self.on_progress("Starting task", 0)
         
-        # Build full prompt
+        # Build full prompt with memory
         full_prompt = ""
+        
+        # Add memory context if available
+        if self._conversation_memory and not self._use_crew_memory:
+            memory_context = self._conversation_memory.build_context(max_tokens=500)
+            if memory_context:
+                full_prompt += f"Previous conversation:\n{memory_context}\n\n"
+        
         if context:
             full_prompt += f"Context from previous tasks:\n{context}\n\n"
         full_prompt += f"Current task: {task_description}"
+        
+        # Add to memory
+        if self._conversation_memory:
+            self._conversation_memory.add_turn("user", task_description)
         
         # Check cache
         if self._response_cache:
@@ -417,6 +448,10 @@ Question: {{input}}
                     response,
                     provider=self.llm.__class__.__name__
                 )
+            
+            # Add to memory
+            if self._conversation_memory and response:
+                self._conversation_memory.add_turn("assistant", response)
             
             if self.on_progress:
                 self.on_progress("Completed", 100)
@@ -518,9 +553,26 @@ Question: {{input}}
             "tools_count": len(self.tools),
             "llm_provider": self.llm.__class__.__name__,
             "cache_enabled": self.cache_responses,
+            "memory_enabled": self._memory_enabled,
         }
+        
+        if self._conversation_memory:
+            metrics["memory_stats"] = self._conversation_memory.get_memory_stats()
         
         if self._response_cache:
             metrics["cache_stats"] = self._response_cache.get_stats()
-            
+        
         return metrics
+    
+    def clear_memory(self):
+        """Clear conversation memory."""
+        if self._conversation_memory:
+            self._conversation_memory.clear()
+    
+    def search_memory(self, query: str) -> List[Dict[str, Any]]:
+        """Search conversation memory."""
+        if self._conversation_memory:
+            from litecrew.memory import MemorySearch
+            search = MemorySearch()
+            return search.search(self._conversation_memory, query)
+        return []
