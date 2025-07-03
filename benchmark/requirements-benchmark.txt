@@ -1,0 +1,32 @@
+# Core benchmarking tools
+pytest-benchmark==4.0.0
+memory-profiler==0.61.0
+py-spy==0.3.14
+psutil==5.9.8
+
+# Load testing
+locust==2.24.0
+
+# Metrics and monitoring
+prometheus-client==0.19.0
+grafana-api==1.0.3
+
+# Data analysis
+pandas==2.1.4
+numpy==1.26.2
+matplotlib==3.8.2
+seaborn==0.13.0
+
+# Utilities
+python-dotenv==1.0.0
+tqdm==4.66.1
+rich==13.7.0
+click==8.1.7
+
+# For testing frameworks
+openai==1.30.1
+anthropic==0.25.7
+
+# Async support
+aiohttp==3.9.1
+asyncio==3.4.3
