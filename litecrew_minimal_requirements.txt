@@ -1,7 +1,0 @@
-# Minimal requirements for litecrew fork
-pydantic>=2.4.2
-openai>=1.13.3
-python-dotenv>=1.0.0
-json-repair>=0.25.2
-click>=8.1.7
-jsonref>=1.1.0
