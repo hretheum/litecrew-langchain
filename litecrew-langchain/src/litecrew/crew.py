@@ -12,6 +12,10 @@ from concurrent.futures import ThreadPoolExecutor
 
 from litecrew.agent import LiteAgent
 from litecrew.task import LiteTask, TaskOutput
+# Lazy imports for context management
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from litecrew.context import SharedContextStore, ContextConfig, ContextMerger, ContextMergeStrategy
 
 
 class ProcessType(str, Enum):
@@ -50,6 +54,10 @@ class LiteCrew(BaseModel):
     function_calling_llm: Optional[Any] = Field(default=None, description="LLM for function calling")
     step_callback: Optional[Any] = Field(default=None, description="Callback after each step")
     
+    # Context management
+    shared_context: bool = Field(default=False, description="Enable shared context between agents")
+    context_config: Optional[Any] = Field(default=None, description="Context management configuration")
+    
     # Runtime state (not in Pydantic schema)
     _start_time: Optional[float] = None
     _usage_metrics: Dict[str, Any] = {}
@@ -73,6 +81,9 @@ class LiteCrew(BaseModel):
         # Setup delegation if needed
         if len(self.agents) > 1:
             self._setup_delegation()
+        
+        # Setup shared context if enabled
+        self._setup_shared_context()
     
     @field_validator("process", mode="before")
     def validate_process(cls, v):
@@ -155,6 +166,24 @@ class LiteCrew(BaseModel):
         # Store delegation manager for crew-level access (private to avoid Pydantic issues)
         self._delegation_manager = delegation_manager
     
+    def _setup_shared_context(self):
+        """Setup shared context management for the crew."""
+        if not self.shared_context:
+            return
+        
+        # Lazy import context components
+        from litecrew.context import SharedContextStore, ContextConfig, ContextMerger
+        
+        # Create context configuration
+        if self.context_config is None:
+            self.context_config = ContextConfig()
+        
+        # Initialize shared context store
+        self._shared_context_store = SharedContextStore(config=self.context_config)
+        
+        # Initialize context merger
+        self._context_merger = ContextMerger()
+    
     def kickoff(self, inputs: Optional[Dict[str, Any]] = None) -> CrewOutput:
         """
         Execute the crew's tasks according to the process type.
@@ -213,12 +242,34 @@ class LiteCrew(BaseModel):
                     "progress": (i + 1) / len(self.tasks)
                 })
             
-            # Execute task
-            output = task.execute(crew_context=crew_context)
+            # Execute task with shared context support
+            if hasattr(self, '_shared_context_store'):
+                output = task.execute(
+                    crew_context=crew_context,
+                    shared_context=self._shared_context_store
+                )
+            else:
+                output = task.execute(crew_context=crew_context)
+            
             task_outputs.append(output)
             
             # Add output to context for next tasks
             crew_context[f"task_{i}_output"] = output.raw
+            
+            # Store in shared context if enabled
+            if hasattr(self, '_shared_context_store'):
+                from litecrew.context import ContextMetadata
+                metadata = ContextMetadata(
+                    agent_role=output.agent_role,
+                    task_description=task.description,
+                    priority=2,  # Medium priority for task outputs
+                    ttl_seconds=self.context_config.ttl_seconds if self.context_config else 3600
+                )
+                self._shared_context_store.store_context(
+                    key=f"task_{i}_output",
+                    value=output.raw,
+                    metadata=metadata
+                )
             
             # Callback if provided
             if self.step_callback:
@@ -342,6 +393,40 @@ Respond with task assignments in format: "Task N -> Agent Role"
         if hasattr(self, '_delegation_manager'):
             return self._delegation_manager.get_delegation_history(limit)
         return []
+    
+    def get_shared_context_metrics(self) -> Dict[str, Any]:
+        """Get shared context metrics from the crew's context store."""
+        if hasattr(self, '_shared_context_store'):
+            return self._shared_context_store.get_metrics()
+        return {
+            "total_items": 0,
+            "total_size_bytes": 0,
+            "access_count": 0,
+            "current_size_mb": 0,
+            "utilization_percent": 0
+        }
+    
+    def get_shared_context_status(self) -> Dict[str, Any]:
+        """Get detailed shared context status."""
+        if hasattr(self, '_shared_context_store'):
+            return self._shared_context_store.get_status()
+        return {"shared_context": False}
+    
+    def get_agent_context(self, agent_role: str, max_items: int = 5) -> str:
+        """Get formatted context for a specific agent."""
+        if hasattr(self, '_shared_context_store'):
+            return self._shared_context_store.get_agent_context(agent_role, max_items)
+        return ""
+    
+    def clear_agent_context(self, agent_role: str):
+        """Clear all context for a specific agent."""
+        if hasattr(self, '_shared_context_store'):
+            self._shared_context_store.clear_agent_context(agent_role)
+    
+    def clear_shared_context(self):
+        """Clear all shared context data."""
+        if hasattr(self, '_shared_context_store'):
+            self._shared_context_store.clear_all()
     
     async def kickoff_async(self, inputs: Optional[Dict[str, Any]] = None) -> CrewOutput:
         """Execute crew asynchronously."""

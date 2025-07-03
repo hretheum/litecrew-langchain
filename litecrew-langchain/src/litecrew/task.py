@@ -38,7 +38,7 @@ class LiteTask(BaseModel):
     class Config:
         arbitrary_types_allowed = True
     
-    def execute(self, crew_context: Optional[Dict] = None) -> TaskOutput:
+    def execute(self, crew_context: Optional[Dict] = None, shared_context=None) -> TaskOutput:
         """
         Execute the task using the assigned agent.
         
@@ -57,6 +57,19 @@ class LiteTask(BaseModel):
         # Add crew context if provided
         if crew_context:
             context_str = f"{crew_context}\n\n{context_str}" if context_str else str(crew_context)
+        
+        # Add shared context if provided
+        if shared_context:
+            # Get relevant context from shared store
+            relevant_context = shared_context.get_relevant_context(self.description, max_items=5)
+            if relevant_context:
+                context_str = f"{context_str}\n\n--- Shared Context ---\n{relevant_context}" if context_str else f"--- Shared Context ---\n{relevant_context}"
+            
+            # Get agent-specific context
+            if hasattr(self.agent, 'role'):
+                agent_context = shared_context.get_agent_context(self.agent.role, max_items=3)
+                if agent_context:
+                    context_str = f"{context_str}\n\n--- Agent History ---\n{agent_context}" if context_str else f"--- Agent History ---\n{agent_context}"
             
         # Execute task through agent
         try:
