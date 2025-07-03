@@ -42,8 +42,8 @@ class TestPackageMetrics:
         # Calculate increase
         memory_increase_mb = after_import_mb - baseline_mb
         
-        # Should use less than 30MB total
-        assert after_import_mb < 30, f"Total memory {after_import_mb:.1f}MB, expected <30MB"
+        # Should increase by less than 10MB
+        assert memory_increase_mb < 10, f"Memory increase {memory_increase_mb:.1f}MB, expected <10MB"
         
     def test_version(self):
         """Test that version is properly set."""

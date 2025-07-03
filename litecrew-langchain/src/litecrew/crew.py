@@ -66,8 +66,10 @@ class LiteCrew(PydanticCompatible):
         object.__setattr__(self, '_start_time', None)
         object.__setattr__(self, '_progress_callback', None)
         object.__setattr__(self, '_delegation_manager', None)
-        object.__setattr__(self, '_shared_context_store', None)
-        object.__setattr__(self, '_context_merger', None)
+        # Don't create these attributes unless shared_context is enabled
+        if self.shared_context:
+            object.__setattr__(self, '_shared_context_store', None)
+            object.__setattr__(self, '_context_merger', None)
         
         # Validate and convert process type
         if isinstance(self.process, str):
@@ -99,15 +101,16 @@ class LiteCrew(PydanticCompatible):
         if not self.tasks:
             raise ValueError("Crew must have at least one task")
             
-        # Ensure all tasks have agents
-        for task in self.tasks:
-            if task.agent is None and self.agents:
-                task.agent = self.agents[0]
+        # Don't auto-assign here, let _auto_assign_tasks handle it
                 
         if self.process == ProcessType.HIERARCHICAL and not self.manager_agent:
-            # First agent becomes manager in hierarchical mode
-            if self.agents:
-                self.manager_agent = self.agents[0]
+            # Create default manager if none provided
+            from .agent import LiteAgent
+            self.manager_agent = LiteAgent(
+                role="Crew Manager",
+                goal="Manage the crew and coordinate task execution",
+                backstory="Experienced manager responsible for overseeing the crew's operations"
+            )
     
     def _auto_assign_tasks(self):
         """Auto-assign tasks to agents if not assigned."""
@@ -237,7 +240,7 @@ class LiteCrew(PydanticCompatible):
                 })
             
             # Execute task with shared context support
-            if hasattr(self, '_shared_context_store'):
+            if hasattr(self, '_shared_context_store') and self._shared_context_store is not None:
                 output = task.execute(
                     crew_context=crew_context,
                     shared_context=self._shared_context_store
@@ -251,7 +254,7 @@ class LiteCrew(PydanticCompatible):
             crew_context[f"task_{i}_output"] = output.raw
             
             # Store in shared context if enabled
-            if hasattr(self, '_shared_context_store'):
+            if hasattr(self, '_shared_context_store') and self._shared_context_store is not None:
                 from litecrew.context import ContextMetadata
                 metadata = ContextMetadata(
                     agent_role=output.agent_role,
@@ -372,7 +375,7 @@ Respond with task assignments in format: "Task N -> Agent Role"
     
     def get_delegation_metrics(self) -> Dict[str, Any]:
         """Get delegation metrics from the crew's delegation manager."""
-        if hasattr(self, '_delegation_manager'):
+        if hasattr(self, '_delegation_manager') and self._delegation_manager is not None:
             return self._delegation_manager.get_delegation_metrics()
         return {
             "total_delegations": 0,
@@ -384,13 +387,13 @@ Respond with task assignments in format: "Task N -> Agent Role"
     
     def get_delegation_history(self, limit: Optional[int] = None):
         """Get delegation history from the crew's delegation manager."""
-        if hasattr(self, '_delegation_manager'):
+        if hasattr(self, '_delegation_manager') and self._delegation_manager is not None:
             return self._delegation_manager.get_delegation_history(limit)
         return []
     
     def get_shared_context_metrics(self) -> Dict[str, Any]:
         """Get shared context metrics from the crew's context store."""
-        if hasattr(self, '_shared_context_store'):
+        if hasattr(self, '_shared_context_store') and self._shared_context_store is not None:
             return self._shared_context_store.get_metrics()
         return {
             "total_items": 0,
@@ -402,24 +405,24 @@ Respond with task assignments in format: "Task N -> Agent Role"
     
     def get_shared_context_status(self) -> Dict[str, Any]:
         """Get detailed shared context status."""
-        if hasattr(self, '_shared_context_store'):
+        if hasattr(self, '_shared_context_store') and self._shared_context_store is not None:
             return self._shared_context_store.get_status()
         return {"shared_context": False}
     
     def get_agent_context(self, agent_role: str, max_items: int = 5) -> str:
         """Get formatted context for a specific agent."""
-        if hasattr(self, '_shared_context_store'):
+        if hasattr(self, '_shared_context_store') and self._shared_context_store is not None:
             return self._shared_context_store.get_agent_context(agent_role, max_items)
         return ""
     
     def clear_agent_context(self, agent_role: str):
         """Clear all context for a specific agent."""
-        if hasattr(self, '_shared_context_store'):
+        if hasattr(self, '_shared_context_store') and self._shared_context_store is not None:
             self._shared_context_store.clear_agent_context(agent_role)
     
     def clear_shared_context(self):
         """Clear all shared context data."""
-        if hasattr(self, '_shared_context_store'):
+        if hasattr(self, '_shared_context_store') and self._shared_context_store is not None:
             self._shared_context_store.clear_all()
     
     async def kickoff_async(self, inputs: Optional[Dict[str, Any]] = None) -> CrewOutput:

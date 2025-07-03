@@ -227,4 +227,4 @@ class TestLiteAgent:
             result = await agent.aexecute("Async task")
             
             assert result == "Async result"
-            mock_execute.assert_called_once_with("Async task", None)
+            mock_execute.assert_called_once_with("Async task", "")

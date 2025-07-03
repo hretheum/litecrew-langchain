@@ -42,11 +42,19 @@ class TestLiteTask:
         
     def test_context_passing(self):
         """Test context passing between tasks."""
+        from unittest.mock import Mock
+        
+        # Create mock agents
+        agent1 = Mock()
+        agent1.role = "Agent1"
+        agent2 = Mock()
+        agent2.role = "Agent2"
+        
         # Create tasks with outputs
-        task1 = LiteTask(description="First task")
+        task1 = LiteTask(description="First task", agent=agent1)
         task1.output = TaskOutput(raw="First result", agent_role="Agent1")
         
-        task2 = LiteTask(description="Second task")
+        task2 = LiteTask(description="Second task", agent=agent2)
         task2.output = TaskOutput(raw="Second result", agent_role="Agent2")
         
         # Create task with context
