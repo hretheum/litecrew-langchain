@@ -113,12 +113,38 @@ Title: "Want the Full Research?"
 Visual: GitLab logo with document icons
 
 ## Design Guidelines:
-- Color scheme: Dark tech theme with bright accent colors for data
-- Charts: Clean, minimalist, with clear data labels
-- Icons: Modern, flat design
-- Typography: Sans-serif, high contrast
-- Data visualization: Bar charts, comparison tables, trend lines
-- Include subtle animations for data reveals
+
+### Visual Mood & Style
+**ANTI-CORPORATE VIBE** - Think startup hustle, not enterprise stiffness:
+- **Color palette**: Cyberpunk meets startup garage - neon accents on dark backgrounds, electric blues, hot pinks, lime greens
+- **Illustration style**: Hand-drawn elements mixed with tech, imperfect lines, human touch
+- **Characters**: Tired developers with coffee stains, real people not stock photo models
+- **Metaphors**: 
+  - Memory leaks as actual water leaking from servers
+  - Slow frameworks as snails carrying server racks
+  - Fork failure as tangled spaghetti code literally
+  - Budget burn as actual money on fire
+
+### Specific Visual Ideas:
+- **Slide 2**: Question mark made of tangled cables with framework logos caught in the mess
+- **Slide 4**: Racing track with LangChain as Formula 1 car, CrewAI as rusty bicycle
+- **Slide 5**: Memory usage as inflating balloons - CrewAI balloon exploding
+- **Slide 6**: Calculator on fire with dollar bills flying away
+- **Slide 8 (Fork Failure)**: Developer facepalming next to exploding computer
+- **Slide 9**: Report cards with coffee stains and doodles in margins
+- **Slide 13**: Treasure map style pointing to GitLab island
+
+### Chart Style:
+- Hand-drawn axes like whiteboard sketches
+- Bar charts that look like they're melting/breaking for bad performance
+- Annotations in handwriting font with arrows and circles
+- "WTF?!" and "OMG" annotations on shocking data points
+
+### Overall Feel:
+- Like a late-night hacker presenting findings at 3 AM after too much Red Bull
+- Honest tech blog post aesthetic, not McKinsey presentation
+- Memes welcome where appropriate
+- Show the human struggle behind the data
 
 ## Key Messages to Emphasize:
 1. **Honesty builds trust** - Share failures alongside successes
