@@ -41,6 +41,7 @@ class LiteCrew:
         cache: bool = True,
         function_calling_llm: Optional[Any] = None,
         step_callback: Optional[Any] = None,
+        async_execution: bool = False,
     ):
         """
         Initialize a crew of agents.
@@ -56,6 +57,7 @@ class LiteCrew:
             cache: Enable caching
             function_calling_llm: LLM for function calling
             step_callback: Callback after each step
+            async_execution: Whether to execute tasks asynchronously
         """
         self.agents = agents
         self.tasks = tasks
@@ -67,6 +69,7 @@ class LiteCrew:
         self.cache = cache
         self.function_calling_llm = function_calling_llm
         self.step_callback = step_callback
+        self.async_execution = async_execution
         
         # Validate setup
         self._validate_setup()
@@ -219,11 +222,62 @@ Respond with just the agent's role."""
             tasks_output=outputs
         )
         
-    async def kickoff_async(self, inputs: Optional[Dict[str, Any]] = None) -> CrewOutput:
+    async def akickoff(self, inputs: Optional[Dict[str, Any]] = None) -> CrewOutput:
         """Execute crew asynchronously."""
+        if self.async_execution:
+            # Execute tasks concurrently when possible
+            if self.process == "sequential":
+                return await self._aexecute_sequential(inputs)
+            else:
+                return await self._aexecute_hierarchical(inputs)
+        else:
+            # Fallback to sync execution in thread pool
+            loop = asyncio.get_event_loop()
+            with ThreadPoolExecutor() as executor:
+                return await loop.run_in_executor(executor, self.kickoff, inputs)
+    
+    async def _aexecute_sequential(self, inputs: Optional[Dict[str, Any]] = None) -> CrewOutput:
+        """Execute tasks sequentially using async."""
+        outputs = []
+        
+        for i, task in enumerate(self.tasks):
+            if self.verbose:
+                print(f"\n\n> Executing task {i+1}/{len(self.tasks)}: {task.description}")
+            
+            # Execute task asynchronously
+            if hasattr(task.agent, 'aexecute'):
+                output_text = await task.agent.aexecute(task.description, "\n".join([o.raw for o in outputs]))
+            else:
+                # Fallback to sync execution
+                loop = asyncio.get_event_loop()
+                output_text = await loop.run_in_executor(None, task.execute, inputs)
+            
+            output = TaskOutput(
+                raw=output_text if isinstance(output_text, str) else output_text.raw,
+                agent=task.agent.role,
+                task=task.description
+            )
+            outputs.append(output)
+            
+            if self.step_callback:
+                self.step_callback(task, output)
+        
+        return CrewOutput(
+            raw=outputs[-1].raw if outputs else "",
+            tasks_output=outputs
+        )
+    
+    async def _aexecute_hierarchical(self, inputs: Optional[Dict[str, Any]] = None) -> CrewOutput:
+        """Execute tasks hierarchically using async."""
+        # For now, fall back to sync execution
+        # TODO: Implement proper async hierarchical execution
         loop = asyncio.get_event_loop()
-        with ThreadPoolExecutor() as executor:
-            return await loop.run_in_executor(executor, self.kickoff, inputs)
+        return await loop.run_in_executor(None, self._execute_hierarchical, inputs)
+    
+    # Legacy alias for backward compatibility
+    async def kickoff_async(self, inputs: Optional[Dict[str, Any]] = None) -> CrewOutput:
+        """Legacy async method - use akickoff instead."""
+        return await self.akickoff(inputs)
             
     def __repr__(self) -> str:
         return f"LiteCrew(agents={len(self.agents)}, tasks={len(self.tasks)}, process={self.process})"
