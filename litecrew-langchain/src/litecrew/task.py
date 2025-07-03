@@ -2,41 +2,65 @@
 LiteTask - Task management for multi-agent systems
 """
 
-from typing import Any, List, Optional, Union, Dict
-from pydantic import BaseModel, Field
+from dataclasses import dataclass, field
+from typing import Any, List, Optional, Dict
 from datetime import datetime
 
+from litecrew.base import PydanticCompatible
 
-class TaskOutput(BaseModel):
+
+@dataclass
+class TaskOutput(PydanticCompatible):
     """Output from task execution."""
-    raw: str = Field(description="Raw output from the agent")
+    raw: str  # Raw output from the agent
     task_id: Optional[str] = None
     agent_role: Optional[str] = None
-    timestamp: datetime = Field(default_factory=datetime.now)
+    timestamp: datetime = field(default_factory=datetime.now)
     
     def __str__(self) -> str:
         return self.raw
 
 
-class LiteTask(BaseModel):
+@dataclass
+class LiteTask(PydanticCompatible):
     """
     A task that can be executed by an agent.
     
     Compatible with CrewAI Task API but simplified.
+    
+    Attributes:
+        description: Description of the task
+        agent: Agent assigned to execute this task
+        context: Tasks whose outputs will be used as context
+        expected_output: Expected output description
+        tools: Tools available for this task
+        output: Task execution output
+        async_execution: Execute task asynchronously
+        callback: Callback function after execution
     """
-    description: str = Field(description="Description of the task")
-    agent: Optional[Any] = Field(default=None, description="Agent assigned to execute this task")
-    context: Optional[List['LiteTask']] = Field(default=None, description="Tasks whose outputs will be used as context")
-    expected_output: str = Field(default="", description="Expected output description")
-    tools: List[Any] = Field(default_factory=list, description="Tools available for this task")
-    output: Optional[TaskOutput] = Field(default=None, description="Task execution output")
+    description: str
+    agent: Optional[Any] = None
+    context: Optional[List['LiteTask']] = None
+    expected_output: str = ""
+    tools: List[Any] = field(default_factory=list)
+    output: Optional[TaskOutput] = None
     
     # Additional fields for compatibility
-    async_execution: bool = Field(default=False, description="Execute task asynchronously")
-    callback: Optional[Any] = Field(default=None, description="Callback function after execution")
+    async_execution: bool = False
+    callback: Optional[Any] = None
     
-    class Config:
-        arbitrary_types_allowed = True
+    def __post_init__(self):
+        """Validate task configuration."""
+        # Validate description
+        if not self.description or not self.description.strip():
+            raise ValueError("Task description cannot be empty")
+        
+        # Ensure description is stripped
+        self.description = self.description.strip()
+        
+        # Validate expected_output if provided
+        if self.expected_output:
+            self.expected_output = self.expected_output.strip()
     
     def execute(self, crew_context: Optional[Dict] = None, shared_context=None) -> TaskOutput:
         """
@@ -44,6 +68,7 @@ class LiteTask(BaseModel):
         
         Args:
             crew_context: Optional context from the crew
+            shared_context: Optional shared context store
             
         Returns:
             TaskOutput containing the result

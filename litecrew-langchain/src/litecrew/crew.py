@@ -5,11 +5,10 @@ LiteCrew - Orchestration engine for multi-agent systems
 import time
 from enum import Enum
 from typing import List, Optional, Dict, Any, Union, Callable
-from pydantic import BaseModel, Field, field_validator
+from dataclasses import dataclass, field
 from datetime import datetime
-import asyncio
-from concurrent.futures import ThreadPoolExecutor
 
+from litecrew.base import PydanticCompatible
 from litecrew.agent import LiteAgent
 from litecrew.task import LiteTask, TaskOutput
 # Lazy imports for context management
@@ -24,53 +23,60 @@ class ProcessType(str, Enum):
     HIERARCHICAL = "hierarchical"
 
 
-class CrewOutput(BaseModel):
+@dataclass
+class CrewOutput(PydanticCompatible):
     """Output from crew execution."""
-    raw: str = Field(description="Raw output from the crew")
-    tasks_output: List[TaskOutput] = Field(description="Individual task outputs")
-    token_usage: Dict[str, Any] = Field(default_factory=dict, description="Token usage metrics")
-    timestamp: datetime = Field(default_factory=datetime.now)
+    raw: str  # Raw output from the crew
+    tasks_output: List[TaskOutput]  # Individual task outputs
+    token_usage: Dict[str, Any] = field(default_factory=dict)  # Token usage metrics
+    timestamp: datetime = field(default_factory=datetime.now)
     
     def __str__(self) -> str:
         return self.raw
 
 
-class LiteCrew(BaseModel):
+@dataclass
+class LiteCrew(PydanticCompatible):
     """
     Orchestration engine for managing multiple agents and tasks.
     
     Compatible with CrewAI API but optimized for performance.
     """
-    agents: List[LiteAgent] = Field(description="List of agents in the crew")
-    tasks: List[LiteTask] = Field(description="List of tasks to execute")
-    process: ProcessType = Field(default=ProcessType.SEQUENTIAL, description="Execution process type")
-    verbose: bool = Field(default=False, description="Enable verbose output")
-    manager_llm: Optional[Any] = Field(default=None, description="LLM for manager agent (hierarchical only)")
-    memory: bool = Field(default=False, description="Enable shared memory")
-    cache: bool = Field(default=True, description="Enable result caching")
-    max_rpm: Optional[int] = Field(default=None, description="Max requests per minute")
-    share_crew: bool = Field(default=False, description="Share crew on CrewAI Hub")
-    manager_agent: Optional[LiteAgent] = Field(default=None, description="Manager agent for hierarchical process")
-    function_calling_llm: Optional[Any] = Field(default=None, description="LLM for function calling")
-    step_callback: Optional[Any] = Field(default=None, description="Callback after each step")
+    agents: List[LiteAgent]  # List of agents in the crew
+    tasks: List[LiteTask]  # List of tasks to execute
+    process: ProcessType = ProcessType.SEQUENTIAL  # Execution process type
+    verbose: bool = False  # Enable verbose output
+    manager_llm: Optional[Any] = None  # LLM for manager agent (hierarchical only)
+    memory: bool = False  # Enable shared memory
+    cache: bool = True  # Enable result caching
+    max_rpm: Optional[int] = None  # Max requests per minute
+    share_crew: bool = False  # Share crew on CrewAI Hub
+    manager_agent: Optional[LiteAgent] = None  # Manager agent for hierarchical process
+    function_calling_llm: Optional[Any] = None  # LLM for function calling
+    step_callback: Optional[Any] = None  # Callback after each step
     
     # Context management
-    shared_context: bool = Field(default=False, description="Enable shared context between agents")
-    context_config: Optional[Any] = Field(default=None, description="Context management configuration")
+    shared_context: bool = False  # Enable shared context between agents
+    context_config: Optional[Any] = None  # Context management configuration
     
-    # Runtime state (not in Pydantic schema)
-    _start_time: Optional[float] = None
-    _usage_metrics: Dict[str, Any] = {}
-    _progress_callback: Optional[Callable] = None
-    
-    model_config = {"arbitrary_types_allowed": True}
-    
-    def __init__(self, **data):
+    def __post_init__(self):
         """Initialize crew with validation."""
-        super().__init__(**data)
-        self._usage_metrics = {}
-        self._start_time = None
-        self._progress_callback = None
+        # Initialize runtime state
+        object.__setattr__(self, '_usage_metrics', {})
+        object.__setattr__(self, '_start_time', None)
+        object.__setattr__(self, '_progress_callback', None)
+        object.__setattr__(self, '_delegation_manager', None)
+        object.__setattr__(self, '_shared_context_store', None)
+        object.__setattr__(self, '_context_merger', None)
+        
+        # Validate and convert process type
+        if isinstance(self.process, str):
+            if self.process.lower() == "sequential":
+                self.process = ProcessType.SEQUENTIAL
+            elif self.process.lower() == "hierarchical":
+                self.process = ProcessType.HIERARCHICAL
+            else:
+                raise ValueError(f"Invalid process type: {self.process}. Must be 'sequential' or 'hierarchical'")
         
         # Validate setup
         self._validate_setup()
@@ -84,18 +90,6 @@ class LiteCrew(BaseModel):
         
         # Setup shared context if enabled
         self._setup_shared_context()
-    
-    @field_validator("process", mode="before")
-    def validate_process(cls, v):
-        """Validate and convert process type."""
-        if isinstance(v, str):
-            if v.lower() == "sequential":
-                return ProcessType.SEQUENTIAL
-            elif v.lower() == "hierarchical":
-                return ProcessType.HIERARCHICAL
-            else:
-                raise ValueError(f"Invalid process type: {v}. Must be 'sequential' or 'hierarchical'")
-        return v
     
     def _validate_setup(self):
         """Validate crew configuration."""
@@ -163,8 +157,8 @@ class LiteCrew(BaseModel):
                 else:
                     agent.tools = [delegation_tool]
         
-        # Store delegation manager for crew-level access (private to avoid Pydantic issues)
-        self._delegation_manager = delegation_manager
+        # Store delegation manager for crew-level access  
+        object.__setattr__(self, '_delegation_manager', delegation_manager)
     
     def _setup_shared_context(self):
         """Setup shared context management for the crew."""
@@ -179,10 +173,10 @@ class LiteCrew(BaseModel):
             self.context_config = ContextConfig()
         
         # Initialize shared context store
-        self._shared_context_store = SharedContextStore(config=self.context_config)
+        object.__setattr__(self, '_shared_context_store', SharedContextStore(config=self.context_config))
         
         # Initialize context merger
-        self._context_merger = ContextMerger()
+        object.__setattr__(self, '_context_merger', ContextMerger())
     
     def kickoff(self, inputs: Optional[Dict[str, Any]] = None) -> CrewOutput:
         """
@@ -430,6 +424,10 @@ Respond with task assignments in format: "Task N -> Agent Role"
     
     async def kickoff_async(self, inputs: Optional[Dict[str, Any]] = None) -> CrewOutput:
         """Execute crew asynchronously."""
+        # Lazy import asyncio for performance
+        import asyncio
+        from concurrent.futures import ThreadPoolExecutor
+        
         loop = asyncio.get_event_loop()
         with ThreadPoolExecutor() as executor:
             return await loop.run_in_executor(executor, self.kickoff, inputs)
