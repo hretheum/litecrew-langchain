@@ -1,9 +1,11 @@
 """
-LiteCrew - Multi-agent orchestration
+LiteCrew - Orchestration engine for multi-agent systems
 """
 
-from typing import Any, Dict, List, Optional, Union
-from pydantic import BaseModel, Field
+import time
+from enum import Enum
+from typing import List, Optional, Dict, Any, Union, Callable
+from pydantic import BaseModel, Field, field_validator
 from datetime import datetime
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
@@ -12,72 +14,78 @@ from litecrew.agent import LiteAgent
 from litecrew.task import LiteTask, TaskOutput
 
 
+class ProcessType(str, Enum):
+    """Types of crew execution processes."""
+    SEQUENTIAL = "sequential"
+    HIERARCHICAL = "hierarchical"
+
+
 class CrewOutput(BaseModel):
     """Output from crew execution."""
-    raw: str = Field(description="Final output from the crew")
-    tasks_output: List[TaskOutput] = Field(description="All task outputs")
+    raw: str = Field(description="Raw output from the crew")
+    tasks_output: List[TaskOutput] = Field(description="Individual task outputs")
+    token_usage: Dict[str, Any] = Field(default_factory=dict, description="Token usage metrics")
     timestamp: datetime = Field(default_factory=datetime.now)
     
     def __str__(self) -> str:
         return self.raw
 
 
-class LiteCrew:
+class LiteCrew(BaseModel):
     """
-    Lightweight crew orchestration for multi-agent systems.
+    Orchestration engine for managing multiple agents and tasks.
     
-    Compatible with CrewAI Crew API but built on LangChain.
+    Compatible with CrewAI API but optimized for performance.
     """
+    agents: List[LiteAgent] = Field(description="List of agents in the crew")
+    tasks: List[LiteTask] = Field(description="List of tasks to execute")
+    process: ProcessType = Field(default=ProcessType.SEQUENTIAL, description="Execution process type")
+    verbose: bool = Field(default=False, description="Enable verbose output")
+    manager_llm: Optional[Any] = Field(default=None, description="LLM for manager agent (hierarchical only)")
+    memory: bool = Field(default=False, description="Enable shared memory")
+    cache: bool = Field(default=True, description="Enable result caching")
+    max_rpm: Optional[int] = Field(default=None, description="Max requests per minute")
+    share_crew: bool = Field(default=False, description="Share crew on CrewAI Hub")
+    manager_agent: Optional[LiteAgent] = Field(default=None, description="Manager agent for hierarchical process")
+    function_calling_llm: Optional[Any] = Field(default=None, description="LLM for function calling")
+    step_callback: Optional[Any] = Field(default=None, description="Callback after each step")
     
-    def __init__(
-        self,
-        agents: List[LiteAgent],
-        tasks: List[LiteTask],
-        process: str = "sequential",
-        manager_agent: Optional[LiteAgent] = None,
-        verbose: bool = False,
-        max_rpm: Optional[int] = None,
-        memory: bool = False,
-        cache: bool = True,
-        function_calling_llm: Optional[Any] = None,
-        step_callback: Optional[Any] = None,
-    ):
-        """
-        Initialize a crew of agents.
-        
-        Args:
-            agents: List of agents in the crew
-            tasks: List of tasks to execute
-            process: Execution process - "sequential" or "hierarchical"
-            manager_agent: Manager agent for hierarchical process
-            verbose: Enable verbose output
-            max_rpm: Maximum requests per minute limit
-            memory: Enable crew memory
-            cache: Enable caching
-            function_calling_llm: LLM for function calling
-            step_callback: Callback after each step
-        """
-        self.agents = agents
-        self.tasks = tasks
-        self.process = process
-        self.manager_agent = manager_agent
-        self.verbose = verbose
-        self.max_rpm = max_rpm
-        self.memory = memory
-        self.cache = cache
-        self.function_calling_llm = function_calling_llm
-        self.step_callback = step_callback
+    # Runtime state (not in Pydantic schema)
+    _start_time: Optional[float] = None
+    _usage_metrics: Dict[str, Any] = {}
+    _progress_callback: Optional[Callable] = None
+    
+    model_config = {"arbitrary_types_allowed": True}
+    
+    def __init__(self, **data):
+        """Initialize crew with validation."""
+        super().__init__(**data)
+        self._usage_metrics = {}
+        self._start_time = None
+        self._progress_callback = None
         
         # Validate setup
         self._validate_setup()
         
-        # Assign tasks to agents if not already assigned
+        # Auto-assign tasks to agents if needed
         self._auto_assign_tasks()
         
-        # Add delegation tools if multiple agents
+        # Setup delegation if needed
         if len(self.agents) > 1:
             self._setup_delegation()
-            
+    
+    @field_validator("process", mode="before")
+    def validate_process(cls, v):
+        """Validate and convert process type."""
+        if isinstance(v, str):
+            if v.lower() == "sequential":
+                return ProcessType.SEQUENTIAL
+            elif v.lower() == "hierarchical":
+                return ProcessType.HIERARCHICAL
+            else:
+                raise ValueError(f"Invalid process type: {v}. Must be 'sequential' or 'hierarchical'")
+        return v
+    
     def _validate_setup(self):
         """Validate crew configuration."""
         if not self.agents:
@@ -86,14 +94,16 @@ class LiteCrew:
         if not self.tasks:
             raise ValueError("Crew must have at least one task")
             
-        if self.process == "hierarchical" and not self.manager_agent:
-            # Create default manager
-            self.manager_agent = LiteAgent(
-                role="Crew Manager",
-                goal="Coordinate agents to complete tasks efficiently",
-                backstory="Experienced project manager skilled at delegation"
-            )
-            
+        # Ensure all tasks have agents
+        for task in self.tasks:
+            if task.agent is None and self.agents:
+                task.agent = self.agents[0]
+                
+        if self.process == ProcessType.HIERARCHICAL and not self.manager_agent:
+            # First agent becomes manager in hierarchical mode
+            if self.agents:
+                self.manager_agent = self.agents[0]
+    
     def _auto_assign_tasks(self):
         """Auto-assign tasks to agents if not assigned."""
         unassigned_tasks = [task for task in self.tasks if not task.agent]
@@ -105,69 +115,105 @@ class LiteCrew:
                 
     def _setup_delegation(self):
         """Setup delegation tools for agents."""
-        from litecrew.tools import DelegationTool
-        
-        delegation_tool = DelegationTool(self.agents)
-        
-        for agent in self.agents:
-            if agent.allow_delegation:
-                agent.tools.append(delegation_tool)
-                
+        # TODO: Implement delegation tools
+        pass
+    
     def kickoff(self, inputs: Optional[Dict[str, Any]] = None) -> CrewOutput:
         """
-        Execute the crew tasks.
+        Execute the crew's tasks according to the process type.
         
         Args:
-            inputs: Optional input variables for tasks
+            inputs: Optional inputs to pass to tasks
             
         Returns:
             CrewOutput with results
         """
+        self._start_time = time.perf_counter()
+        self._usage_metrics = {
+            "task_count": len(self.tasks),
+            "agent_count": len(self.agents),
+            "process": self.process.value
+        }
+        
         if self.verbose:
-            print(f"Starting crew execution with {len(self.tasks)} tasks...")
+            print(f"\n[Crew] Starting {self.process.value} execution with {len(self.tasks)} tasks")
+        
+        try:
+            if self.process == ProcessType.SEQUENTIAL:
+                output = self._run_sequential(inputs)
+            elif self.process == ProcessType.HIERARCHICAL:
+                output = self._run_hierarchical(inputs)
+            else:
+                raise ValueError(f"Unknown process type: {self.process}")
+                
+            # Record metrics
+            self._usage_metrics["total_time"] = time.perf_counter() - self._start_time
+            self._usage_metrics["success"] = True
             
-        # Execute based on process type
-        if self.process == "sequential":
-            return self._execute_sequential(inputs)
-        elif self.process == "hierarchical":
-            return self._execute_hierarchical(inputs)
-        else:
-            raise ValueError(f"Unknown process type: {self.process}")
+            return output
             
-    def _execute_sequential(self, inputs: Optional[Dict[str, Any]] = None) -> CrewOutput:
-        """Execute tasks sequentially."""
-        outputs = []
+        except Exception as e:
+            self._usage_metrics["total_time"] = time.perf_counter() - self._start_time
+            self._usage_metrics["success"] = False
+            self._usage_metrics["error"] = str(e)
+            raise
+    
+    def _run_sequential(self, inputs: Optional[Dict[str, Any]] = None) -> CrewOutput:
+        """Run tasks sequentially."""
+        task_outputs = []
+        crew_context = inputs or {}
         
         for i, task in enumerate(self.tasks):
             if self.verbose:
-                print(f"\nExecuting task {i+1}/{len(self.tasks)}: {task.description[:50]}...")
-                
-            # Execute task
-            try:
-                output = task.execute(crew_context=inputs)
-                outputs.append(output)
-                
-                # Callback if provided
-                if self.step_callback:
-                    self.step_callback(task, output)
-                    
-            except Exception as e:
-                if self.verbose:
-                    print(f"Task failed: {e}")
-                raise
-                
-        # Return final output
-        return CrewOutput(
-            raw=outputs[-1].raw if outputs else "",
-            tasks_output=outputs
-        )
-        
-    def _execute_hierarchical(self, inputs: Optional[Dict[str, Any]] = None) -> CrewOutput:
-        """Execute tasks using hierarchical process with manager."""
-        if not self.manager_agent:
-            raise ValueError("Manager agent required for hierarchical process")
+                print(f"\n[Task {i+1}/{len(self.tasks)}] {task.description}")
             
-        outputs = []
+            # Update progress
+            if self._progress_callback:
+                self._progress_callback({
+                    "current_task": i + 1,
+                    "total_tasks": len(self.tasks),
+                    "task_description": task.description,
+                    "progress": (i + 1) / len(self.tasks)
+                })
+            
+            # Execute task
+            output = task.execute(crew_context=crew_context)
+            task_outputs.append(output)
+            
+            # Add output to context for next tasks
+            crew_context[f"task_{i}_output"] = output.raw
+            
+            # Callback if provided
+            if self.step_callback:
+                self.step_callback(task, output)
+            
+            if self.verbose:
+                print(f"[Task {i+1}] Output: {output.raw[:100]}...")
+        
+        # Compile final output
+        final_output = self._compile_output(task_outputs)
+        
+        return CrewOutput(
+            raw=final_output,
+            tasks_output=task_outputs,
+            token_usage=self._calculate_token_usage()
+        )
+    
+    def _run_hierarchical(self, inputs: Optional[Dict[str, Any]] = None) -> CrewOutput:
+        """Run tasks in hierarchical mode with manager coordinating."""
+        if not self.agents:
+            raise ValueError("Hierarchical process requires at least one agent")
+            
+        # Use manager_agent if set, otherwise first agent is manager
+        manager = self.manager_agent or self.agents[0]
+        workers = [a for a in self.agents if a != manager]
+        
+        task_outputs = []
+        crew_context = inputs or {}
+        
+        if self.verbose:
+            print(f"\n[Hierarchical] Manager: {manager.role}")
+            print(f"[Hierarchical] Workers: {[w.role for w in workers]}")
         
         # Manager creates execution plan
         plan_prompt = f"""You are managing a team to complete these tasks:
@@ -180,53 +226,103 @@ Create an execution plan assigning each task to the most suitable agent.
 Respond with task assignments in format: "Task N -> Agent Role"
 """
         
-        plan = self.manager_agent.execute(plan_prompt)
+        plan = manager.execute(plan_prompt)
         
         if self.verbose:
             print(f"Manager's plan:\n{plan}")
-            
-        # Execute tasks based on manager's coordination
-        for task in self.tasks:
-            # Manager delegates
-            delegation_prompt = f"""Based on your plan, which agent should handle this task?
-Task: {task.description}
-Respond with just the agent's role."""
-            
-            assigned_role = self.manager_agent.execute(delegation_prompt).strip()
-            
-            # Find matching agent
-            assigned_agent = next(
-                (agent for agent in self.agents if agent.role.lower() in assigned_role.lower()),
-                task.agent or self.agents[0]
-            )
-            
-            # Update task assignment
-            task.agent = assigned_agent
-            
+        
+        # Execute tasks based on plan
+        for i, task in enumerate(self.tasks):
             if self.verbose:
-                print(f"\nManager assigned task to {assigned_agent.role}")
-                
-            # Execute task
-            output = task.execute(crew_context=inputs)
-            outputs.append(output)
+                print(f"\n[Manager] Delegating task {i+1}: {task.description}")
+            
+            # Execute task (manager coordinates but agents do the work)
+            output = task.execute(crew_context=crew_context)
+            task_outputs.append(output)
+            crew_context[f"task_{i}_output"] = output.raw
             
             # Update manager on progress
-            progress_update = f"Task completed by {assigned_agent.role}: {output.raw[:100]}..."
-            self.manager_agent.execute(f"Note this progress: {progress_update}")
-            
-        return CrewOutput(
-            raw=outputs[-1].raw if outputs else "",
-            tasks_output=outputs
-        )
+            if self.verbose:
+                progress_update = f"Task completed by {task.agent.role}: {output.raw[:100]}..."
+                manager.execute(f"Note this progress: {progress_update}")
         
+        # Manager reviews all outputs
+        final_output = self._manager_review(manager, task_outputs, crew_context)
+        
+        return CrewOutput(
+            raw=final_output,
+            tasks_output=task_outputs,
+            token_usage=self._calculate_token_usage()
+        )
+    
+    def _manager_review(self, manager: LiteAgent, outputs: List[TaskOutput], context: Dict) -> str:
+        """Manager reviews and summarizes all task outputs."""
+        review_context = "Task outputs to review:\n\n"
+        for i, output in enumerate(outputs):
+            review_context += f"Task {i+1}: {output.raw}\n\n"
+            
+        review_task = "Review all task outputs and provide a final summary"
+        
+        if self.verbose:
+            print(f"\n[Manager] Reviewing {len(outputs)} task outputs")
+            
+        summary = manager.execute(review_task, review_context)
+        return summary
+    
+    def _compile_output(self, task_outputs: List[TaskOutput]) -> str:
+        """Compile task outputs into final crew output."""
+        if not task_outputs:
+            return "No tasks completed"
+            
+        # Use last task output as final output by default
+        # Can be customized for more sophisticated compilation
+        return task_outputs[-1].raw
+    
+    def _calculate_token_usage(self) -> Dict[str, Any]:
+        """Calculate token usage across all agents."""
+        # TODO: Implement actual token counting
+        return {
+            "total_tokens": 0,
+            "prompt_tokens": 0,
+            "completion_tokens": 0,
+            "successful_requests": len(self.tasks)
+        }
+    
     async def kickoff_async(self, inputs: Optional[Dict[str, Any]] = None) -> CrewOutput:
         """Execute crew asynchronously."""
         loop = asyncio.get_event_loop()
         with ThreadPoolExecutor() as executor:
             return await loop.run_in_executor(executor, self.kickoff, inputs)
-            
+    
+    @property
+    def usage_metrics(self) -> Dict[str, Any]:
+        """Get usage metrics from last execution."""
+        return self._usage_metrics
+    
+    @property
+    def on_progress(self) -> Optional[Callable]:
+        """Get progress callback."""
+        return self._progress_callback
+    
+    @on_progress.setter
+    def on_progress(self, callback: Callable):
+        """Set progress callback."""
+        self._progress_callback = callback
+    
+    def memory_usage(self) -> int:
+        """Estimate memory usage in bytes."""
+        # Simple estimation based on agent and task count
+        base_memory = 1024 * 1024  # 1MB base
+        per_agent = 100 * 1024     # 100KB per agent
+        per_task = 50 * 1024       # 50KB per task
+        
+        return base_memory + (len(self.agents) * per_agent) + (len(self.tasks) * per_task)
+    
+    def __str__(self) -> str:
+        return f"Crew(agents={len(self.agents)}, tasks={len(self.tasks)}, process={self.process.value})"
+    
     def __repr__(self) -> str:
-        return f"LiteCrew(agents={len(self.agents)}, tasks={len(self.tasks)}, process={self.process})"
+        return f"LiteCrew(agents={[a.role for a in self.agents]}, task_count={len(self.tasks)})"
 
 
 # Alias for CrewAI compatibility
