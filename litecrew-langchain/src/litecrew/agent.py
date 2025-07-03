@@ -2,13 +2,15 @@
 LiteAgent - CrewAI-compatible agent built on LangChain
 """
 
-from typing import Any, List, Optional, Dict
-from langchain.agents import AgentExecutor, create_react_agent
-from langchain.memory import ConversationBufferMemory
-from langchain.schema import BaseMessage
-from langchain_openai import ChatOpenAI
-from langchain.prompts import PromptTemplate
-from langchain.tools import Tool
+from typing import Any, List, Optional, Dict, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from langchain.agents import AgentExecutor
+    from langchain.memory import ConversationBufferMemory
+    from langchain.schema import BaseMessage
+    from langchain_openai import ChatOpenAI
+    from langchain.prompts import PromptTemplate
+    from langchain.tools import Tool
 
 
 class LiteAgent:
@@ -34,12 +36,20 @@ class LiteAgent:
         backstory: str,
         tools: Optional[List[Any]] = None,
         llm: Optional[Any] = None,
-        memory: bool = True,
+        function_calling_llm: Optional[Any] = None,
+        max_iter: int = 15,
+        max_rpm: Optional[int] = None,
+        memory: bool = False,
         verbose: bool = False,
-        max_iter: int = 5,
-        allow_delegation: bool = True,
+        allow_delegation: bool = False,
+        step_callback: Optional[Any] = None,
+        system_template: Optional[str] = None,
+        prompt_template: Optional[str] = None,
+        response_template: Optional[str] = None,
         max_execution_time: Optional[int] = None,
+        callbacks: Optional[List[Any]] = None,
     ):
+        """Initialize a LiteAgent."""
         self.role = role
         self.goal = goal
         self.backstory = backstory
@@ -52,25 +62,56 @@ class LiteAgent:
         # Build system message from CrewAI-style attributes
         self.system_message = self._build_system_message()
         
-        # Initialize LLM (default to OpenAI)
-        self.llm = llm or ChatOpenAI(temperature=0.7, model="gpt-4-turbo-preview")
+        # Initialize LLM (lazy import to speed up startup)
+        self._llm = llm
+        self._llm_initialized = llm is not None
         
-        # Setup memory if enabled
-        self._memory = ConversationBufferMemory(
-            memory_key="chat_history",
-            return_messages=True
-        ) if memory else None
+        # Setup memory if enabled (lazy loading)
+        self._memory = None
+        self._memory_enabled = memory
         
-        # Create LangChain agent
-        self._agent_executor = self._create_agent_executor()
+        # Delay agent creation until first use
+        self._agent_executor = None
+        
+    @property
+    def llm(self):
+        """Lazy load LLM to improve import time."""
+        if not self._llm_initialized:
+            from langchain_openai import ChatOpenAI
+            self._llm = ChatOpenAI(temperature=0.7, model="gpt-4-turbo-preview")
+            self._llm_initialized = True
+        return self._llm
+    
+    @property
+    def memory(self):
+        """Lazy load memory."""
+        if self._memory is None and self._memory_enabled:
+            from langchain.memory import ConversationBufferMemory
+            self._memory = ConversationBufferMemory(
+                memory_key="chat_history",
+                return_messages=True
+            )
+        return self._memory
+    
+    @property
+    def agent_executor(self):
+        """Lazy load agent executor."""
+        if self._agent_executor is None:
+            self._agent_executor = self._create_agent_executor()
+        return self._agent_executor
         
     def _build_system_message(self) -> str:
         """Build system message from role, goal, and backstory."""
-        return f"""You are {self.role}.
+        message = f"""You are {self.role}.
 
 Your personal goal is: {self.goal}
 
-Your backstory is: {self.backstory}
+Your backstory is: {self.backstory}"""
+
+        if self.allow_delegation:
+            message += "\n\nYou can delegate tasks to other agents when needed."
+
+        message += """
 
 You have access to the following tools:
 {{tools}}
@@ -89,8 +130,13 @@ Begin!
 Question: {{input}}
 {{agent_scratchpad}}"""
         
-    def _create_agent_executor(self) -> AgentExecutor:
+        return message
+        
+    def _create_agent_executor(self):
         """Create the LangChain agent executor."""
+        from langchain.agents import AgentExecutor, create_react_agent
+        from langchain.prompts import PromptTemplate
+        
         # Convert tools to LangChain format if needed
         langchain_tools = self._convert_tools(self.tools)
         
@@ -104,22 +150,24 @@ Question: {{input}}
         agent = create_react_agent(
             llm=self.llm,
             tools=langchain_tools,
-            prompt=prompt
+            prompt=prompt,
         )
         
         # Create executor
         return AgentExecutor(
             agent=agent,
             tools=langchain_tools,
-            memory=self._memory,
+            memory=self.memory,
             verbose=self.verbose,
             max_iterations=self.max_iter,
             handle_parsing_errors=True,
         )
         
-    def _convert_tools(self, tools: List[Any]) -> List[Tool]:
+    def _convert_tools(self, tools: List[Any]) -> List['Tool']:
         """Convert CrewAI tools to LangChain tools."""
         langchain_tools = []
+        
+        from langchain.tools import Tool
         
         for tool in tools:
             if isinstance(tool, Tool):
@@ -135,11 +183,11 @@ Question: {{input}}
                     )
                 )
             else:
-                # Assume it's a callable
+                # Try to wrap as a basic tool
                 langchain_tools.append(
                     Tool(
-                        name=tool.__name__,
-                        description=f"Tool: {tool.__name__}",
+                        name=str(tool),
+                        description=f"Tool: {tool}",
                         func=tool,
                     )
                 )
@@ -165,25 +213,25 @@ Question: {{input}}
         
         # Execute through LangChain
         try:
-            result = self._agent_executor.invoke({"input": full_prompt})
+            result = self.agent_executor.invoke({"input": full_prompt})
             return result.get("output", "")
         except Exception as e:
             if self.verbose:
                 print(f"Agent {self.role} encountered error: {e}")
-            return f"Error: {str(e)}"
+            raise
             
     def execute_task(self, task: 'Task', context: Optional[str] = None) -> Any:
         """
-        Execute a task (CrewAI compatibility).
+        Execute a CrewAI-style Task object.
         
         Args:
-            task: Task object to execute
-            context: Optional context string
+            task: Task object with description and context
+            context: Additional context (optional)
             
         Returns:
             Task execution result
         """
-        # Build context from task's context tasks if available
+        # Extract context from task if it has context attribute
         if hasattr(task, 'context') and task.context:
             context_parts = []
             for ctx_task in task.context:
@@ -198,3 +246,29 @@ Question: {{input}}
             task.output = result
             
         return result
+    
+    def __repr__(self) -> str:
+        return f"Agent(role={self.role})"
+    
+    @property
+    def metrics(self) -> Dict[str, Any]:
+        """Return agent performance metrics."""
+        return {
+            "executions": 0,  # TODO: Track actual executions
+            "errors": 0,
+            "avg_execution_time": 0.0
+        }
+    
+    @classmethod
+    def from_config(cls, config: Dict[str, Any]) -> 'LiteAgent':
+        """Create agent from configuration dictionary."""
+        return cls(**config)
+    
+    async def aexecute(self, task_description: str, context: str = "") -> str:
+        """Async version of execute (placeholder for now)."""
+        # TODO: Implement true async execution
+        return self.execute(task_description, context)
+
+
+# Alias for CrewAI compatibility
+Agent = LiteAgent

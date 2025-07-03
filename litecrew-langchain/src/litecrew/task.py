@@ -66,7 +66,7 @@ class LiteTask(BaseModel):
             self.output = TaskOutput(
                 raw=result,
                 task_id=str(id(self)),
-                agent_role=self.agent.role if hasattr(self.agent, 'role') else None
+                agent_role=str(self.agent.role) if hasattr(self.agent, 'role') else None
             )
             
             # Call callback if provided
@@ -80,7 +80,7 @@ class LiteTask(BaseModel):
             self.output = TaskOutput(
                 raw=f"Task execution failed: {str(e)}",
                 task_id=str(id(self)),
-                agent_role=self.agent.role if hasattr(self.agent, 'role') else None
+                agent_role=str(self.agent.role) if hasattr(self.agent, 'role') else None
             )
             raise
             
