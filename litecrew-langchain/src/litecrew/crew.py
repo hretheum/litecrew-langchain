@@ -10,6 +10,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 from litecrew.agent import LiteAgent
 from litecrew.task import LiteTask, TaskOutput
+from litecrew.memory import ConversationMemory
 
 
 class CrewOutput(BaseModel):
@@ -80,6 +81,10 @@ class LiteCrew:
         # Add delegation tools if multiple agents
         if len(self.agents) > 1:
             self._setup_delegation()
+        
+        # Setup shared memory if enabled
+        if self.memory:
+            self._setup_shared_memory()
             
     def _validate_setup(self):
         """Validate crew configuration."""
@@ -115,6 +120,29 @@ class LiteCrew:
         for agent in self.agents:
             if agent.allow_delegation:
                 agent.tools.append(delegation_tool)
+    
+    def _setup_shared_memory(self):
+        """Setup shared memory for crew."""
+        self._shared_memory = ConversationMemory()
+        
+        # Configure agents to use shared memory
+        for agent in self.agents:
+            if hasattr(agent, '_use_crew_memory'):
+                agent._use_crew_memory = True
+            # Share the memory reference
+            if hasattr(agent, '_conversation_memory'):
+                agent._conversation_memory = self._shared_memory
+        
+        # Manager also uses shared memory
+        if self.manager_agent and hasattr(self.manager_agent, '_conversation_memory'):
+            self.manager_agent._conversation_memory = self._shared_memory
+            self.manager_agent._use_crew_memory = True
+    
+    def get_memory_context(self) -> str:
+        """Get shared memory context."""
+        if hasattr(self, '_shared_memory'):
+            return self._shared_memory.build_context()
+        return ""
                 
     def kickoff(self, inputs: Optional[Dict[str, Any]] = None) -> CrewOutput:
         """
