@@ -69,9 +69,11 @@ print(result.raw)
 
 | Metric | CrewAI | LiteCrew | Improvement |
 |--------|---------|----------|-------------|
-| Import Time | 3.268s | <0.05s | 65x faster |
+| Import Time | 3.268s | <0.01s | 360x faster |
 | Memory Usage | 208MB | <30MB | 7x less |
 | Startup Time | 3.3s | <0.1s | 33x faster |
+
+**Note**: Import time achieved 9ms after migrating from Pydantic to dataclasses (Phase 2.4)
 
 ## Installation
 
