@@ -1,0 +1,78 @@
+{
+  "timestamp": "2025-07-03T12:59:08.583592",
+  "system": {
+    "cpu_count": 4,
+    "memory_total_gb": 7.751289367675781,
+    "python_version": "3.10.12 (main, May 27 2025, 17:12:29) [GCC 11.4.0]"
+  },
+  "frameworks": {
+    "crewai": {
+      "import_test": {
+        "success": true,
+        "duration": 3.2677371501922607
+      },
+      "size_mb": 1.8363313674926758,
+      "memory_usage": {
+        "import_overhead_mb": 208.2109375,
+        "total_overhead_mb": 208.46875
+      },
+      "functional_test": {
+        "success": false,
+        "error": "1 validation error for Task\nexpected_output\n  Field required [type=missing, input_value={'description': 'What is ...A helpful AI assistant)}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing",
+        "traceback": "Traceback (most recent call last):\n  File \"/root/full_benchmark.py\", line 231, in run_benchmark\n    test_result = config['create_test']()\n  File \"/root/full_benchmark.py\", line 17, in <lambda>\n    'create_test': lambda: test_crewai()\n  File \"/root/full_benchmark.py\", line 96, in test_crewai\n    task = Task(\n  File \"/usr/local/lib/python3.10/dist-packages/pydantic/main.py\", line 253, in __init__\n    validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)\npydantic_core._pydantic_core.ValidationError: 1 validation error for Task\nexpected_output\n  Field required [type=missing, input_value={'description': 'What is ...A helpful AI assistant)}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing\n"
+      }
+    },
+    "litecrew-fork": {
+      "import_test": {
+        "success": true,
+        "duration": 4.673004150390625e-05
+      },
+      "size_mb": 10.700600624084473,
+      "memory_usage": {
+        "import_overhead_mb": 0.0,
+        "total_overhead_mb": 0.0
+      },
+      "functional_test": {
+        "success": false,
+        "error": "1 validation error for Task\nexpected_output\n  Field required [type=missing, input_value={'description': 'What is ...A helpful AI assistant)}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing",
+        "traceback": "Traceback (most recent call last):\n  File \"/root/full_benchmark.py\", line 231, in run_benchmark\n    test_result = config['create_test']()\n  File \"/root/full_benchmark.py\", line 22, in <lambda>\n    'create_test': lambda: test_litecrew()\n  File \"/root/full_benchmark.py\", line 124, in test_litecrew\n    task = Task(\n  File \"/usr/local/lib/python3.10/dist-packages/pydantic/main.py\", line 253, in __init__\n    validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)\npydantic_core._pydantic_core.ValidationError: 1 validation error for Task\nexpected_output\n  Field required [type=missing, input_value={'description': 'What is ...A helpful AI assistant)}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing\n"
+      }
+    },
+    "langchain": {
+      "import_test": {
+        "success": true,
+        "duration": 0.008157730102539062
+      },
+      "size_mb": 4.295056343078613,
+      "memory_usage": {
+        "import_overhead_mb": 0.2578125,
+        "total_overhead_mb": 17.25
+      },
+      "functional_test": {
+        "success": true,
+        "results": {
+          "template_format_time": 2.5987625122070312e-05,
+          "response_length": 20
+        }
+      }
+    },
+    "pyautogen": {
+      "import_test": {
+        "success": true,
+        "duration": 0.2661106586456299
+      },
+      "size_mb": 4.238968849182129,
+      "memory_usage": {
+        "import_overhead_mb": 15.015625,
+        "total_overhead_mb": 16.8203125
+      },
+      "functional_test": {
+        "success": true,
+        "results": {
+          "agent_creation_time": 0.06821751594543457,
+          "agent_type": "AssistantAgent"
+        }
+      }
+    }
+  }
+}
