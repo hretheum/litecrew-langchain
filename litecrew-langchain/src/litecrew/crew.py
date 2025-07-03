@@ -6,11 +6,14 @@ from typing import Any, Dict, List, Optional, Union
 from pydantic import BaseModel, Field
 from datetime import datetime
 import asyncio
+import time
+import uuid
 from concurrent.futures import ThreadPoolExecutor
 
 from litecrew.agent import LiteAgent
 from litecrew.task import LiteTask, TaskOutput
 from litecrew.memory import ConversationMemory
+from litecrew.state import StateManager, CrewState
 
 
 class CrewOutput(BaseModel):
@@ -43,6 +46,7 @@ class LiteCrew:
         function_calling_llm: Optional[Any] = None,
         step_callback: Optional[Any] = None,
         async_execution: bool = False,
+        state_manager: Optional[StateManager] = None,
     ):
         """
         Initialize a crew of agents.
@@ -59,6 +63,7 @@ class LiteCrew:
             function_calling_llm: LLM for function calling
             step_callback: Callback after each step
             async_execution: Whether to execute tasks asynchronously
+            state_manager: Optional state manager for snapshots
         """
         self.agents = agents
         self.tasks = tasks
@@ -71,6 +76,13 @@ class LiteCrew:
         self.function_calling_llm = function_calling_llm
         self.step_callback = step_callback
         self.async_execution = async_execution
+        
+        # Generate unique crew ID
+        self.id = f"crew_{uuid.uuid4().hex[:8]}"
+        
+        # Setup state management
+        self._state_manager = state_manager
+        self._state: Optional[CrewState] = None
         
         # Validate setup
         self._validate_setup()
@@ -156,14 +168,41 @@ class LiteCrew:
         """
         if self.verbose:
             print(f"Starting crew execution with {len(self.tasks)} tasks...")
+        
+        # Initialize state if state manager is available
+        if self._state_manager:
+            self._state = CrewState.from_crew(
+                crew_id=self.id,
+                agents=self.agents,
+                tasks=self.tasks,
+                process=self.process
+            )
+            self._state.update_status("running")
+            self._save_state()
             
         # Execute based on process type
-        if self.process == "sequential":
-            return self._execute_sequential(inputs)
-        elif self.process == "hierarchical":
-            return self._execute_hierarchical(inputs)
-        else:
-            raise ValueError(f"Unknown process type: {self.process}")
+        try:
+            if self.process == "sequential":
+                result = self._execute_sequential(inputs)
+            elif self.process == "hierarchical":
+                result = self._execute_hierarchical(inputs)
+            else:
+                raise ValueError(f"Unknown process type: {self.process}")
+            
+            # Update final state
+            if self._state:
+                self._state.update_status("completed")
+                self._save_state()
+                
+            return result
+            
+        except Exception as e:
+            # Update state on failure
+            if self._state:
+                self._state.update_status("failed")
+                self._state.metadata["error"] = str(e)
+                self._save_state()
+            raise
             
     def _execute_sequential(self, inputs: Optional[Dict[str, Any]] = None) -> CrewOutput:
         """Execute tasks sequentially."""
@@ -172,11 +211,23 @@ class LiteCrew:
         for i, task in enumerate(self.tasks):
             if self.verbose:
                 print(f"\nExecuting task {i+1}/{len(self.tasks)}: {task.description[:50]}...")
+            
+            # Update state
+            if self._state:
+                self._state.current_task_index = i
+                self._state.update_task_status(i, "in_progress")
+                self._save_state()
                 
             # Execute task
             try:
                 output = task.execute(crew_context=inputs)
                 outputs.append(output)
+                
+                # Update state with output
+                if self._state:
+                    self._state.update_task_status(i, "completed")
+                    self._state.update_task_output(i, output.raw)
+                    self._save_state()
                 
                 # Callback if provided
                 if self.step_callback:
@@ -185,6 +236,12 @@ class LiteCrew:
             except Exception as e:
                 if self.verbose:
                     print(f"Task failed: {e}")
+                
+                # Update state with error
+                if self._state:
+                    self._state.update_task_error(i, str(e))
+                    self._save_state()
+                    
                 raise
                 
         # Return final output
@@ -307,6 +364,39 @@ Respond with just the agent's role."""
         """Legacy async method - use akickoff instead."""
         return await self.akickoff(inputs)
             
+    def _save_state(self) -> None:
+        """Save current state if state manager is available."""
+        if self._state_manager and self._state:
+            # Check if auto-snapshot is needed
+            if self._state_manager.should_auto_snapshot(self.id):
+                self._state_manager.save_state(self._state)
+            else:
+                # Save incremental update
+                self._state_manager.save_incremental_update(
+                    self._state,
+                    changed_fields=["task_states", "current_task_index", "status", "updated_at"]
+                )
+    
+    def save_state_snapshot(self) -> Optional[str]:
+        """Manually save a state snapshot."""
+        if self._state_manager and self._state:
+            return self._state_manager.save_state(self._state)
+        return None
+    
+    def restore_state(self, version: Optional[int] = None) -> None:
+        """Restore crew state from a snapshot."""
+        if self._state_manager:
+            restored_state = self._state_manager.load_state(self.id, version)
+            if restored_state:
+                self._state = restored_state
+                # TODO: Restore task outputs and crew state
+    
+    def get_state_history(self) -> List[Dict[str, Any]]:
+        """Get state history."""
+        if self._state_manager:
+            return self._state_manager.get_state_history(self.id)
+        return []
+    
     def __repr__(self) -> str:
         return f"LiteCrew(agents={len(self.agents)}, tasks={len(self.tasks)}, process={self.process})"
 
