@@ -72,7 +72,6 @@ RUN pip install --no-cache-dir --user \
     langchain-openai \
     fastapi \
     uvicorn \
-    pydantic \
     redis \
     sqlalchemy \
     aiosqlite
