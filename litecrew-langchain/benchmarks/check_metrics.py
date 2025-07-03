@@ -12,6 +12,14 @@ def check_metrics():
     process = psutil.Process()
     baseline_memory = process.memory_info().rss / 1024 / 1024
     
+    # Pre-import standard library modules that litecrew uses
+    # This ensures we only measure litecrew's actual import time
+    import enum
+    import typing
+    import dataclasses
+    import datetime
+    import json
+    
     # Measure import time
     start = time.perf_counter()
     import litecrew

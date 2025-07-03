@@ -18,6 +18,13 @@ class TestPackageMetrics:
         for module in modules_to_remove:
             del sys.modules[module]
         
+        # Pre-import standard library modules to measure only litecrew's import time
+        import enum
+        import typing
+        import dataclasses
+        import datetime
+        import json
+        
         # Measure import time
         start = time.perf_counter()
         import litecrew
