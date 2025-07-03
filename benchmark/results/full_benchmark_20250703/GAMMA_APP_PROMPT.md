@@ -1,6 +1,6 @@
 # Gamma.app Prompt for AI Framework Benchmark Presentation
 
-Create a professional LinkedIn carousel presentation about AI framework benchmarking results. Style: Modern tech/research presentation with data visualization focus. Tone: Authoritative AI researcher sharing groundbreaking findings.
+Create a professional LinkedIn carousel presentation about AI framework benchmarking results. Style: Modern tech/research presentation with data visualization focus. Tone: **Honest, transparent AI researcher sharing both successes AND failures** - include the problems encountered, failed attempts, and lessons learned. Make it relatable by showing the human side of technical research.
 
 ## Title Slide
 "The Hidden Cost of AI Frameworks: A Performance Deep Dive"
@@ -59,13 +59,15 @@ For 1000 service restarts per day:
 Visual: Clock/calendar visualization
 
 ## Slide 8: The Fork Experiment
-Title: "Can We Fix It? The LiteCrew Fork Story"
-Our optimization attempt:
-- ✅ Removed telemetry (privacy win)
-- ✅ Stripped enterprise features (lighter)
-- ❌ Introduced syntax errors (reality check)
-Lesson: "Forking is easy. Maintaining is hard."
-Visual: Git branch diagram
+Title: "Our Biggest Failure: The LiteCrew Fork Story"
+What we tried:
+- ✅ Removed telemetry (easy win)
+- ✅ Stripped enterprise features (seemed smart)
+- ❌ Package size INCREASED from 1.8MB to 10.7MB (!?)
+- ❌ Introduced 17 syntax errors
+- ❌ Broke core functionality completely
+Painful lesson: "Just fork it and remove stuff" is incredibly naive. Dependencies are deeply intertwined.
+Visual: Before/after comparison showing failure
 
 ## Slide 9: Framework Report Card
 Title: "The Verdict: Production Readiness"
@@ -100,12 +102,15 @@ CTA: "What hidden costs lurk in your tech stack?"
 
 ## Slide 13: Technical Deep Dive Available
 Title: "Want the Full Research?"
-- Complete benchmark methodology
-- Raw performance data
-- Implementation guides
-- Cost optimization strategies
-"Connect for the full technical report"
-Visual: GitHub/research paper icon
+
+**Available Documentation:**
+- [Complete Benchmark Methodology](https://gitlab.com/eof3/litecrewai/-/blob/master/benchmark/results/full_benchmark_20250703/BENCHMARK_METHODOLOGY.md) - The honest journey from assumption to discovery
+- [Raw Performance Data](https://gitlab.com/eof3/litecrewai/-/blob/master/benchmark/results/full_benchmark_20250703/RAW_PERFORMANCE_DATA.md) - Shocking 113x memory overhead findings
+- [Implementation Guide](https://gitlab.com/eof3/litecrewai/-/blob/master/benchmark/results/full_benchmark_20250703/IMPLEMENTATION_GUIDE.md) - Practical strategies for efficient AI agents
+- [Cost Optimization Strategies](https://gitlab.com/eof3/litecrewai/-/blob/master/benchmark/results/full_benchmark_20250703/COST_OPTIMIZATION_STRATEGIES.md) - Save 90% on infrastructure
+
+"Full research available at: gitlab.com/eof3/litecrewai"
+Visual: GitLab logo with document icons
 
 ## Design Guidelines:
 - Color scheme: Dark tech theme with bright accent colors for data
@@ -116,10 +121,11 @@ Visual: GitHub/research paper icon
 - Include subtle animations for data reveals
 
 ## Key Messages to Emphasize:
-1. Data-driven decision making
-2. Cost implications at scale
-3. Performance as a competitive advantage
-4. Research-backed recommendations
-5. Practical, actionable insights
+1. **Honesty builds trust** - Share failures alongside successes
+2. **Popular ≠ Performant** - GitHub stars can be misleading
+3. **Real data beats assumptions** - We were wrong about CrewAI
+4. **Failures teach valuable lessons** - LiteCrew fork was educational
+5. **Cost implications are massive** - 10x difference between frameworks
+6. **The ecosystem needs better solutions** - Current options all have issues
 
-Make this presentation compelling for CTOs, Engineering Managers, and AI practitioners who need to make informed infrastructure decisions.
+Make this presentation compelling for CTOs, Engineering Managers, and AI practitioners by being refreshingly honest about what worked, what didn't, and what we learned along the way.
