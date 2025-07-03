@@ -54,56 +54,10 @@ Gdy wykonasz, wpisz "done" aby kontynuować.
 
 ## 📝 Custom Commands
 
-### /sprint-start <phase> <block>
-Rozpocznij pracę nad blokiem:
-1. Wczytaj IMPLEMENTATION_ROADMAP.md
-2. Znajdź wskazany blok zadań
-3. Stwórz failing tests first
-4. Zaktualizuj project-context.md z current sprint info
-5. Rozpocznij implementację w kontenerach
+⚠️ **Aliasy przeniesione do głównego pliku**: `/Users/hretheum/dev/bezrobocie/litecrew/CLAUDE.md`
 
-### /task-check
-Sprawdź czy aktualne zadanie spełnia kryteria:
-1. Testy napisane first? ✓
-2. Performance metrics met? ✓ 
-3. Container works? ✓
-4. Documentation updated? ✓
-5. Project-context.md current? ✓
-
-### /sprint-end
-Zakończ blok zadań:
-1. Run all tests in container
-2. Check performance benchmarks
-3. Update project-context.md with completed items
-4. Update roadmap checkboxes
-5. Commit changes (no push)
-6. Show summary of completed work
-
-### /status
-Pokaż:
-- Current phase & block
-- Completed tasks
-- In progress items
-- Performance metrics
-- Next steps
-
-### /next
-Przejdź do następnego zadania z current block
-
-### /phase-run <phase>
-Wykonuj całą fazę automatycznie:
-1. Wczytaj IMPLEMENTATION_ROADMAP.md
-2. Znajdź wszystkie bloki w podanej fazie
-3. Dla każdego bloku po kolei:
-   - Wykonaj pre-work (create issue, branch, update context)
-   - Zrealizuj wszystkie zadania atomowe
-   - Sprawdź metryki sukcesu
-   - Wykonaj post-work
-   - Automatycznie przejdź do następnego bloku
-4. Po ukończeniu wszystkich bloków w fazie:
-   - Podsumuj wyniki
-   - Zamknij milestone
-   - Przygotuj issues dla następnej fazy
+Wszystkie custom commands (/sprint-start, /task-check, /sprint-end, /status, /next, /phase-run) 
+znajdują się teraz w głównym pliku CLAUDE.md dla łatwiejszego dostępu z każdego projektu.
 
 ## 🐳 Container Commands
 ```bash
