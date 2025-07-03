@@ -508,7 +508,6 @@ Question: {{input}}
                 if self.on_chunk:
                     self.on_chunk(chunk)
                 yield chunk
-                await asyncio.sleep(0.01)  # Simulate streaming delay
     
     async def batch_execute(self, tasks: List[str], context: str = "") -> List[str]:
         """
