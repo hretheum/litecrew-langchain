@@ -412,6 +412,59 @@ def test_crew_orchestration():
 - Implemented lazy loading for context modules
 - Further optimization would require replacing Pydantic
 
+## Blok 2.4: Pydantic → dataclasses Migration (Dzień 11-12)
+
+### Pre-work:
+- [ ] Create issue: "Phase 2.4 - Migrate from Pydantic to dataclasses"
+- [ ] Branch: `feature/phase-2-block-4`
+- [ ] Review all Pydantic usage in codebase
+- [ ] Create migration checklist
+
+### Zadania atomowe:
+- [ ] Stwórz PydanticCompatible mixin dla kompatybilności API
+- [ ] Migruj LiteAgent na dataclass + mixin
+- [ ] Migruj LiteTask na dataclass + mixin
+- [ ] Migruj LiteCrew na dataclass + mixin
+- [ ] Migruj pozostałe modele (delegation, context)
+- [ ] Usuń Pydantic z requirements
+- [ ] Napisz testy kompatybilności API
+- [ ] Zaktualizuj dokumentację
+
+### Metryki sukcesu:
+- Import time: <10ms ✅ (target achieved!)
+- Memory usage: <25MB (reduction by ~7MB)
+- All tests passing (100%)
+- API compatibility maintained (mixin working)
+- Zero Pydantic imports in codebase
+
+### Walidacja:
+```python
+def test_import_performance():
+    start = time.perf_counter()
+    import litecrew
+    duration = (time.perf_counter() - start) * 1000
+    assert duration < 10.0  # Under 10ms!
+    
+def test_api_compatibility():
+    # Old Pydantic-style API should still work
+    agent = LiteAgent(role="Test", goal="Test")
+    data = agent.model_dump()  # Mixin provides this
+    agent2 = LiteAgent.model_validate(data)
+    assert agent.role == agent2.role
+```
+
+### Implementation notes:
+- Use mixin approach for 90% compatibility with 5% effort
+- Type conversion must be handled in __post_init__
+- Private fields need special handling in model_dump()
+- Focus on commonly used methods (model_dump, model_validate)
+
+### Post-work:
+- [ ] Run full benchmark suite
+- [ ] Update performance metrics in README
+- [ ] Create migration guide for users
+- [ ] Close Phase 2 milestone
+
 ---
 
 # FAZA 3: LLM Integration Layer (5 dni)
