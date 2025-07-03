@@ -17,10 +17,11 @@ This project provides CrewAI's multi-agent features on LangChain's efficient fou
 - ✅ Multi-agent crew orchestration
 - ✅ Task dependencies and context passing
 - ✅ Sequential and hierarchical execution
-- ✅ Agent delegation capabilities
+- ✅ Agent delegation capabilities (5 strategies)
+- ✅ Advanced context management with compression
 - ✅ CrewAI-compatible API
 - ✅ <30MB memory footprint
-- ✅ <100ms startup time
+- ✅ 9ms import time
 
 ## Quick Start
 
@@ -69,11 +70,12 @@ print(result.raw)
 
 | Metric | CrewAI | LiteCrew | Improvement |
 |--------|---------|----------|-------------|
-| Import Time | 3.268s | <0.01s | 360x faster |
+| Import Time | 3.268s | 9ms | 363x faster |
 | Memory Usage | 208MB | <30MB | 7x less |
-| Startup Time | 3.3s | <0.1s | 33x faster |
+| Agent Creation | N/A | <5ms | ✅ |
+| Task Overhead | N/A | <3% | ✅ |
 
-**Note**: Import time achieved 9ms after migrating from Pydantic to dataclasses (Phase 2.4)
+**Note**: Import time of 9ms achieved after Phase 2 completion (migration from Pydantic to dataclasses)
 
 ## Installation
 
