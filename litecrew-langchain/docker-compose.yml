@@ -1,0 +1,120 @@
+version: '3.8'
+
+services:
+  # Development container
+  dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    volumes:
+      - .:/app:cached
+      - ~/.ssh:/home/root/.ssh:ro
+      - pip-cache:/root/.cache/pip
+    environment:
+      - ENVIRONMENT=development
+      - PYTHONUNBUFFERED=1
+      - DATABASE_URL=postgresql://litecrew:litecrew@postgres:5432/litecrew_dev
+      - REDIS_URL=redis://redis:6379/0
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - litecrew-network
+    command: sleep infinity
+
+  # Test runner container
+  test:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: test
+    volumes:
+      - .:/app:cached
+      - pip-cache:/root/.cache/pip
+    environment:
+      - ENVIRONMENT=test
+      - DATABASE_URL=postgresql://litecrew:litecrew@postgres:5432/litecrew_test
+      - REDIS_URL=redis://redis:6379/1
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - litecrew-network
+
+  # PostgreSQL database
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: litecrew
+      POSTGRES_PASSWORD: litecrew
+      POSTGRES_DB: litecrew_dev
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+    networks:
+      - litecrew-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U litecrew"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis cache
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes
+    volumes:
+      - redis-data:/data
+    ports:
+      - "6380:6379"
+    networks:
+      - litecrew-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Local LLM for testing (Ollama)
+  ollama:
+    image: ollama/ollama:latest
+    volumes:
+      - ollama-data:/root/.ollama
+    ports:
+      - "11434:11434"
+    networks:
+      - litecrew-network
+    environment:
+      - OLLAMA_KEEP_ALIVE=24h
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+
+  # API documentation (optional)
+  docs:
+    image: swaggerapi/swagger-ui
+    environment:
+      - SWAGGER_JSON=/docs/openapi.json
+    volumes:
+      - ./docs:/docs
+    ports:
+      - "8080:8080"
+    networks:
+      - litecrew-network
+    profiles:
+      - docs
+
+volumes:
+  postgres-data:
+  redis-data:
+  ollama-data:
+  pip-cache:
+
+networks:
+  litecrew-network:
+    driver: bridge

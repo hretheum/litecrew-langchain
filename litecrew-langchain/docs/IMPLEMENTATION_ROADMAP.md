@@ -13,7 +13,107 @@ Stworzenie wydajnej alternatywy dla CrewAI opartej na LangChain, która:
 - **PyAutoGen**: 0.7s import, 39MB RAM
 - **Decyzja**: Budujemy na LangChain (408x szybszy od CrewAI)
 
-## 🗓️ Timeline: 45 dni (9 faz)
+## 🗓️ Timeline: 48 dni (10 faz)
+
+## 📋 Recurring Tasks (dla każdego bloku)
+
+### Na początku bloku:
+1. **Create GitLab Issue** z template
+   - Przypisz do milestone
+   - Dodaj labels (priority, type, component)
+   - Link do roadmap block
+2. **Create feature branch**: `feature/phase-X-block-Y`
+3. **Update project-context.md** z current block info
+
+### Podczas pracy:
+1. **Test-first**: Napisz failing tests przed kodem
+2. **Container check**: Wszystko w Dockerze
+3. **Performance check**: Po każdej implementacji
+4. **Commit often**: Conventional commits
+
+### Na końcu bloku:
+1. **Run full test suite** w kontenerze
+2. **Check performance benchmarks**
+3. **Update documentation**
+4. **Create/Update MR**
+5. **Update project-context.md**
+6. **Check off tasks in roadmap**
+
+---
+
+# FAZA 0: Project Setup (3 dni)
+
+## Blok 0.1: GitLab Infrastructure (Dzień -3)
+
+### Zadania atomowe:
+- [x] Stwórz 9 milestones (1 per fazę) w GitLab ✅
+- [x] Stwórz system 18+ labels (priority, type, component, status) ✅
+- [x] Dodaj issue templates (.gitlab/issue_templates/) ✅
+- [x] Skonfiguruj protected branches i merge rules ✅
+- [x] Włącz Container Registry w projekcie ✅
+
+### Metryki sukcesu:
+- Wszystkie milestones utworzone z datami
+- Wszystkie labels dostępne
+- Issue templates działają
+- CI/CD włączone
+
+### GitLab Labels do utworzenia:
+```yaml
+Priority: P0-Critical, P1-High, P2-Medium, P3-Low
+Type: type::feature, type::bug, type::test, type::docs, type::performance
+Component: component::agent, component::task, component::crew, component::api, component::memory
+Status: status::ready, status::in-progress, status::review, status::blocked
+```
+
+## Blok 0.2: Development Environment (Dzień -2)
+
+### Zadania atomowe:
+- [x] Stwórz multi-stage Dockerfile ✅
+- [x] Stwórz docker-compose.yml z Redis, Postgres, Ollama ✅
+- [x] Skonfiguruj .devcontainer dla VS Code ✅
+- [x] Stwórz Makefile z common commands ✅
+- [x] Napisz .env.example z wszystkimi wymaganymi vars ✅
+
+### Metryki sukcesu:
+- `docker-compose up` uruchamia całe środowisko
+- Devcontainer działa w VS Code
+- Wszystkie serwisy dostępne lokalnie
+
+### Docker services:
+```yaml
+services:
+  dev: Python 3.12 development container
+  test: Test runner container
+  redis: Redis 7 dla cache/state
+  postgres: PostgreSQL 15 dla storage
+  ollama: Local LLM dla testów
+```
+
+## Blok 0.3: CI/CD Pipeline (Dzień -1)
+
+### Zadania atomowe:
+- [x] Stwórz .gitlab-ci.yml z 5 stages ✅
+- [x] Skonfiguruj build stage (multi-stage Docker) ✅
+- [x] Dodaj test stages (unit, integration, e2e) ✅
+- [x] Dodaj benchmark stage z performance checks ✅
+- [x] Skonfiguruj deploy stages (staging, production) ✅
+- [x] Dodaj notifications (Discord/Slack webhooks) ✅
+
+### Metryki sukcesu:
+- Pipeline przechodzi na empty project
+- Docker images buildują się poprawnie
+- Test reports generują się
+- Notifications działają
+
+### CI/CD Variables do dodania:
+```
+CI_REGISTRY_USER
+CI_REGISTRY_PASSWORD
+DISCORD_WEBHOOK (optional)
+STAGING_DEPLOY_TOKEN (for future)
+PROD_DEPLOY_TOKEN (for future)
+```
 
 ---
 
@@ -21,12 +121,17 @@ Stworzenie wydajnej alternatywy dla CrewAI opartej na LangChain, która:
 
 ## Blok 1.1: Project Infrastructure (Dzień 1)
 
+### Pre-work:
+- [x] Create issue: "Phase 1.1 - Project Infrastructure" ✅
+- [x] Create branch: `feature/phase-1-block-1` ✅
+- [x] Update project-context.md ✅
+
 ### Zadania atomowe:
-- [ ] Stwórz strukturę projektu z src/, tests/, benchmarks/
-- [ ] Skonfiguruj Poetry/pip z minimalnym requirements.txt
-- [ ] Ustaw pre-commit hooks (black, mypy, ruff)
-- [ ] Skonfiguruj pytest z coverage
-- [ ] Stwórz CI/CD pipeline (GitHub Actions/GitLab CI)
+- [x] Stwórz strukturę projektu z src/, tests/, benchmarks/ ✅
+- [x] Skonfiguruj Poetry/pip z minimalnym requirements.txt ✅
+- [x] Ustaw pre-commit hooks (black, mypy, ruff) ✅
+- [x] Skonfiguruj pytest z coverage ✅
+- [x] Zintegruj z GitLab CI (już istnieje z Fazy 0) ✅
 
 ### Metryki sukcesu:
 - Import czasu pakietu: <0.01s
@@ -48,15 +153,31 @@ def test_package_metrics():
     assert memory_mb < 30
 ```
 
+### Post-work:
+- [x] Run benchmarks in container ✅
+- [ ] Update MR with results
+- [x] Update project-context.md ✅
+- [ ] Move issue to "Done"
+
+### Issues Found:
+- Import time: 504ms (langchain_openai imports)
+- Memory usage: 84.6MB (exceeds 30MB target)
+- Need to optimize imports in Phase 2
+
 ## Blok 1.2: LiteAgent - Basic Implementation (Dzień 2-3)
 
+### Pre-work:
+- [x] Create issue: "Phase 1.2 - LiteAgent Implementation" ✅
+- [x] Create branch: `feature/phase-1-block-2` ✅
+- [x] Update project-context.md ✅
+
 ### Zadania atomowe:
-- [ ] Stwórz klasę LiteAgent wrappującą LangChain agent
-- [ ] Implementuj role, goal, backstory jako system prompts
-- [ ] Dodaj allow_delegation i verbose flags
-- [ ] Implementuj podstawową metodę execute()
-- [ ] Dodaj wsparcie dla tools (LangChain tools)
-- [ ] Napisz testy jednostkowe (>90% coverage)
+- [x] Stwórz klasę LiteAgent wrappującą LangChain agent ✅
+- [x] Implementuj role, goal, backstory jako system prompts ✅
+- [x] Dodaj allow_delegation i verbose flags ✅
+- [x] Implementuj podstawową metodę execute() ✅
+- [x] Dodaj wsparcie dla tools (LangChain tools) ✅
+- [x] Napisz testy jednostkowe (>90% coverage) ✅
 
 ### Metryki sukcesu:
 - Czas tworzenia agenta: <10ms
@@ -80,15 +201,31 @@ def test_agent_creation_performance():
     assert len(agents) == 100
 ```
 
+### Post-work:
+- [x] Performance benchmark vs CrewAI ✅ (partially - needs API key)
+- [ ] Update API compatibility matrix
+- [ ] Create example notebook
+- [x] Update project-context.md ✅
+
+### Issues Found:
+- Tests require OPENAI_API_KEY
+- Mock agent tests have validation errors
+- Need to make LLM optional in Phase 2
+
 ## Blok 1.3: LiteTask - Task Management (Dzień 4-5)
 
+### Pre-work:
+- [x] Create issue: "Phase 1.3 - LiteTask Implementation" ✅
+- [x] Create branch: `feature/phase-1-block-3` ✅
+- [x] Update project-context.md ✅
+
 ### Zadania atomowe:
-- [ ] Stwórz klasę LiteTask z description i expected_output
-- [ ] Implementuj task dependencies
-- [ ] Dodaj context passing między taskami
-- [ ] Implementuj async execution
-- [ ] Dodaj output validation
-- [ ] Napisz testy integracyjne
+- [x] Stwórz klasę LiteTask z description i expected_output ✅
+- [x] Implementuj task dependencies ✅
+- [x] Dodaj context passing między taskami ✅
+- [x] Implementuj async execution ✅
+- [x] Dodaj output validation ✅
+- [x] Napisz testy integracyjne ✅
 
 ### Metryki sukcesu:
 - Overhead per task: <1ms
@@ -113,11 +250,28 @@ async def test_task_performance():
     assert duration < 2.0  # 10 parallel tasks in <2s
 ```
 
+### Post-work:
+- [x] Update performance dashboard ✅ (benchmarks run)
+- [ ] Document task patterns
+- [ ] Close Phase 1 milestone (if all done)
+- [ ] Prepare Phase 2 issues
+
+### Validation Results:
+- Task creation: <1ms ✅ PASS
+- Context passing: <0.1ms ✅ PASS
+- Parallel support: ✅ PASS
+- Fixed task_id validation error
+
 ---
 
 # FAZA 2: Core Engine (5 dni)
 
 ## Blok 2.1: LiteCrew - Orchestration Engine (Dzień 6-7)
+
+### Pre-work:
+- [ ] Create issue with Phase 2 milestone
+- [ ] Branch from updated master
+- [ ] Review Phase 1 performance metrics
 
 ### Zadania atomowe:
 - [ ] Stwórz klasę LiteCrew z agents i tasks
@@ -150,7 +304,17 @@ def test_crew_orchestration():
     assert crew.memory_usage() < 50 * 1024 * 1024  # 50MB
 ```
 
+### Post-work:
+- [ ] Benchmark vs CrewAI equivalent
+- [ ] Create orchestration examples
+- [ ] Update integration tests
+
 ## Blok 2.2: Delegation System (Dzień 8-9)
+
+### Pre-work:
+- [ ] Create issue: "Phase 2.2 - Delegation System"
+- [ ] Review CrewAI delegation patterns
+- [ ] Design delegation architecture
 
 ### Zadania atomowe:
 - [ ] Implementuj agent-to-agent delegation
@@ -166,6 +330,11 @@ def test_crew_orchestration():
 - Max delegation depth: konfigurowalny
 
 ## Blok 2.3: Context Management (Dzień 10)
+
+### Pre-work:
+- [ ] Create issue: "Phase 2.3 - Context Management"
+- [ ] Analyze memory patterns from Blocks 2.1-2.2
+- [ ] Design context architecture
 
 ### Zadania atomowe:
 - [ ] Implementuj shared context między agentami
@@ -185,6 +354,11 @@ def test_crew_orchestration():
 # FAZA 3: LLM Integration Layer (5 dni)
 
 ## Blok 3.1: Multi-LLM Support (Dzień 11-12)
+
+### Pre-work:
+- [ ] Create Phase 3 issues in GitLab
+- [ ] Set up test LLM accounts/keys
+- [ ] Review LangChain LLM integrations
 
 ### Zadania atomowe:
 - [ ] Integruj z LangChain LLM providers
@@ -216,6 +390,11 @@ def test_llm_providers():
 
 ## Blok 3.2: Streaming and Async (Dzień 13-14)
 
+### Pre-work:
+- [ ] Review async patterns in LangChain
+- [ ] Design streaming architecture
+- [ ] Create performance test suite
+
 ### Zadania atomowe:
 - [ ] Implementuj streaming responses
 - [ ] Dodaj async/await dla wszystkich LLM calls
@@ -230,6 +409,11 @@ def test_llm_providers():
 - Batch efficiency: >80% vs sequential
 
 ## Blok 3.3: Conversation Memory (Dzień 15)
+
+### Pre-work:
+- [ ] Design memory architecture
+- [ ] Review LangChain memory types
+- [ ] Plan migration strategy
 
 ### Zadania atomowe:
 - [ ] Implementuj short-term memory (per session)
@@ -249,6 +433,11 @@ def test_llm_providers():
 # FAZA 4: Storage Layer (5 dni)
 
 ## Blok 4.1: Result Storage (Dzień 16-17)
+
+### Pre-work:
+- [ ] Design storage schema
+- [ ] Set up test databases
+- [ ] Create migration strategy
 
 ### Zadania atomowe:
 - [ ] Implementuj SQLite storage backend
@@ -299,6 +488,11 @@ def test_llm_providers():
 
 ## Blok 5.1: REST API (Dzień 21-22)
 
+### Pre-work:
+- [ ] Design API schema
+- [ ] Set up API documentation
+- [ ] Create Postman collection
+
 ### Zadania atomowe:
 - [ ] Stwórz FastAPI endpoints
 - [ ] Implementuj crew management API
@@ -329,6 +523,11 @@ async def test_api_performance():
 ```
 
 ## Blok 5.2: Monitoring Dashboard (Dzień 23-24)
+
+### Pre-work:
+- [ ] Design dashboard UI
+- [ ] Choose frontend framework
+- [ ] Set up development server
 
 ### Zadania atomowe:
 - [ ] Stwórz simple HTML/JS dashboard
@@ -363,6 +562,11 @@ async def test_api_performance():
 # FAZA 6: Production Readiness (5 dni)
 
 ## Blok 6.1: Rate Limiting & Token Management (Dzień 26-27)
+
+### Pre-work:
+- [ ] Research rate limit strategies
+- [ ] Design token counting system
+- [ ] Create cost tracking schema
 
 ### Zadania atomowe:
 - [ ] Implementuj rate limiter per-agent i globalny
@@ -424,6 +628,11 @@ def test_rate_limiting():
 
 ## Blok 7.1: Long-term Memory (Dzień 31-32)
 
+### Pre-work:
+- [ ] Research vector databases
+- [ ] Design memory schema
+- [ ] Plan data migration
+
 ### Zadania atomowe:
 - [ ] Implementuj persistent memory store
 - [ ] Dodaj memory indexing i search
@@ -472,6 +681,11 @@ def test_rate_limiting():
 # FAZA 8: Advanced Orchestration (5 dni)
 
 ## Blok 8.1: Planning & Reasoning (Dzień 36-37)
+
+### Pre-work:
+- [ ] Research planning algorithms
+- [ ] Design reasoning chains
+- [ ] Create test scenarios
 
 ### Zadania atomowe:
 - [ ] Implementuj dynamic task planning
@@ -522,6 +736,11 @@ def test_rate_limiting():
 
 ## Blok 9.1: Testing & Evaluation (Dzień 41-42)
 
+### Pre-work:
+- [ ] Design test framework
+- [ ] Create benchmark suite
+- [ ] Plan regression tests
+
 ### Zadania atomowe:
 - [ ] Implementuj crew testing framework
 - [ ] Dodaj performance benchmarks
@@ -565,11 +784,20 @@ def test_rate_limiting():
 - Feedback integration: automatic
 - Audit completeness: 100%
 
+### Post-work - Project Completion:
+- [ ] Run full benchmark suite vs CrewAI
+- [ ] Create migration guide from CrewAI
+- [ ] Publish performance comparison
+- [ ] Release v1.0.0
+- [ ] Close all milestones
+- [ ] Celebration! 🎉
+
 ---
 
 ## 📋 Podsumowanie
 
 ### Delivery po każdej fazie:
+- **Faza 0**: Complete GitLab setup & development environment
 - **Faza 1**: Working LiteAgent + LiteTask (CrewAI compatible)
 - **Faza 2**: Full orchestration engine
 - **Faza 3**: Multi-LLM support with memory

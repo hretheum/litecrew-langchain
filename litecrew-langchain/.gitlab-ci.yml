@@ -1,0 +1,278 @@
+stages:
+  - build
+  - test
+  - benchmark
+  - deploy
+  - release
+
+variables:
+  DOCKER_DRIVER: overlay2
+  DOCKER_TLS_CERTDIR: ""
+  IMAGE_TAG: $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
+  LATEST_TAG: $CI_REGISTRY_IMAGE:latest
+  PYTHON_VERSION: "3.12"
+
+# Build stage
+build:
+  stage: build
+  image: docker:latest
+  services:
+    - docker:dind
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  script:
+    - docker build --target test -t $IMAGE_TAG-test .
+    - docker build --target production -t $IMAGE_TAG .
+    - docker push $IMAGE_TAG-test
+    - docker push $IMAGE_TAG
+  rules:
+    - if: $CI_MERGE_REQUEST_ID
+    - if: $CI_COMMIT_BRANCH == "master"
+
+# Test jobs
+test:unit:
+  stage: test
+  image: $IMAGE_TAG-test
+  script:
+    - pytest tests/unit -v --cov=litecrew --cov-report=term --cov-report=xml
+    - coverage xml
+  coverage: '/TOTAL.+?(\d+\%)/'
+  artifacts:
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage.xml
+    paths:
+      - coverage.xml
+    expire_in: 1 week
+  rules:
+    - if: $CI_MERGE_REQUEST_ID
+    - if: $CI_COMMIT_BRANCH == "master"
+
+test:integration:
+  stage: test
+  image: $IMAGE_TAG-test
+  services:
+    - redis:7-alpine
+    - postgres:15-alpine
+  variables:
+    REDIS_URL: redis://redis:6379
+    DATABASE_URL: postgresql://test:test@postgres/test
+    POSTGRES_USER: test
+    POSTGRES_PASSWORD: test
+    POSTGRES_DB: test
+  script:
+    - pytest tests/integration -v
+  rules:
+    - if: $CI_MERGE_REQUEST_ID
+    - if: $CI_COMMIT_BRANCH == "master"
+
+test:e2e:
+  stage: test
+  image: $IMAGE_TAG-test
+  services:
+    - redis:7-alpine
+    - postgres:15-alpine
+    - ollama/ollama:latest
+  variables:
+    REDIS_URL: redis://redis:6379
+    DATABASE_URL: postgresql://test:test@postgres/test
+    OLLAMA_HOST: http://ollama:11434
+    TEST_LLM_PROVIDER: ollama
+    TEST_LLM_MODEL: llama2
+  script:
+    - pytest tests/e2e -v --timeout=300
+  rules:
+    - if: $CI_MERGE_REQUEST_ID
+    - if: $CI_COMMIT_BRANCH == "master"
+
+test:security:
+  stage: test
+  image: python:3.12-slim
+  script:
+    - pip install bandit safety
+    - bandit -r src/ -f json -o bandit-report.json
+    - safety check --json > safety-report.json || true
+  artifacts:
+    reports:
+      sast: bandit-report.json
+    paths:
+      - bandit-report.json
+      - safety-report.json
+    expire_in: 1 week
+  rules:
+    - if: $CI_MERGE_REQUEST_ID
+    - if: $CI_COMMIT_BRANCH == "master"
+
+# Benchmark stage
+benchmark:performance:
+  stage: benchmark
+  image: $IMAGE_TAG-test
+  script:
+    - python -m pytest benchmarks/ -v --benchmark-only --benchmark-json=benchmark-results.json
+    - python benchmarks/compare_with_baseline.py
+  artifacts:
+    reports:
+      performance: benchmark-results.json
+    paths:
+      - benchmark-results.json
+      - benchmark-comparison.html
+    expire_in: 1 month
+  rules:
+    - if: $CI_MERGE_REQUEST_ID
+    - if: $CI_COMMIT_BRANCH == "master"
+
+benchmark:memory:
+  stage: benchmark
+  image: $IMAGE_TAG-test
+  script:
+    - python benchmarks/memory_profiler.py
+    - python benchmarks/check_memory_limits.py
+  artifacts:
+    paths:
+      - memory-profile/
+    expire_in: 1 week
+  rules:
+    - if: $CI_MERGE_REQUEST_ID
+      when: manual
+    - if: $CI_COMMIT_BRANCH == "master"
+
+# Deploy stages
+deploy:staging:
+  stage: deploy
+  image: alpine:latest
+  before_script:
+    - apk add --no-cache curl
+  script:
+    - echo "Deploying to staging..."
+    - |
+      if [ -n "$STAGING_DEPLOY_WEBHOOK" ]; then
+        curl -X POST $STAGING_DEPLOY_WEBHOOK \
+          -H "Content-Type: application/json" \
+          -d "{\"image\": \"$IMAGE_TAG\", \"environment\": \"staging\"}"
+      else
+        echo "No staging deployment configured yet"
+      fi
+  environment:
+    name: staging
+    url: https://staging.litecrewai.com
+  rules:
+    - if: $CI_COMMIT_BRANCH == "master"
+      when: manual
+
+deploy:production:
+  stage: deploy
+  image: alpine:latest
+  before_script:
+    - apk add --no-cache curl
+  script:
+    - echo "Deploying to production..."
+    - |
+      if [ -n "$PROD_DEPLOY_WEBHOOK" ]; then
+        curl -X POST $PROD_DEPLOY_WEBHOOK \
+          -H "Content-Type: application/json" \
+          -d "{\"image\": \"$IMAGE_TAG\", \"environment\": \"production\"}"
+      else
+        echo "No production deployment configured yet"
+      fi
+  environment:
+    name: production
+    url: https://api.litecrewai.com
+  rules:
+    - if: $CI_COMMIT_TAG
+      when: manual
+
+# Release stage
+release:
+  stage: release
+  image: docker:latest
+  services:
+    - docker:dind
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  script:
+    - docker pull $IMAGE_TAG
+    - docker tag $IMAGE_TAG $CI_REGISTRY_IMAGE:$CI_COMMIT_TAG
+    - docker tag $IMAGE_TAG $LATEST_TAG
+    - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_TAG
+    - docker push $LATEST_TAG
+    # Create GitLab release
+    - apk add --no-cache curl
+    - |
+      curl --header "PRIVATE-TOKEN: $CI_JOB_TOKEN" \
+           --data "{ \"name\": \"$CI_COMMIT_TAG\", \"tag_name\": \"$CI_COMMIT_TAG\", \"description\": \"Release $CI_COMMIT_TAG\" }" \
+           --request POST \
+           "$CI_API_V4_URL/projects/$CI_PROJECT_ID/releases"
+  rules:
+    - if: $CI_COMMIT_TAG
+
+# Notification job
+.notify:
+  image: alpine:latest
+  before_script:
+    - apk add --no-cache curl
+  rules:
+    - if: $DISCORD_WEBHOOK
+
+notify:success:
+  extends: .notify
+  stage: .post
+  script:
+    - |
+      curl -X POST $DISCORD_WEBHOOK \
+        -H "Content-Type: application/json" \
+        -d "{
+          \"embeds\": [{
+            \"title\": \"✅ Pipeline Success\",
+            \"description\": \"Pipeline for commit $CI_COMMIT_SHORT_SHA succeeded\",
+            \"color\": 3066993,
+            \"fields\": [
+              {\"name\": \"Branch\", \"value\": \"$CI_COMMIT_REF_NAME\", \"inline\": true},
+              {\"name\": \"Author\", \"value\": \"$CI_COMMIT_AUTHOR\", \"inline\": true},
+              {\"name\": \"Pipeline\", \"value\": \"[$CI_PIPELINE_ID]($CI_PIPELINE_URL)\", \"inline\": true}
+            ]
+          }]
+        }"
+  when: on_success
+  rules:
+    - if: $DISCORD_WEBHOOK && $CI_COMMIT_BRANCH == "master"
+
+notify:failure:
+  extends: .notify
+  stage: .post
+  script:
+    - |
+      curl -X POST $DISCORD_WEBHOOK \
+        -H "Content-Type: application/json" \
+        -d "{
+          \"embeds\": [{
+            \"title\": \"❌ Pipeline Failed\",
+            \"description\": \"Pipeline for commit $CI_COMMIT_SHORT_SHA failed\",
+            \"color\": 15158332,
+            \"fields\": [
+              {\"name\": \"Branch\", \"value\": \"$CI_COMMIT_REF_NAME\", \"inline\": true},
+              {\"name\": \"Author\", \"value\": \"$CI_COMMIT_AUTHOR\", \"inline\": true},
+              {\"name\": \"Pipeline\", \"value\": \"[$CI_PIPELINE_ID]($CI_PIPELINE_URL)\", \"inline\": true}
+            ]
+          }]
+        }"
+  when: on_failure
+  rules:
+    - if: $DISCORD_WEBHOOK
+
+# Code quality job
+code_quality:
+  stage: test
+  image: python:3.12-slim
+  script:
+    - pip install ruff black mypy
+    - ruff check src/ tests/ --output-format=gitlab > ruff-report.json || true
+    - black --check src/ tests/
+    - mypy src/ --junit-xml mypy-report.xml || true
+  artifacts:
+    reports:
+      codequality: ruff-report.json
+      junit: mypy-report.xml
+    expire_in: 1 week
+  rules:
+    - if: $CI_MERGE_REQUEST_ID

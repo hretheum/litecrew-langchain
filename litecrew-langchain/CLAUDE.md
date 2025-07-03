@@ -28,6 +28,25 @@ docs/
 4. **Check metrics** - po każdej implementacji
 5. **Update context** - przed końcem sesji
 
+### ⚠️ WAŻNE - Działania ręczne:
+**ZAWSZE ZATRZYMAJ SIĘ** gdy potrzebne jest działanie użytkownika:
+- Ustawienie GITLAB_TOKEN lub innych credentials
+- Konfiguracja w GitLab UI (labels, milestones, settings)
+- Instalacja narzędzi systemowych
+- Tworzenie kont zewnętrznych (API keys)
+- Weryfikacja działania (np. "sprawdź czy Docker działa")
+
+**Format zatrzymania:**
+```
+⚠️ WYMAGANE DZIAŁANIE RĘCZNE:
+1. Co zrobić: [dokładna instrukcja]
+2. Gdzie: [URL lub ścieżka]
+3. Przykład: [komenda lub screenshot]
+4. Weryfikacja: [jak sprawdzić czy działa]
+
+Gdy wykonasz, wpisz "done" aby kontynuować.
+```
+
 ### Koniec sesji:
 1. Zaktualizuj project-context.md
 2. Sprawdź metryki wydajności
@@ -70,6 +89,21 @@ Pokaż:
 
 ### /next
 Przejdź do następnego zadania z current block
+
+### /phase-run <phase>
+Wykonuj całą fazę automatycznie:
+1. Wczytaj IMPLEMENTATION_ROADMAP.md
+2. Znajdź wszystkie bloki w podanej fazie
+3. Dla każdego bloku po kolei:
+   - Wykonaj pre-work (create issue, branch, update context)
+   - Zrealizuj wszystkie zadania atomowe
+   - Sprawdź metryki sukcesu
+   - Wykonaj post-work
+   - Automatycznie przejdź do następnego bloku
+4. Po ukończeniu wszystkich bloków w fazie:
+   - Podsumuj wyniki
+   - Zamknij milestone
+   - Przygotuj issues dla następnej fazy
 
 ## 🐳 Container Commands
 ```bash

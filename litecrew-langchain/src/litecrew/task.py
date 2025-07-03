@@ -65,7 +65,7 @@ class LiteTask(BaseModel):
             # Create output
             self.output = TaskOutput(
                 raw=result,
-                task_id=id(self),
+                task_id=str(id(self)),
                 agent_role=self.agent.role if hasattr(self.agent, 'role') else None
             )
             
@@ -79,7 +79,7 @@ class LiteTask(BaseModel):
             # Create error output
             self.output = TaskOutput(
                 raw=f"Task execution failed: {str(e)}",
-                task_id=id(self),
+                task_id=str(id(self)),
                 agent_role=self.agent.role if hasattr(self.agent, 'role') else None
             )
             raise
