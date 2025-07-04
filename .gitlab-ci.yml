@@ -21,8 +21,6 @@ variables:
     key:
       files:
         - requirements*.txt
-        - requirements/*.txt
-        - constraints.txt
         - pyproject.toml
     paths:
       - .cache/pip
