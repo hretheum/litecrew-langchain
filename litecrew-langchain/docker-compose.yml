@@ -1,3 +1,6 @@
+# Local development docker-compose
+# For production, see .gitlab-ci.yml
+
 version: '3.8'
 
 services:
@@ -6,21 +9,22 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: litecrew_api
+    container_name: litecrew_api_dev
     ports:
       - "${PORT:-8000}:8000"
     environment:
-      - ENVIRONMENT=${ENVIRONMENT:-production}
+      - ENVIRONMENT=development
       - DATABASE_URL=postgresql://litecrew:litecrew@postgres:5432/litecrew
       - REDIS_URL=redis://redis:6379/0
-      # API Keys from environment
+      # API Keys from .env file
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
       - GROQ_API_KEY=${GROQ_API_KEY}
       # Security
-      - SECRET_KEY=${SECRET_KEY:-generate-secure-key-for-production}
-      - JWT_SECRET=${JWT_SECRET:-generate-secure-jwt-for-production}
+      - SECRET_KEY=${SECRET_KEY:-dev-secret-key}
+      - JWT_SECRET=${JWT_SECRET:-dev-jwt-secret}
     volumes:
+      - ./src:/app/src  # Mount source for hot reload
       - ./data:/app/data
       - ./logs:/app/logs
     depends_on:
@@ -29,13 +33,14 @@ services:
     restart: unless-stopped
     networks:
       - litecrew-network
+    command: ["python", "-m", "uvicorn", "litecrew.api:create_app", "--host", "0.0.0.0", "--port", "8000", "--reload", "--factory"]
 
   # Redis for caching
   redis:
     image: redis:7-alpine
-    container_name: litecrew_redis
+    container_name: litecrew_redis_dev
     ports:
-      - "${REDIS_PORT:-6380}:6379"
+      - "${REDIS_PORT:-6379}:6379"
     volumes:
       - redis_data:/data
     restart: unless-stopped
@@ -50,13 +55,13 @@ services:
   # PostgreSQL for persistence
   postgres:
     image: postgres:15-alpine
-    container_name: litecrew_postgres
+    container_name: litecrew_postgres_dev
     environment:
       - POSTGRES_USER=litecrew
       - POSTGRES_PASSWORD=litecrew
       - POSTGRES_DB=litecrew
     ports:
-      - "${POSTGRES_PORT:-5433}:5432"
+      - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     restart: unless-stopped
