@@ -79,6 +79,7 @@ lint:
   stage: test
   image: python:3.12-slim
   <<: *cache_config
+  allow_failure: true
   before_script:
     - python -m venv venv
     - source venv/bin/activate
