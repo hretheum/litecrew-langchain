@@ -1,27 +1,21 @@
 # GitLeaks configuration for LiteCrewAI
+title = "gitleaks config for LiteCrewAI"
 
-[allowlist]
-description = "Global allowlist"
+[extend]
+# Extend the base configuration
+useDefault = true
 
-# Allow all SECURITY.md files to contain example keys
-[[allowlist.paths]]
-paths = ["**/SECURITY.md", "SECURITY.md", "litecrew-langchain/SECURITY.md"]
-description = "Security documentation files can contain example keys"
-
-# Allow specific example API key patterns in documentation
 [[allowlist.regexes]]
-description = "Allow example API keys in SECURITY.md"
+description = "Allow example API key sk-1234567890abcdef in documentation"
 regex = '''sk-1234567890abcdef'''
-paths = ["**/SECURITY.md"]
 
-# Allow example formats that are clearly marked
 [[allowlist.regexes]]
-description = "Allow clearly marked example API keys"
-regex = '''sk-EXAMPLE.*'''
-paths = ["**/SECURITY.md"]
+description = "Allow example API keys starting with sk-EXAMPLE"
+regex = '''sk-EXAMPLE'''
 
-# Whitelist rule ID for generic API keys in documentation
-[[allowlist.rules]]
-description = "Allow generic-api-key rule in SECURITY.md files"
-id = "generic-api-key"
-paths = ["**/SECURITY.md"]
+[[allowlist.paths]]
+paths = [
+    '''SECURITY\.md''',
+    '''.*SECURITY\.md''',
+    '''litecrew-langchain/SECURITY\.md'''
+]
