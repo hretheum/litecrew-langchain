@@ -1,21 +1,42 @@
-"""Tests for the api module imports."""
+"""Tests for the api.py file - direct import to ensure coverage."""
 
-def test_api_module_imports():
-    """Test that api module correctly imports create_app."""
-    from litecrew.api import create_app
-    
-    # Verify that create_app is available
-    assert create_app is not None
-    assert callable(create_app)
+import sys
+import os
+import importlib.util
 
-def test_api_module_all():
-    """Test that __all__ is properly defined."""
-    import litecrew.api as api_module
+
+def test_api_file_direct_import():
+    """Test api.py file by directly importing it."""
+    # Get the path to the api.py file
+    api_file_path = os.path.join(os.path.dirname(__file__), '..', 'src', 'litecrew', 'api.py')
     
-    # The api.py file has __all__ defined
-    if hasattr(api_module, '__all__'):
-        assert 'create_app' in api_module.__all__
-        assert len(api_module.__all__) == 1
-    else:
-        # If __all__ is not defined, just verify create_app is available
-        assert hasattr(api_module, 'create_app')
+    # Load the module directly from the file
+    spec = importlib.util.spec_from_file_location("api_module", api_file_path)
+    api_module = importlib.util.module_from_spec(spec)
+    
+    # Execute the module to trigger coverage
+    spec.loader.exec_module(api_module)
+    
+    # Test that create_app function exists and is callable
+    assert hasattr(api_module, 'create_app')
+    assert callable(api_module.create_app)
+    
+    # Test __all__ attribute
+    assert hasattr(api_module, '__all__')
+    assert 'create_app' in api_module.__all__
+
+def test_api_file_function_execution():
+    """Test executing the create_app function from api.py."""
+    # Import the module and execute the function
+    api_file_path = os.path.join(os.path.dirname(__file__), '..', 'src', 'litecrew', 'api.py')
+    spec = importlib.util.spec_from_file_location("api_module", api_file_path)
+    api_module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(api_module)
+    
+    # Execute the function to ensure all lines are covered
+    app = api_module.create_app()
+    assert app is not None
+    
+    # Verify it's a FastAPI instance
+    from fastapi import FastAPI
+    assert isinstance(app, FastAPI)
