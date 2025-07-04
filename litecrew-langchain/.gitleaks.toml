@@ -3,28 +3,25 @@
 [allowlist]
 description = "Global allowlist"
 
-# Allow example API keys in SECURITY.md documentation
-[[allowlist.regexes]]
-description = "Allow example keys in SECURITY.md"
-regex = '''sk-1234567890abcdef'''
-paths = ["SECURITY.md", "litecrew-langchain/SECURITY.md"]
-
-# Allow the specific fingerprints where example keys were found
-[[allowlist.commits]]
-description = "Allow commits with example keys in documentation"
-commits = [
-    "ba891795cc8b30ae31583be8f69dbc21296e8d1a",
-    "c89309de66b9aeca87d5bd13061437b29e3d4a39",
-    "19e98bf966a3efde955402f994ac92e5908f5e7d"
-]
-
-# Allow paths for documentation files
+# Allow all SECURITY.md files to contain example keys
 [[allowlist.paths]]
-description = "Allow all SECURITY.md files"
-paths = ["**/SECURITY.md", "SECURITY.md"]
+paths = ["**/SECURITY.md", "SECURITY.md", "litecrew-langchain/SECURITY.md"]
+description = "Security documentation files can contain example keys"
+
+# Allow specific example API key patterns in documentation
+[[allowlist.regexes]]
+description = "Allow example API keys in SECURITY.md"
+regex = '''sk-1234567890abcdef'''
+paths = ["**/SECURITY.md"]
 
 # Allow example formats that are clearly marked
 [[allowlist.regexes]]
 description = "Allow clearly marked example API keys"
 regex = '''sk-EXAMPLE.*'''
+paths = ["**/SECURITY.md"]
+
+# Whitelist rule ID for generic API keys in documentation
+[[allowlist.rules]]
+description = "Allow generic-api-key rule in SECURITY.md files"
+id = "generic-api-key"
 paths = ["**/SECURITY.md"]
