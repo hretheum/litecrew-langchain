@@ -1,5 +1,12 @@
 # Status Deployment LiteCrew - 2025-01-04
 
+## ⚠️ WAŻNA ZMIANA: Deployment przez GitLab CI/CD
+
+Deployment został przeprojektowany zgodnie z najlepszymi praktykami:
+- **NIE MA** kodu źródłowego na serwerze produkcyjnym
+- **WSZYSTKO** działa w kontenerach Docker
+- **CI/CD** buduje i deployuje obrazy automatycznie
+
 ## ✅ Wykonane kroki
 
 ### 1. Analiza projektu ✅

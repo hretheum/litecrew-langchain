@@ -208,6 +208,28 @@ pytest
 python benchmarks/performance_test.py
 ```
 
+## Deployment
+
+LiteCrew is fully containerized and production-ready:
+
+```bash
+# Local development with Docker
+docker-compose up -d
+
+# Access endpoints
+- API: http://localhost:8000
+- Docs: http://localhost:8000/docs
+- Dashboard: http://localhost:8000/
+```
+
+Production deployment uses GitLab CI/CD:
+1. Push to `main` branch
+2. CI/CD builds Docker image
+3. Automatic deployment to server
+4. Zero-downtime updates
+
+See [DEPLOYMENT_GUIDE.md](docs/DEPLOYMENT_GUIDE.md) for details.
+
 ## License
 
 MIT License - see LICENSE file
