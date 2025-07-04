@@ -183,3 +183,54 @@ class TestModelContextLength:
         """Test empty provider/model strings."""
         assert get_model_context_length("", "") == 4096
         assert get_model_context_length("openai", "") == 4096
+
+    def test_response_none_values(self):
+        """Test response unification with None values."""
+        result = unify_response(None, "openai")
+        assert result == "None"
+
+    def test_complex_objects_fallback(self):
+        """Test complex objects fall back to string conversion."""
+        class ComplexObject:
+            def __str__(self):
+                return "complex_object_string"
+        
+        obj = ComplexObject()
+        result = unify_response(obj, "unknown_provider")
+        assert result == "complex_object_string"
+
+    def test_estimate_tokens_edge_cases(self):
+        """Test token estimation edge cases."""
+        # Test with special characters
+        text_with_special = "Hello! @#$%^&*()_+ 你好"
+        tokens = estimate_tokens(text_with_special, method="simple")
+        assert tokens >= 0
+        
+        # Test with very short text
+        short_text = "Hi"
+        tokens = estimate_tokens(short_text, method="simple")
+        assert tokens == 0  # 2 chars / 4 = 0 (integer division)
+
+    def test_provider_case_sensitivity(self):
+        """Test that provider matching is case sensitive."""
+        response = {"choices": [{"message": {"content": "test"}}]}
+        
+        # Should work with exact case
+        result = unify_response(response, "openai")
+        assert result == "test"
+        
+        # Should fall back to string with wrong case
+        result = unify_response(response, "OpenAI")
+        assert "choices" in result
+
+    def test_missing_nested_keys(self):
+        """Test responses with missing nested keys."""
+        # OpenAI response missing message content
+        incomplete_openai = {"choices": [{"message": {}}]}
+        result = unify_response(incomplete_openai, "openai")
+        assert "choices" in result  # Falls back to string
+        
+        # Anthropic response missing text
+        incomplete_anthropic = {"content": [{}]}
+        result = unify_response(incomplete_anthropic, "anthropic")
+        assert "content" in result  # Falls back to string
