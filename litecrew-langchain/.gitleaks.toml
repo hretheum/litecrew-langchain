@@ -1,0 +1,22 @@
+[allowlist]
+description = "Allowlist for example keys in documentation"
+paths = [
+    '''SECURITY\.md'''
+]
+
+[[allowlist.commits]]
+description = "Allow example API key in SECURITY.md documentation"
+commits = [
+    "ba891795cc8b30ae31583be8f69dbc21296e8d1a",
+    "c89309de66b9aeca87d5bd13061437b29e3d4a39"
+]
+
+[[allowlist.regexes]]
+description = "Allow example API keys in security documentation"
+regex = '''sk-EXAMPLE_DO_NOT_USE_THIS_KEY'''
+
+# Additional rule to allow example keys that are clearly marked as examples
+[[allowlist.regexes]]
+description = "Allow clearly marked example keys"
+regex = '''sk-[0-9a-zA-Z]{16}'''
+path = '''SECURITY\.md'''
