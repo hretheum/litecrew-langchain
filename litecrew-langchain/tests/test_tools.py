@@ -187,3 +187,111 @@ class TestDelegationTool:
                     matched = True
                     break
             assert matched, f"No pattern matched query: {query}"
+
+    def test_delegate_method_success(self):
+        """Test successful delegation execution."""
+        from litecrew.tools import DelegationTool
+        from unittest.mock import Mock
+        
+        # Create mock agents
+        agent1 = Mock()
+        agent1.role = "Researcher"
+        agent1.execute = Mock(return_value="Research results about AI")
+        
+        agent2 = Mock()
+        agent2.role = "Writer"
+        agent2.execute = Mock(return_value="Written article about AI")
+        
+        # Create tool
+        tool = DelegationTool([agent1, agent2])
+        
+        # Test delegation to researcher
+        result = tool._delegate("Ask the Researcher to find information about AI")
+        assert result == "Delegation result from Researcher: Research results about AI"
+        agent1.execute.assert_called_once_with("find information about ai")
+        
+        # Test delegation to writer
+        result = tool._delegate("Ask the Writer to write about AI")
+        assert result == "Delegation result from Writer: Written article about AI"
+        agent2.execute.assert_called_once_with("write about ai")
+
+    def test_delegate_method_unknown_agent(self):
+        """Test delegation to unknown agent."""
+        from litecrew.tools import DelegationTool
+        from unittest.mock import Mock
+        
+        # Create mock agent
+        agent = Mock()
+        agent.role = "Researcher"
+        
+        # Create tool
+        tool = DelegationTool([agent])
+        
+        # Test delegation to unknown agent
+        result = tool._delegate("Ask the Writer to write something")
+        assert "Agent role 'Writer' not found" in result
+        assert "Available agents: Researcher" in result
+
+    def test_delegate_method_various_patterns(self):
+        """Test delegation with various query patterns."""
+        from litecrew.tools import DelegationTool
+        from unittest.mock import Mock
+        
+        # Create mock agent
+        agent = Mock()
+        agent.role = "Analyst"
+        agent.execute = Mock(return_value="Analysis complete")
+        
+        # Create tool
+        tool = DelegationTool([agent])
+        
+        # Test different patterns
+        test_patterns = [
+            "delegate to analyst: analyze the data",
+            "have the analyst review metrics",
+            "get the analyst to check performance"
+        ]
+        
+        for pattern in test_patterns:
+            result = tool._delegate(pattern)
+            assert result == "Delegation result from Analyst: Analysis complete"
+            assert agent.execute.called
+
+    def test_delegate_method_fallback_parsing(self):
+        """Test delegation with fallback parsing."""
+        from litecrew.tools import DelegationTool
+        from unittest.mock import Mock
+        
+        # Create mock agent
+        agent = Mock()
+        agent.role = "Developer"
+        agent.execute = Mock(return_value="Bug fixed")
+        
+        # Create tool
+        tool = DelegationTool([agent])
+        
+        # Test fallback pattern (simple space-separated)
+        result = tool._delegate("Developer fix the critical bug")
+        assert result == "Delegation result from Developer: Bug fixed"
+        agent.execute.assert_called_with("fix the critical bug")
+
+    def test_tool_as_langchain_tool(self):
+        """Test DelegationTool works as a langchain Tool."""
+        from litecrew.tools import DelegationTool
+        from unittest.mock import Mock
+        
+        # Create mock agent
+        agent = Mock()
+        agent.role = "Tester"
+        agent.execute = Mock(return_value="Tests passed")
+        
+        # Create tool
+        tool = DelegationTool([agent])
+        
+        # Test using the tool's func method (like langchain would)
+        result = tool.func("Ask the Tester to run the test suite")
+        assert result == "Delegation result from Tester: Tests passed"
+        
+        # Verify tool metadata
+        assert tool.name == "delegate_task"
+        assert callable(tool.func)
