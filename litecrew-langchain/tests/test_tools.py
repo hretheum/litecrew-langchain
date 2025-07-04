@@ -115,3 +115,75 @@ class TestDelegationTool:
         role, task = tool_class._parse_delegation("Developer fix the bug")
         assert role == "Developer"
         assert task == "fix the bug"
+
+    def test_delegation_parsing_comprehensive(self):
+        """Test comprehensive delegation parsing patterns."""
+        from litecrew.tools import DelegationTool
+        
+        # Test parsing without initialization issues
+        tool_class = DelegationTool.__new__(DelegationTool)
+        
+        test_cases = [
+            ("ask the researcher to find data", ("Researcher", "find data")),
+            ("delegate to writer: create content", ("Writer", "create content")),
+            ("have the analyst analyze trends", ("Analyst", "analyze trends")),
+            ("get the designer to create mockups", ("Designer", "create mockups")),
+            ("ASK THE researcher TO find INFO", ("Researcher", "find info")),
+            ("Developer fix the bug", ("Developer", "fix the bug")),
+            ("help", ("Unknown", "help"))
+        ]
+        
+        for query, expected in test_cases:
+            role, task = tool_class._parse_delegation(query)
+            assert role == expected[0], f"Failed for query: {query}"
+            assert task == expected[1], f"Failed for query: {query}"
+
+    def test_tool_creation_basic(self):
+        """Test basic tool creation without complex mock setup."""
+        # Just test that we can create a tool with simple mock agents
+        from litecrew.tools import DelegationTool
+        from unittest.mock import Mock
+        
+        # Simple mock that just has a role attribute
+        mock_agent = Mock()
+        mock_agent.role = "TestAgent"
+        
+        # This should work without issues
+        tool = DelegationTool([mock_agent])
+        
+        # Verify basic properties
+        assert tool.name == "delegate_task"
+        assert "TestAgent" in tool.description
+        assert "Delegate a task to another agent" in tool.description
+
+    def test_regex_patterns_comprehensive(self):
+        """Test all regex patterns in isolation."""
+        from litecrew.tools import DelegationTool
+        import re
+        
+        patterns = [
+            r"ask the (\w+) to (.+)",
+            r"delegate to (\w+): (.+)",
+            r"have the (\w+) (.+)",
+            r"get the (\w+) to (.+)",
+        ]
+        
+        test_queries = [
+            ("ask the researcher to find data", "researcher", "find data"),
+            ("delegate to writer: create story", "writer", "create story"),
+            ("have the analyst review data", "analyst", "review data"),
+            ("get the designer to create ui", "designer", "create ui"),
+        ]
+        
+        for query, expected_role, expected_task in test_queries:
+            matched = False
+            for pattern in patterns:
+                match = re.match(pattern, query.lower())
+                if match:
+                    role = match.group(1).title()
+                    task = match.group(2)
+                    assert role == expected_role.title()
+                    assert task == expected_task
+                    matched = True
+                    break
+            assert matched, f"No pattern matched query: {query}"
