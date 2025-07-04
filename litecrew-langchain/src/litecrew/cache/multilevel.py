@@ -270,6 +270,8 @@ class MultiLevelCache:
                 self.l3.delete(key)
 
             self._key_levels[key] = new_level
+            # Reset access count after promotion
+            self._access_counts[key] = 1
 
     def get_metrics(self) -> CacheMetrics:
         """Get cache metrics."""

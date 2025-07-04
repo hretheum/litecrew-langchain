@@ -50,7 +50,9 @@ if TYPE_CHECKING:
 class LiteAgent:
     """Lightweight agent implementation."""
 
-    pass
+    def __init__(self, *args, **kwargs):
+        """Accept any arguments for compatibility."""
+        pass
 
 
 class Agent(LiteAgent):
@@ -329,15 +331,28 @@ Question: {{input}}
             if os.getenv("OPENAI_API_KEY"):
                 provider = LLMProvider.OPENAI
             else:
-                # Return mock model for testing when no API key
-                from unittest.mock import Mock
-
-                mock_llm = Mock()
-                mock_llm.__class__.__name__ = "MockChatModel"
-                mock_llm.invoke = Mock(
-                    return_value={"content": "I'm a test response from LiteAgent"}
-                )
-                return mock_llm
+                # Return fake model for testing when no API key
+                try:
+                    from langchain_core.language_models.fake import FakeChatModel
+                    return FakeChatModel()
+                except ImportError:
+                    # Use a simple mock if FakeChatModel is not available
+                    from langchain_core.messages import AIMessage
+                    
+                    class SimpleFakeLLM:
+                        def __init__(self):
+                            self.model_name = "fake-test-model"
+                            
+                        def invoke(self, input_data, **kwargs):
+                            return AIMessage(content="I'm a test response from LiteAgent")
+                            
+                        def bind(self, **kwargs):
+                            return self
+                            
+                        def with_structured_output(self, schema):
+                            return self
+                    
+                    return SimpleFakeLLM()
 
         # Parse config
         if config:
@@ -389,15 +404,28 @@ Question: {{input}}
                 except Exception:
                     continue
 
-            # Final fallback to mock model
-            from unittest.mock import Mock
-
-            mock_llm = Mock()
-            mock_llm.__class__.__name__ = "MockChatModel"
-            mock_llm.invoke = Mock(
-                return_value={"content": "I'm a fallback response from LiteAgent"}
-            )
-            return mock_llm
+            # Final fallback to fake model
+            try:
+                from langchain_core.language_models.fake import FakeChatModel
+                return FakeChatModel()
+            except ImportError:
+                # Use a simple mock if FakeChatModel is not available
+                from langchain_core.messages import AIMessage
+                
+                class SimpleFakeLLM:
+                    def __init__(self):
+                        self.model_name = "fake-fallback-model"
+                        
+                    def invoke(self, input_data, **kwargs):
+                        return AIMessage(content="I'm a fallback response from LiteAgent")
+                        
+                    def bind(self, **kwargs):
+                        return self
+                        
+                    def with_structured_output(self, schema):
+                        return self
+                
+                return SimpleFakeLLM()
 
     def switch_llm_provider(
         self, provider: Union[str, LLMProvider], config: Optional[Dict[str, Any]] = None

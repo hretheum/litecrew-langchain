@@ -10,7 +10,7 @@ from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field
 
-from litecrew.agent import LiteAgent
+from litecrew.agent import Agent as LiteAgent
 from litecrew.events import EventEmitter, EventType, LifecycleCallbacks
 from litecrew.memory import ConversationMemory
 from litecrew.state import CrewState, StateManager

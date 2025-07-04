@@ -1,5 +1,6 @@
 """Simple health check router without psutil."""
 
+from datetime import datetime
 from typing import Any, Dict
 
 from fastapi import APIRouter
@@ -15,6 +16,7 @@ class HealthStatus(BaseModel):
     version: str
     environment: str
     metrics: Dict[str, Any]
+    timestamp: str
 
 
 @router.get("/health", response_model=HealthStatus)
@@ -31,4 +33,5 @@ async def health_check():
             "active_crews": 0,
             "total_tasks": 0,
         },
+        timestamp=datetime.now().isoformat(),
     )
