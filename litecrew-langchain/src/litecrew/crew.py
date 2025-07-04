@@ -360,9 +360,14 @@ Respond with just the agent's role."""
         return await loop.run_in_executor(None, self._execute_hierarchical, inputs)
     
     # Legacy alias for backward compatibility
-    async def kickoff_async(self, inputs: Optional[Dict[str, Any]] = None) -> CrewOutput:
+    async def kickoff_async(self, inputs: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """Legacy async method - use akickoff instead."""
-        return await self.akickoff(inputs)
+        crew_output = await self.akickoff(inputs)
+        return {
+            "result": crew_output.raw,
+            "tasks_output": [{"raw": output.raw, "agent": getattr(output, 'agent_role', 'unknown'), "task": getattr(output, 'task_id', 'unknown')} for output in crew_output.tasks_output],
+            "timestamp": crew_output.timestamp.isoformat()
+        }
             
     def _save_state(self) -> None:
         """Save current state if state manager is available."""
