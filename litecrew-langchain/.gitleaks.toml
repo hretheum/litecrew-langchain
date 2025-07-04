@@ -1,22 +1,30 @@
-[allowlist]
-description = "Allowlist for example keys in documentation"
-paths = [
-    '''SECURITY\.md'''
-]
+# GitLeaks configuration for LiteCrewAI
 
+[allowlist]
+description = "Global allowlist"
+
+# Allow example API keys in SECURITY.md documentation
+[[allowlist.regexes]]
+description = "Allow example keys in SECURITY.md"
+regex = '''sk-1234567890abcdef'''
+paths = ["SECURITY.md", "litecrew-langchain/SECURITY.md"]
+
+# Allow the specific fingerprints where example keys were found
 [[allowlist.commits]]
-description = "Allow example API key in SECURITY.md documentation"
+description = "Allow commits with example keys in documentation"
 commits = [
     "ba891795cc8b30ae31583be8f69dbc21296e8d1a",
-    "c89309de66b9aeca87d5bd13061437b29e3d4a39"
+    "c89309de66b9aeca87d5bd13061437b29e3d4a39",
+    "19e98bf966a3efde955402f994ac92e5908f5e7d"
 ]
 
-[[allowlist.regexes]]
-description = "Allow example API keys in security documentation"
-regex = '''sk-EXAMPLE_DO_NOT_USE_THIS_KEY'''
+# Allow paths for documentation files
+[[allowlist.paths]]
+description = "Allow all SECURITY.md files"
+paths = ["**/SECURITY.md", "SECURITY.md"]
 
-# Additional rule to allow example keys that are clearly marked as examples
+# Allow example formats that are clearly marked
 [[allowlist.regexes]]
-description = "Allow clearly marked example keys"
-regex = '''sk-[0-9a-zA-Z]{16}'''
-path = '''SECURITY\.md'''
+description = "Allow clearly marked example API keys"
+regex = '''sk-EXAMPLE.*'''
+paths = ["**/SECURITY.md"]
