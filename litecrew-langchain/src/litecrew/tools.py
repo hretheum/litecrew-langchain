@@ -2,7 +2,7 @@
 Tools for LiteCrew agents
 """
 
-from typing import List, TYPE_CHECKING
+from typing import TYPE_CHECKING, List
 
 from langchain.tools import Tool
 
