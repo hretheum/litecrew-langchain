@@ -39,25 +39,36 @@ test:unit:
     - source venv/bin/activate
     - pip install --upgrade pip wheel setuptools
     - |
-      if [ -f "requirements.txt" ]; then
-        pip install -r requirements.txt
-      elif [ -f "litecrew-langchain/requirements.txt" ]; then
-        pip install -r litecrew-langchain/requirements.txt
-      fi
-    - |
-      if [ -f "setup.py" ] || [ -f "pyproject.toml" ]; then
-        pip install -e .[dev] || pip install -e .
-      elif [ -f "litecrew-langchain/setup.py" ]; then
-        cd litecrew-langchain && pip install -e . && cd ..
+      # Install from litecrew-langchain directory
+      if [ -d "litecrew-langchain" ]; then
+        cd litecrew-langchain
+        if [ -f "requirements.txt" ]; then
+          pip install -r requirements.txt
+        fi
+        if [ -f "setup.py" ] || [ -f "pyproject.toml" ]; then
+          pip install -e .
+        fi
+        cd ..
+      else
+        # Fallback to root directory
+        if [ -f "requirements.txt" ]; then
+          pip install -r requirements.txt
+        fi
+        if [ -f "setup.py" ] || [ -f "pyproject.toml" ]; then
+          pip install -e .[dev] || pip install -e .
+        fi
       fi
     - pip install pytest pytest-asyncio pytest-cov
   script:
     - source venv/bin/activate
     - |
+      # Always cd to litecrew-langchain if it exists
+      if [ -d "litecrew-langchain" ]; then
+        cd litecrew-langchain
+      fi
+    - |
       if [ -d "tests/" ]; then
-        pytest tests/ -v --cov=tests --cov-report=html --cov-report=term --cov-report=xml --cov-fail-under=70
-      elif [ -d "litecrew-langchain/tests/" ]; then
-        cd litecrew-langchain && pytest tests/ -v --cov=src/litecrew --cov-report=html --cov-report=term --cov-report=xml --cov-fail-under=70
+        pytest tests/ -v --cov=src/litecrew --cov-report=html --cov-report=term --cov-report=xml --cov-fail-under=70
       else
         echo "No tests directory found, skipping tests"
       fi
@@ -88,18 +99,19 @@ lint:
   script:
     - source venv/bin/activate
     - |
-      if [ -d "app/" ]; then
-        black --check app/
-        ruff check app/
-        mypy app/ --ignore-missing-imports
-      elif [ -d "src/" ]; then
+      # Always cd to litecrew-langchain if it exists
+      if [ -d "litecrew-langchain" ]; then
+        cd litecrew-langchain
+      fi
+    - |
+      if [ -d "src/" ]; then
         black --check src/
         ruff check src/
         mypy src/ --ignore-missing-imports
-      elif [ -d "litecrew-langchain/src/" ]; then
-        black --check litecrew-langchain/src/
-        ruff check litecrew-langchain/src/
-        mypy litecrew-langchain/src/ --ignore-missing-imports
+      elif [ -d "app/" ]; then
+        black --check app/
+        ruff check app/
+        mypy app/ --ignore-missing-imports
       else
         echo "No source directory found, skipping lint"
       fi
