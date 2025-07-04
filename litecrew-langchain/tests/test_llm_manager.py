@@ -94,9 +94,10 @@ class TestLLMManager:
         manager = LLMManager()
         config = LLMConfig(
             provider=LLMProvider.OLLAMA,
-            model="llama2",
-            base_url="http://localhost:11434"
+            model="llama2"
         )
+        # Add api_base through extra_params
+        config.extra_params["base_url"] = "http://localhost:11434"
         
         llm = manager.create_llm(config)
         
@@ -133,9 +134,11 @@ class TestLLMManager:
         
         # Creation time should be tracked
         assert "openai" in manager._metrics["creation_times"]
-        creation_time = manager._metrics["creation_times"]["openai"]
+        creation_times = manager._metrics["creation_times"]["openai"]
         
         # Should be reasonable duration
+        assert len(creation_times) > 0
+        creation_time = creation_times[0]
         assert 0 <= creation_time <= (end_time - start_time) + 0.1
 
     @patch('litecrew.llm.manager.LLMManager._create_openai')
