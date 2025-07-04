@@ -1,11 +1,11 @@
 """Configuration management CLI commands."""
 
-import click
 import json
-import yaml
 import os
 from pathlib import Path
-from typing import Dict, Any
+
+import click
+import yaml
 
 
 @click.group(name="config")

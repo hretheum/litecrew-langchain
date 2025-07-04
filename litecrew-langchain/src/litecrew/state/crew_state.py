@@ -3,9 +3,8 @@ Crew state representation and management.
 """
 
 import time
-from typing import Any, Dict, List, Optional, Union
 from dataclasses import dataclass, field
-from datetime import datetime
+from typing import Any, Dict, List, Optional
 
 from litecrew.state.base import StateError
 

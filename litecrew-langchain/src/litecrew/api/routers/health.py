@@ -1,10 +1,11 @@
 """Health check API endpoints."""
 
-from fastapi import APIRouter
-from typing import Dict, Any
-from datetime import datetime
-import psutil
 import time
+from datetime import datetime
+from typing import Any, Dict
+
+import psutil
+from fastapi import APIRouter
 
 router = APIRouter()
 

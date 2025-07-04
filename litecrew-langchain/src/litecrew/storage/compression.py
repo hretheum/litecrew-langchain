@@ -2,11 +2,11 @@
 Compression utilities for storage layer.
 """
 
-import zlib
-import gzip
 import bz2
+import gzip
+import zlib
 from enum import Enum
-from typing import Union, Tuple
+from typing import Tuple, Union
 
 
 class CompressionType(Enum):

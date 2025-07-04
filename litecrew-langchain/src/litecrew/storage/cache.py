@@ -2,12 +2,12 @@
 Cache implementations for storage layer.
 """
 
-import time
 import json
-from typing import Any, Dict, Optional, List
+import time
 from collections import OrderedDict
+from dataclasses import dataclass
 from threading import RLock
-from dataclasses import dataclass, field
+from typing import Any, Dict, Optional
 
 
 @dataclass

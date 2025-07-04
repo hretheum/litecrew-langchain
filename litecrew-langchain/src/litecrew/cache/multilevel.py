@@ -2,17 +2,17 @@
 Multi-level cache implementation.
 """
 
-import time
 import json
 import pickle
-from typing import Any, Dict, Optional, List, Set, Tuple
-from pathlib import Path
 import tempfile
+import time
+from pathlib import Path
 from threading import RLock
+from typing import Any, Dict, List, Optional, Set
 
-from litecrew.storage.cache import MemoryCache, RedisCache
-from litecrew.cache.policy import CachePolicy
 from litecrew.cache.metrics import CacheMetrics
+from litecrew.cache.policy import CachePolicy
+from litecrew.storage.cache import MemoryCache, RedisCache
 
 
 class L1Cache:
@@ -86,7 +86,7 @@ class L3Cache:
             try:
                 with open(file_path, "rb") as f:
                     return pickle.load(f)
-            except:
+            except Exception:
                 return None
 
     def set(self, key: str, value: Any, ttl: Optional[int] = None) -> None:
@@ -97,7 +97,7 @@ class L3Cache:
                 with open(file_path, "wb") as f:
                     pickle.dump(value, f)
                 self._index[key] = {"created": time.time(), "ttl": ttl}
-            except:
+            except Exception:
                 pass
 
     def delete(self, key: str) -> None:

@@ -2,9 +2,10 @@
 LiteTask - Task management for multi-agent systems
 """
 
-from typing import Any, List, Optional, Union, Dict
-from pydantic import BaseModel, Field
 from datetime import datetime
+from typing import Any, Dict, List, Optional
+
+from pydantic import BaseModel, Field
 
 
 class TaskOutput(BaseModel):

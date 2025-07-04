@@ -2,19 +2,19 @@
 LiteCrew - Multi-agent orchestration
 """
 
-from typing import Any, Dict, List, Optional, Union
-from pydantic import BaseModel, Field
-from datetime import datetime
 import asyncio
-import time
 import uuid
 from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime
+from typing import Any, Dict, List, Optional
+
+from pydantic import BaseModel, Field
 
 from litecrew.agent import LiteAgent
-from litecrew.task import LiteTask, TaskOutput
-from litecrew.memory import ConversationMemory
-from litecrew.state import StateManager, CrewState
 from litecrew.events import EventEmitter, EventType, LifecycleCallbacks
+from litecrew.memory import ConversationMemory
+from litecrew.state import CrewState, StateManager
+from litecrew.task import LiteTask, TaskOutput
 
 
 class CrewOutput(BaseModel):

@@ -1,11 +1,11 @@
 """Task runner CLI commands."""
 
-import click
 import json
-import httpx
 import sys
 import time
-from typing import Optional
+
+import click
+import httpx
 
 
 @click.group(name="task")

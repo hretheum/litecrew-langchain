@@ -1,12 +1,11 @@
 """Crew management CLI commands."""
 
-import click
 import json
-import yaml
-import httpx
 import sys
-from typing import Dict, Any
-from pathlib import Path
+
+import click
+import httpx
+import yaml
 
 
 @click.group(name="crew")

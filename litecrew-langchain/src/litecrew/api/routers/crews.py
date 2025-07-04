@@ -1,13 +1,14 @@
 """Crew management API endpoints."""
 
-from fastapi import APIRouter, HTTPException, status
-from pydantic import BaseModel
-from typing import List, Dict, Any, Optional
-import uuid
 import asyncio
+import uuid
 from datetime import datetime
+from typing import Any, Dict, List
 
-from litecrew import LiteAgent, LiteTask, LiteCrew
+from fastapi import APIRouter, HTTPException, status
+
+from litecrew import LiteAgent, LiteCrew, LiteTask
+
 from ..models import CrewCreate, CrewResponse, CrewUpdate, TaskSubmission
 from ..storage import APIStorage
 

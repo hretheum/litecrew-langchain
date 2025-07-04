@@ -2,9 +2,10 @@
 LLM Manager for creating and managing different LLM providers.
 """
 
-from typing import Any, Dict, List, Optional, TYPE_CHECKING
 import time
-from litecrew.llm.config import LLMProvider, LLMConfig
+from typing import TYPE_CHECKING, Any, Dict, List
+
+from litecrew.llm.config import LLMConfig, LLMProvider
 
 if TYPE_CHECKING:
     from langchain_core.language_models import BaseChatModel
@@ -87,7 +88,7 @@ class LLMManager:
             # Fallback for testing
             from unittest.mock import Mock
 
-            ChatOpenAI = Mock
+            ChatOpenAI = Mock  # noqa: N806
 
         kwargs = {
             "model": config.model,
@@ -116,7 +117,7 @@ class LLMManager:
         except ImportError:
             from unittest.mock import Mock
 
-            ChatAnthropic = Mock
+            ChatAnthropic = Mock  # noqa: N806
 
         kwargs = {
             "model_name": config.model,
@@ -139,7 +140,7 @@ class LLMManager:
         except ImportError:
             from unittest.mock import Mock
 
-            ChatGroq = Mock
+            ChatGroq = Mock  # noqa: N806
 
         kwargs = {
             "model_name": config.model,
@@ -162,7 +163,7 @@ class LLMManager:
         except ImportError:
             from unittest.mock import Mock
 
-            ChatOllama = Mock
+            ChatOllama = Mock  # noqa: N806
 
         kwargs = {
             "model": config.model,
@@ -181,7 +182,7 @@ class LLMManager:
         except ImportError:
             from unittest.mock import Mock
 
-            ChatCohere = Mock
+            ChatCohere = Mock  # noqa: N806
 
         kwargs = {
             "model": config.model,
@@ -202,7 +203,7 @@ class LLMManager:
         except ImportError:
             from unittest.mock import Mock
 
-            AzureChatOpenAI = Mock
+            AzureChatOpenAI = Mock  # noqa: N806
 
         return AzureChatOpenAI(
             deployment_name=config.model,
@@ -217,7 +218,7 @@ class LLMManager:
         except ImportError:
             from unittest.mock import Mock
 
-            ChatBedrock = Mock
+            ChatBedrock = Mock  # noqa: N806
 
         return ChatBedrock(
             model_id=config.model,
@@ -232,7 +233,7 @@ class LLMManager:
         except ImportError:
             from unittest.mock import Mock
 
-            ChatVertexAI = Mock
+            ChatVertexAI = Mock  # noqa: N806
 
         return ChatVertexAI(
             model_name=config.model,
@@ -247,7 +248,7 @@ class LLMManager:
         except ImportError:
             from unittest.mock import Mock
 
-            ChatHuggingFace = Mock
+            ChatHuggingFace = Mock  # noqa: N806
 
         return ChatHuggingFace(
             model_id=config.model,
@@ -262,7 +263,7 @@ class LLMManager:
         except ImportError:
             from unittest.mock import Mock
 
-            ChatTogether = Mock
+            ChatTogether = Mock  # noqa: N806
 
         return ChatTogether(
             model=config.model,

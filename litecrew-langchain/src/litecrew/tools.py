@@ -2,8 +2,12 @@
 Tools for LiteCrew agents
 """
 
-from typing import List, Any
+from typing import List, TYPE_CHECKING
+
 from langchain.tools import Tool
+
+if TYPE_CHECKING:
+    from litecrew.agent import LiteAgent
 
 
 class DelegationTool(Tool):

@@ -3,9 +3,9 @@ Cache metrics tracking and monitoring.
 """
 
 import time
-from typing import Any, Dict, List, Optional
 from dataclasses import dataclass, field
 from statistics import mean, quantiles
+from typing import Any, Dict, List, Optional
 
 
 @dataclass
@@ -77,7 +77,7 @@ class CacheMetrics:
             return 0
         try:
             return quantiles(self.get_latencies, n=100)[98] * 1000  # 99th percentile
-        except:
+        except Exception:
             return max(self.get_latencies) * 1000
 
     def record_get(self, hit: bool, level: Optional[int], latency: float):
