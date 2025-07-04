@@ -37,5 +37,5 @@ async def health_check():
         "timestamp": datetime.now().isoformat(),
         "memory_mb": 50,  # Estimated for test environment
     }
-    
+
     return HealthStatus(**health_data)
