@@ -210,17 +210,21 @@ class TestStateManager:
     
     def test_state_history(self, manager):
         """Test state history tracking."""
-        state = CrewState(
-            crew_id="test_crew",
-            agents=[{"role": "researcher"}],
-            tasks=[{"description": "research"}],
-            process="sequential"
-        )
-        
-        # Create multiple versions
+        # Create multiple separate states to save different versions
+        states = []
         for i in range(3):
+            state = CrewState(
+                crew_id="test_crew",
+                agents=[{"role": "researcher"}],
+                tasks=[{"description": "research"}],
+                process="sequential"
+            )
             state.update_task_status(0, f"status_{i}")
-            # Force new version by resetting version counter
+            states.append(state)
+        
+        # Save each state as a new version
+        for i, state in enumerate(states):
+            # Reset version counter to force specific version numbers
             manager._version_counter[state.crew_id] = i
             manager.save_state(state)
         
@@ -228,7 +232,7 @@ class TestStateManager:
         history = manager.get_state_history("test_crew")
         assert len(history) == 3
         
-        # Load specific version
+        # Load specific version - version 1 should have status_0
         version_1_state = manager.load_state("test_crew", version=1)
         assert version_1_state.task_states[0]["status"] == "status_0"
     
