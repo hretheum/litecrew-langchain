@@ -1,4 +1,4 @@
-# Status Deployment LiteCrew - 2025-01-04
+# Status Deployment LiteCrew - 2025-07-04
 
 ## ⚠️ WAŻNA ZMIANA: Deployment przez GitLab CI/CD
 
@@ -52,13 +52,31 @@ Deployment został przeprojektowany zgodnie z najlepszymi praktykami:
 - Skopiowano template .env.production
 - **WYMAGANE**: Uzupełnić prawdziwe klucze API przed deploymentem
 
+## ✅ Nowy Droplet (2025-07-04)
+
+### Droplet Configuration
+- **IP**: 152.42.139.18
+- **Specs**: 2 vCPU, 4GB RAM, 80GB SSD
+- **OS**: Ubuntu 24.04 LTS
+- **Region**: Amsterdam (ams3)
+- **User**: litecrewai (sudo without password)
+- **SSH**: `ssh -i ~/.ssh/id_rag litecrewai@152.42.139.18`
+
+### Installed Software
+- ✅ Docker 28.3.1
+- ✅ Docker Compose 1.29.2
+- ✅ UFW firewall (ports: 22, 80, 443, 8000)
+- ✅ Fail2ban for SSH protection
+- ✅ System fully updated
+
 ## 📋 Do wykonania
 
-### 8. Przygotowanie Droplet
-- [ ] Zalogować się SSH: `ssh litecrewai@46.101.181.183 -p 2222`
-- [ ] Sprawdzić Docker: `docker --version`
-- [ ] Sprawdzić docker-compose: `docker-compose --version`
-- [ ] Zaktualizować system: `sudo apt update && sudo apt upgrade`
+### 8. GitLab CI/CD Variables
+- [ ] Set SSH_PRIVATE_KEY (content of ~/.ssh/id_rag)
+- [ ] Set DROPLET_IP = 152.42.139.18
+- [ ] Set CI_REGISTRY_USER and CI_REGISTRY_PASSWORD
+- [ ] Set API keys (OPENAI_API_KEY, etc.)
+- [ ] Set secrets (SECRET_KEY, JWT_SECRET, DB_PASSWORD)
 
 ### 9. Deployment na produkcję
 - [ ] Push kodu do GitLab

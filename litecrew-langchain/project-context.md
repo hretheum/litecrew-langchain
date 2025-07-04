@@ -26,13 +26,13 @@
 ### Access the System
 
 ```bash
-# SSH to server (port 2222!)
-ssh -p 2222 -i ~/.ssh/id_rag litecrewai@46.101.181.183
+# SSH to server
+ssh -i ~/.ssh/id_rag litecrewai@152.42.139.18
 
 # Access endpoints
-Dashboard: http://46.101.181.183:8000/dashboard
-Health: http://46.101.181.183:8000/health
-API Docs: http://46.101.181.183:8000/docs
+Dashboard: http://152.42.139.18:8000/dashboard
+Health: http://152.42.139.18:8000/health
+API Docs: http://152.42.139.18:8000/docs
 ```
 
 ### Local Development
@@ -63,10 +63,11 @@ python -m uvicorn app.main:app --reload
 ## 🏗️ Architecture
 
 ### Infrastructure
-- **Server**: DigitalOcean Droplet (2GB RAM, Ubuntu 24.10)
-- **Deployment**: Hybrid (App in Docker, services native)
-- **Storage**: SQLite for data, Redis for cache
-- **LLM**: Local Ollama with mistral:7b, phi3:mini, nomic-embed-text
+- **Server**: DigitalOcean Droplet (4GB RAM, 2vCPU, Ubuntu 24.04)
+- **IP**: 152.42.139.18
+- **Deployment**: Full Docker containerization via GitLab CI/CD
+- **Storage**: PostgreSQL for data, Redis for cache
+- **LLM**: Multi-provider support (OpenAI, Anthropic, Groq, etc.)
 
 ### Tech Stack
 - **Backend**: Python 3.12, FastAPI
