@@ -153,7 +153,7 @@ class DataclassOutputParser:
 
             if field.default is not field.default_factory:
                 field_desc += f" (optional, default: {field.default})"
-            elif field.default_factory is not field.default_factory:
+            elif hasattr(field, 'default_factory') and field.default_factory is not field.default_factory:
                 field_desc += " (optional)"
             else:
                 field_desc += " (required)"
@@ -225,9 +225,9 @@ Example format:
             elif field.default is not field.default_factory:
                 # Use default value
                 fixed_data[field.name] = field.default
-            elif field.default_factory is not field.default_factory:
+            elif hasattr(field, 'default_factory') and field.default_factory is not field.default_factory:
                 # Use default factory
-                fixed_data[field.name] = field.default_factory()
+                fixed_data[field.name] = field.default_factory()  # type: ignore[misc]
 
         return fixed_data
 
@@ -432,7 +432,7 @@ class OutputFormatter:
         )  # nosec B318 - Parsing our own generated XML, not untrusted input
         return dom.toprettyxml(indent="  ").split("\n", 1)[1]  # Skip XML declaration
 
-    def _dict_to_xml(self, data: Any, parent: ET.Element, name: str = None):
+    def _dict_to_xml(self, data: Any, parent: ET.Element, name: Optional[str] = None) -> None:
         """Convert dict to XML elements."""
         if isinstance(data, dict):
             for key, value in data.items():

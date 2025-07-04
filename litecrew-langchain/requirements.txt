@@ -30,3 +30,6 @@ psutil>=5.9.0
 # langchain-groq>=0.0.1
 # langchain-cohere>=0.1.0
 # langchain-together>=0.0.2
+
+# Type stubs for mypy
+types-PyYAML>=6.0.0
