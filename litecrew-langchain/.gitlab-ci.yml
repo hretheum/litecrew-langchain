@@ -14,7 +14,7 @@ test:
   stage: test
   image: python:3.11-slim
   before_script:
-    - pip install -r requirements.txt
+    - pip install -e .
     - pip install pytest pytest-asyncio pytest-cov
   script:
     - pytest tests/ -v --cov=src/litecrew --cov-report=term-missing
