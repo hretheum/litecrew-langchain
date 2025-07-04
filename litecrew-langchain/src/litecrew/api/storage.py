@@ -129,3 +129,15 @@ class APIStorage:
                     self._executions[execution_id][
                         "completed_at"
                     ] = datetime.utcnow().isoformat()
+
+
+# Global storage instance
+_storage_instance = None
+
+
+def get_storage() -> APIStorage:
+    """Get global storage instance."""
+    global _storage_instance
+    if _storage_instance is None:
+        _storage_instance = APIStorage()
+    return _storage_instance

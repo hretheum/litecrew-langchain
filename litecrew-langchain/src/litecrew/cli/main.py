@@ -125,7 +125,11 @@ def status(ctx):
         click.echo(f"   Check if server is running at {api_url}")
         sys.exit(1)
     except Exception as e:
-        click.echo(click.style(f"❌ Error: {str(e)}", fg="red"))
+        if "Connection refused" in str(e):
+            click.echo(click.style("❌ Cannot connect to API server", fg="red"))
+            click.echo(f"   Check if server is running at {api_url}")
+        else:
+            click.echo(click.style(f"❌ Error: {str(e)}", fg="red"))
         sys.exit(1)
 
 

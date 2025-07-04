@@ -5,7 +5,7 @@ Tests for conversation memory functionality in LiteCrew.
 import pytest
 import time
 from unittest.mock import Mock, patch
-from litecrew.agent import LiteAgent
+from litecrew import LiteAgent
 from litecrew.task import LiteTask
 from litecrew.crew import LiteCrew
 from litecrew.memory import ConversationMemory, MemorySummarizer, MemorySearch

@@ -7,7 +7,7 @@ import asyncio
 import time
 from typing import AsyncIterator, List
 from unittest.mock import Mock, patch, AsyncMock
-from litecrew.agent import LiteAgent
+from litecrew import LiteAgent
 from litecrew.task import LiteTask
 from litecrew.crew import LiteCrew
 
