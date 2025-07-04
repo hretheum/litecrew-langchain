@@ -175,7 +175,7 @@ Example format:
         try:
             # Try to parse as JSON
             data = json.loads(text)
-        except json.JSONDecodeError:
+        except json.JSONDecodeError as e:
             if self.auto_fix:
                 # Try to fix and parse again
                 fixer = OutputFixer()
@@ -212,11 +212,13 @@ Example format:
                     try:
                         value = int(value)
                     except ValueError:
+                        # Keep original value if conversion fails
                         pass
                 elif field_type is float and isinstance(value, str):
                     try:
                         value = float(value)
                     except ValueError:
+                        # Keep original value if conversion fails
                         pass
 
                 fixed_data[field.name] = value
@@ -305,6 +307,7 @@ class OutputFixer:
                     try:
                         value = int(value)
                     except ValueError:
+                        # Default to 0 if conversion fails
                         value = 0
 
                 # Fix enum

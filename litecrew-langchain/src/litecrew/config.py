@@ -38,8 +38,13 @@ class Config:
     REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 
     # Security
-    SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret-key-change-in-production")
-    JWT_SECRET = os.getenv("JWT_SECRET", "dev-jwt-secret-change-in-production")
+    # Use environment variables for secrets, no hardcoded defaults in production
+    SECRET_KEY = os.getenv(
+        "SECRET_KEY", "dev-secret-key" if ENVIRONMENT == "development" else None
+    )
+    JWT_SECRET = os.getenv(
+        "JWT_SECRET", "dev-jwt-secret" if ENVIRONMENT == "development" else None
+    )
 
     # Additional providers
     AZURE_OPENAI_API_KEY = os.getenv("AZURE_OPENAI_API_KEY")
@@ -55,15 +60,9 @@ class Config:
 
         # Check required API keys based on environment
         if cls.ENVIRONMENT == "production":
-            if (
-                not cls.SECRET_KEY
-                or cls.SECRET_KEY == "dev-secret-key-change-in-production"
-            ):
+            if not cls.SECRET_KEY:
                 errors.append("SECRET_KEY must be set in production")
-            if (
-                not cls.JWT_SECRET
-                or cls.JWT_SECRET == "dev-jwt-secret-change-in-production"
-            ):
+            if not cls.JWT_SECRET:
                 errors.append("JWT_SECRET must be set in production")
 
         # Warn about missing API keys

@@ -88,7 +88,8 @@ class L3Cache:
                     return pickle.load(
                         f
                     )  # nosec B301 - Loading trusted local cache files only
-            except Exception:
+            except (OSError, pickle.UnpicklingError, EOFError):
+                # File read or unpickling error
                 return None
 
     def set(self, key: str, value: Any, ttl: Optional[int] = None) -> None:
@@ -99,7 +100,8 @@ class L3Cache:
                 with open(file_path, "wb") as f:
                     pickle.dump(value, f)
                 self._index[key] = {"created": time.time(), "ttl": ttl}
-            except Exception:
+            except (OSError, pickle.PicklingError):
+                # File write or pickling error - skip caching
                 pass
 
     def delete(self, key: str) -> None:
