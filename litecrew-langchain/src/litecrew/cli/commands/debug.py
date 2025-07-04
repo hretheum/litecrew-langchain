@@ -1,11 +1,12 @@
 """Debug and troubleshooting CLI commands."""
 
-import click
 import json
-import httpx
 import sys
 import time
 from datetime import datetime, timedelta
+
+import click
+import httpx
 
 
 @click.group(name="debug")
@@ -29,7 +30,7 @@ def logs(ctx, tail, level, follow):
     Note: This is a mock implementation. In production, this would
     connect to actual log sources (files, syslog, etc.)
     """
-    verbose = ctx.obj["verbose"]
+    verbose = ctx.obj["verbose"]  # noqa: F841
 
     # Mock log data (in production, this would read from actual log sources)
     mock_logs = [
@@ -131,7 +132,7 @@ def logs(ctx, tail, level, follow):
 def connectivity(ctx):
     """Test connectivity to all system components."""
     api_url = ctx.obj["api_url"]
-    verbose = ctx.obj["verbose"]
+    verbose = ctx.obj["verbose"]  # noqa: F841
 
     click.echo("🔍 Testing LiteCrew Connectivity...")
     click.echo("=" * 40)
@@ -210,7 +211,7 @@ def trace(ctx, crew_id):
     CREW_ID: The ID of the crew to trace
     """
     api_url = ctx.obj["api_url"]
-    verbose = ctx.obj["verbose"]
+    verbose = ctx.obj["verbose"]  # noqa: F841
 
     try:
         # Get crew details
@@ -256,7 +257,7 @@ def trace(ctx, crew_id):
             click.echo(f"      Expected: {task.get('expected_output', 'None')[:30]}...")
 
             if i < len(tasks):
-                click.echo(f"      ↓")
+                click.echo("      ↓")
 
         # Get execution history
         try:

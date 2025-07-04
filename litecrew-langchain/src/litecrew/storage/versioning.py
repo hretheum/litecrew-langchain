@@ -2,11 +2,11 @@
 Result versioning functionality.
 """
 
+import hashlib
+import json
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Dict, List, Optional
-import hashlib
-import json
 
 
 @dataclass

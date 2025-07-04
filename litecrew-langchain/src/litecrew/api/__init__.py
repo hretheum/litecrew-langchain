@@ -1,18 +1,19 @@
 """LiteCrew API module."""
 
+import os
+import time
+import uuid
+from datetime import datetime
+from typing import Any, Dict, List, Optional
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-import time
-import uuid
-from typing import Dict, Any, List, Optional
-from datetime import datetime
+from fastapi.staticfiles import StaticFiles
 
-from .routers import crews, tasks, executions
+from .routers import crews, executions, tasks
 from .routers import health_simple as health
 from .websocket import websocket_router
-from fastapi.staticfiles import StaticFiles
-import os
 
 
 def create_app() -> FastAPI:

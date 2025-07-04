@@ -1,18 +1,16 @@
 """Main CLI entry point for LiteCrew."""
 
-import click
+import json
 import sys
 import time
-import json
-import os
-from typing import Optional, Dict, Any
-from pathlib import Path
 
-from .commands.crew import crew_group
-from .commands.task import task_group
+import click
+
 from .commands.config import config_group
+from .commands.crew import crew_group
 from .commands.debug import debug_group
 from .commands.export import export_group
+from .commands.task import task_group
 
 
 @click.group()
@@ -135,8 +133,9 @@ def status(ctx):
 @click.pass_context
 def benchmark(ctx):
     """Run performance benchmarks."""
-    import httpx
     import statistics
+
+    import httpx
 
     api_url = ctx.obj["api_url"]
 

@@ -3,7 +3,8 @@ Cache invalidation strategies.
 """
 
 import fnmatch
-from typing import List, Set, Optional
+from typing import List, Set
+
 from litecrew.cache.multilevel import MultiLevelCache
 
 

@@ -1,13 +1,13 @@
 """Export and result retrieval CLI commands."""
 
-import click
-import json
 import csv
-import yaml
-import httpx
+import json
 import sys
-from pathlib import Path
-from typing import Dict, Any, List
+from typing import Any, Dict, List
+
+import click
+import httpx
+import yaml
 
 
 @click.group(name="export")
@@ -94,7 +94,7 @@ def execution(ctx, execution_id, output_format, output, include_metadata):
             click.echo(formatted_data)
 
         if verbose and not output:
-            click.echo(f"\n📊 Export Statistics:")
+            click.echo("\n📊 Export Statistics:")
             click.echo(f"   Format: {output_format}")
             click.echo(f"   Size: {len(formatted_data)} characters")
             click.echo(f"   Metadata included: {include_metadata}")
@@ -169,7 +169,7 @@ def executions(ctx, crew_id, output_format, output, limit):
             click.echo(formatted_data)
 
         if verbose and not output:
-            click.echo(f"\n📊 Export Statistics:")
+            click.echo("\n📊 Export Statistics:")
             click.echo(f"   Executions: {len(executions)}")
             click.echo(f"   Format: {output_format}")
             click.echo(f"   Crew filter: {crew_id or 'all'}")
@@ -253,7 +253,7 @@ def crews(ctx, output_format, output, include_config):
             click.echo(formatted_data)
 
         if verbose and not output:
-            click.echo(f"\n📊 Export Statistics:")
+            click.echo("\n📊 Export Statistics:")
             click.echo(f"   Crews: {len(export_crews)}")
             click.echo(f"   Format: {output_format}")
             click.echo(f"   Config included: {include_config}")
@@ -332,7 +332,7 @@ def metrics(ctx, output):
             click.echo(formatted_data)
 
         if verbose and not output:
-            click.echo(f"\n📊 Metrics Summary:")
+            click.echo("\n📊 Metrics Summary:")
             click.echo(f"   Memory Usage: {metrics_data['system']['memory_mb']:.1f} MB")
             click.echo(f"   Total Crews: {metrics_data['usage']['total_crews']}")
             click.echo(

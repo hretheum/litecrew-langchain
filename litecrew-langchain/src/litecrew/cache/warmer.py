@@ -4,9 +4,8 @@ Cache warming strategies.
 
 import asyncio
 import time
-import threading
-from typing import List, Callable, Dict, Any, Optional
 from concurrent.futures import ThreadPoolExecutor
+from typing import Any, Callable, Dict, List, Optional
 
 from litecrew.cache.multilevel import MultiLevelCache
 
@@ -118,7 +117,7 @@ class CacheWarmer:
                         try:
                             task["func"]()
                             task["last_run"] = current_time
-                        except:
+                        except Exception:
                             pass
                 time.sleep(1)
 
@@ -153,7 +152,7 @@ class CacheWarmer:
                     value = data_source(key)
                     self.cache.set(key, value, level=2)
                     warmed += 1
-                except:
+                except Exception:
                     continue
 
         return warmed

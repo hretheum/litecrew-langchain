@@ -2,15 +2,14 @@
 State snapshot functionality.
 """
 
-import json
 import hashlib
-import zlib
-from typing import Any, Dict, Optional, Union
+import json
 from dataclasses import dataclass, field
 from datetime import datetime
+from typing import Any, Dict, Optional, Union
 
 from litecrew.state.crew_state import CrewState
-from litecrew.storage.compression import Compressor, CompressionType
+from litecrew.storage.compression import CompressionType, Compressor
 
 
 @dataclass

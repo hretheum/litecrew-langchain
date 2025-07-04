@@ -3,16 +3,15 @@ State manager for handling crew state persistence and restoration.
 """
 
 import json
-import time
 import threading
+import time
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
-from concurrent.futures import ThreadPoolExecutor
+from typing import Any, Dict, List, Optional
 
 from litecrew.state.base import StateError
 from litecrew.state.crew_state import CrewState
+from litecrew.state.migration import BUILTIN_MIGRATIONS
 from litecrew.state.snapshot import StateSnapshot
-from litecrew.state.migration import MigrationChain, BUILTIN_MIGRATIONS
 from litecrew.storage import StorageManager
 
 
@@ -174,7 +173,7 @@ class StateManager:
                         try:
                             v = int(key.split("_v")[-1])
                             versions.append(v)
-                        except:
+                        except Exception:
                             continue
 
                     if not versions:

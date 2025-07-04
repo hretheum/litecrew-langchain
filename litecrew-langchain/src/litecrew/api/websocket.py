@@ -1,9 +1,10 @@
 """WebSocket handlers for real-time updates."""
 
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect
-from typing import Dict, List
-import json
 import asyncio
+import json
+from typing import Dict, List
+
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
 router = APIRouter()
 
@@ -36,14 +37,14 @@ class ConnectionManager:
             for connection in self.crew_connections[crew_id]:
                 try:
                     await connection.send_text(message)
-                except:
+                except Exception:
                     pass
 
     async def broadcast(self, message: str):
         for connection in self.active_connections:
             try:
                 await connection.send_text(message)
-            except:
+            except Exception:
                 pass
 
 

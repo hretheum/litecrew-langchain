@@ -2,10 +2,9 @@
 Conversation memory implementation for LiteCrew.
 """
 
-from typing import List, Dict, Any, Optional, Callable
-from datetime import datetime
-import json
 from collections import deque
+from datetime import datetime
+from typing import Any, Callable, Dict, List, Optional
 
 
 class ConversationMemory:

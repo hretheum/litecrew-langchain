@@ -2,8 +2,8 @@
 Cache policies and configuration.
 """
 
-from typing import Dict, Optional, Any
 from dataclasses import dataclass, field
+from typing import Dict, Optional
 
 
 @dataclass

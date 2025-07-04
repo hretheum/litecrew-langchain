@@ -2,48 +2,48 @@
 LiteAgent - CrewAI-compatible agent built on LangChain
 """
 
-import time
 import asyncio
+import time
+from pathlib import Path
 from typing import (
-    Any,
-    List,
-    Optional,
-    Dict,
-    Union,
     TYPE_CHECKING,
+    Any,
     AsyncIterator,
     Callable,
+    Dict,
+    List,
+    Optional,
     Type,
+    Union,
 )
-from pathlib import Path
+
 from langchain.agents import AgentExecutor, create_react_agent
 from langchain.memory import ConversationBufferMemory
-from langchain.schema import BaseMessage
-from langchain_openai import ChatOpenAI
 from langchain.prompts import PromptTemplate
 from langchain.tools import Tool
 
-# Import removed - will create mock LLM inline
+from litecrew.events import EventEmitter, EventType, LifecycleCallbacks
 
-from litecrew.llm import LLMProvider, LLMConfig, LLMManager, ResponseCache
+# Import removed - will create mock LLM inline
+from litecrew.llm import LLMConfig, LLMManager, LLMProvider, ResponseCache
 from litecrew.llm.utils import estimate_tokens
 from litecrew.memory import ConversationMemory
+from litecrew.outputs import (
+    DataclassOutputParser,
+    FileOutputHandler,
+    OutputFixer,
+    OutputValidator,
+)
 from litecrew.rate_limiter import (
+    BudgetManager,
     RateLimiter,
     TokenCounter,
-    BudgetManager,
     retry_with_backoff,
 )
-from litecrew.outputs import (
-    OutputValidator,
-    DataclassOutputParser,
-    OutputFixer,
-    FileOutputHandler,
-)
-from litecrew.events import EventEmitter, EventType, LifecycleCallbacks, emit_event
 
 if TYPE_CHECKING:
     from langchain_core.language_models import BaseChatModel
+    from litecrew.task import LiteTask as Task
 
 
 class LiteAgent:
@@ -93,7 +93,7 @@ class Agent(LiteAgent):
         max_rpm: Optional[int] = None,
         track_tokens: bool = True,
         budget_limit: Optional[float] = None,
-        global_rate_limiter: Optional["GlobalRateLimiter"] = None,
+        global_rate_limiter: Optional["RateLimiter"] = None,
         # Structured outputs
         output_dataclass: Optional[Type] = None,
         output_schema: Optional[Dict[str, Any]] = None,
@@ -608,7 +608,7 @@ Question: {{input}}
                                 return data
                         else:
                             return data
-                    except:
+                    except Exception:
                         pass
 
         return response
@@ -856,7 +856,6 @@ Question: {{input}}
             "tools_count": len(self.tools),
             "llm_provider": self.llm.__class__.__name__,
             "cache_enabled": self.cache_responses,
-            "memory_enabled": self._memory_enabled,
         }
 
         if self._conversation_memory:

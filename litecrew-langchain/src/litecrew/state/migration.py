@@ -2,8 +2,8 @@
 State migration functionality for version upgrades.
 """
 
-from typing import Any, Callable, Dict, List, Optional
 from dataclasses import dataclass
+from typing import Any, Callable, Dict, List, Optional
 
 
 @dataclass

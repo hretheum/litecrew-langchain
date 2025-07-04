@@ -1,12 +1,12 @@
 """Rate limiting and token management for LiteCrew."""
 
 import asyncio
-import time
-from collections import deque, defaultdict
-from dataclasses import dataclass, field
-from typing import Dict, Optional, Callable, Any, List
-from functools import wraps
 import logging
+import time
+from collections import defaultdict, deque
+from dataclasses import dataclass, field
+from functools import wraps
+from typing import Any, Callable, Dict, Optional
 
 logger = logging.getLogger(__name__)
 

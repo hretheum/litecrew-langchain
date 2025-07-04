@@ -1,16 +1,17 @@
 """Structured outputs module for LiteCrew."""
 
-import json
 import csv
 import io
+import json
 import re
+from dataclasses import fields, is_dataclass
+from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Type, Union, get_type_hints
-from dataclasses import dataclass, fields, is_dataclass, asdict
-from datetime import datetime
-import yaml
-from xml.etree import ElementTree as ET
 from xml.dom import minidom
+from xml.etree import ElementTree as ET
+
+import yaml
 
 
 class OutputValidator:
@@ -203,12 +204,12 @@ Example format:
                         value = 0.0
 
                 # Try to convert types
-                if field_type == int and isinstance(value, str):
+                if field_type is int and isinstance(value, str):
                     try:
                         value = int(value)
                     except ValueError:
                         pass
-                elif field_type == float and isinstance(value, str):
+                elif field_type is float and isinstance(value, str):
                     try:
                         value = float(value)
                     except ValueError:
