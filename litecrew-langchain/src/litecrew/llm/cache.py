@@ -35,7 +35,8 @@ class ResponseCache:
         """Generate cache key from prompt and parameters."""
         key_data = {"prompt": prompt, "provider": provider, **kwargs}
         key_str = json.dumps(key_data, sort_keys=True)
-        return hashlib.md5(key_str.encode()).hexdigest()
+        # Using MD5 for cache keys, not security - disable bandit warning
+        return hashlib.md5(key_str.encode(), usedforsecurity=False).hexdigest()  # nosec B324
 
     def get(
         self, prompt: str, provider: Optional[str] = None, **kwargs

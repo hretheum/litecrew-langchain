@@ -3,7 +3,7 @@ Multi-level cache implementation.
 """
 
 import json
-import pickle
+import pickle  # nosec B403 - Used for local caching only, not with untrusted data
 import tempfile
 import time
 from pathlib import Path
@@ -85,7 +85,7 @@ class L3Cache:
 
             try:
                 with open(file_path, "rb") as f:
-                    return pickle.load(f)
+                    return pickle.load(f)  # nosec B301 - Loading trusted local cache files only
             except Exception:
                 return None
 
