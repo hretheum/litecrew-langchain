@@ -205,13 +205,13 @@ class TestDelegationTool:
         # Create tool
         tool = DelegationTool([agent1, agent2])
         
-        # Test delegation to researcher
-        result = tool._delegate("Ask the Researcher to find information about AI")
+        # Test delegation to researcher using the func method
+        result = tool.func("Ask the Researcher to find information about AI")
         assert result == "Delegation result from Researcher: Research results about AI"
         agent1.execute.assert_called_once_with("find information about ai")
         
         # Test delegation to writer
-        result = tool._delegate("Ask the Writer to write about AI")
+        result = tool.func("Ask the Writer to write about AI")
         assert result == "Delegation result from Writer: Written article about AI"
         agent2.execute.assert_called_once_with("write about ai")
 
@@ -228,7 +228,7 @@ class TestDelegationTool:
         tool = DelegationTool([agent])
         
         # Test delegation to unknown agent
-        result = tool._delegate("Ask the Writer to write something")
+        result = tool.func("Ask the Writer to write something")
         assert "Agent role 'Writer' not found" in result
         assert "Available agents: Researcher" in result
 
@@ -253,7 +253,7 @@ class TestDelegationTool:
         ]
         
         for pattern in test_patterns:
-            result = tool._delegate(pattern)
+            result = tool.func(pattern)
             assert result == "Delegation result from Analyst: Analysis complete"
             assert agent.execute.called
 
@@ -271,7 +271,7 @@ class TestDelegationTool:
         tool = DelegationTool([agent])
         
         # Test fallback pattern (simple space-separated)
-        result = tool._delegate("Developer fix the critical bug")
+        result = tool.func("Developer fix the critical bug")
         assert result == "Delegation result from Developer: Bug fixed"
         agent.execute.assert_called_with("fix the critical bug")
 

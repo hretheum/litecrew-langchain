@@ -20,20 +20,22 @@ class DelegationTool(Tool):
         Args:
             agents: List of agents that can be delegated to
         """
-        self._agents = {agent.role: agent for agent in agents}
-
+        # Store agents in a way that works with Pydantic models
+        agents_dict = {agent.role: agent for agent in agents}
+        
         super().__init__(
             name="delegate_task",
-            description=f"Delegate a task to another agent. Available agents: {', '.join(self._agents.keys())}. Input format: 'Ask the [Role] to [task description]'",
-            func=self._delegate,
+            description=f"Delegate a task to another agent. Available agents: {', '.join(agents_dict.keys())}. Input format: 'Ask the [Role] to [task description]'",
+            func=lambda query: self._delegate_with_agents(query, agents_dict),
         )
 
-    def _delegate(self, query: str) -> str:
+    def _delegate_with_agents(self, query: str, agents_dict: dict) -> str:
         """
         Delegate a task to another agent.
 
         Args:
             query: Delegation request like "Ask the Researcher to find information about X"
+            agents_dict: Dictionary of agents by role
 
         Returns:
             Result from the delegated agent
@@ -41,12 +43,12 @@ class DelegationTool(Tool):
         # Parse delegation request
         role, task = self._parse_delegation(query)
 
-        if role in self._agents:
-            agent = self._agents[role]
+        if role in agents_dict:
+            agent = agents_dict[role]
             result = agent.execute(task)
             return f"Delegation result from {role}: {result}"
         else:
-            available = ", ".join(self._agents.keys())
+            available = ", ".join(agents_dict.keys())
             return f"Agent role '{role}' not found. Available agents: {available}"
 
     def _parse_delegation(self, query: str) -> tuple[str, str]:
