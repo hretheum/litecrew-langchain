@@ -1,0 +1,134 @@
+"""
+Utility functions for LLM handling.
+"""
+
+from typing import Any
+
+
+def unify_response(response: Any, provider: str) -> str:
+    """
+    Unify response format across different providers.
+
+    Args:
+        response: Raw response from provider
+        provider: Provider name
+
+    Returns:
+        Unified string response
+    """
+    if isinstance(response, str):
+        return response
+
+    # Handle different provider response formats
+    if provider == "openai":
+        if isinstance(response, dict) and "choices" in response:
+            try:
+                return response["choices"][0]["message"]["content"]
+            except (KeyError, IndexError):
+                pass
+        elif hasattr(response, "content"):
+            return response.content
+
+    elif provider == "anthropic":
+        if isinstance(response, dict) and "content" in response:
+            try:
+                return response["content"][0]["text"]
+            except (KeyError, IndexError):
+                pass
+        elif hasattr(response, "content"):
+            return response.content
+
+    elif provider in ["groq", "together"]:
+        # Similar to OpenAI format
+        if isinstance(response, dict) and "choices" in response:
+            try:
+                return response["choices"][0]["message"]["content"]
+            except (KeyError, IndexError):
+                pass
+        elif hasattr(response, "content"):
+            return response.content
+
+    elif provider == "cohere":
+        if isinstance(response, dict) and "text" in response:
+            return response["text"]
+        elif hasattr(response, "text"):
+            return response.text
+
+    elif provider == "ollama":
+        if isinstance(response, dict) and "response" in response:
+            return response["response"]
+        elif hasattr(response, "content"):
+            return response.content
+
+    # Fallback to string conversion
+    return str(response)
+
+
+def estimate_tokens(text: str, method: str = "simple") -> int:
+    """
+    Estimate token count for text.
+
+    Args:
+        text: Text to estimate
+        method: Estimation method ("simple", "tiktoken")
+
+    Returns:
+        Estimated token count
+    """
+    if method == "simple":
+        # Simple estimation: ~4 characters per token
+        return len(text) // 4
+
+    elif method == "tiktoken":
+        try:
+            import tiktoken
+
+            encoding = tiktoken.get_encoding("cl100k_base")
+            return len(encoding.encode(text))
+        except ImportError:
+            # Fallback to simple method
+            return len(text) // 4
+
+    else:
+        raise ValueError(f"Unknown token estimation method: {method}")
+
+
+def get_model_context_length(provider: str, model: str) -> int:
+    """
+    Get context length for a model.
+
+    Args:
+        provider: Provider name
+        model: Model name
+
+    Returns:
+        Maximum context length in tokens
+    """
+    # Common model context lengths
+    context_lengths = {
+        "openai": {
+            "gpt-4": 8192,
+            "gpt-4-turbo": 128000,
+            "gpt-4-turbo-preview": 128000,
+            "gpt-3.5-turbo": 16384,
+        },
+        "anthropic": {
+            "claude-3-opus": 200000,
+            "claude-3-sonnet": 200000,
+            "claude-3-haiku": 200000,
+            "claude-2.1": 200000,
+            "claude-2": 100000,
+        },
+        "groq": {
+            "mixtral-8x7b": 32768,
+            "llama2-70b": 4096,
+        },
+        "ollama": {
+            "llama2": 4096,
+            "mistral": 8192,
+            "mixtral": 32768,
+        },
+    }
+
+    provider_contexts = context_lengths.get(provider, {})
+    return provider_contexts.get(model, 4096)  # Default to 4k

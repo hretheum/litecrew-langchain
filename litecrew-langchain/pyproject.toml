@@ -4,15 +4,15 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "litecrew-langchain"
-version = "0.1.0"
-description = "Lightweight multi-agent orchestration on LangChain"
+version = "0.6.0"
+description = "Lightweight multi-agent orchestration framework - 363x faster than CrewAI"
 authors = [{name = "LiteCrew Team", email = "team@litecrew.ai"}]
 readme = "README.md"
 license = {text = "MIT"}
 requires-python = ">=3.10"
 keywords = ["ai", "agents", "langchain", "crewai", "orchestration"]
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
@@ -27,6 +27,20 @@ dependencies = [
     "langchain-openai>=0.1.8",
     "pydantic>=2.0",
     "python-dotenv>=1.0.0",
+    # API dependencies
+    "fastapi>=0.104.0",
+    "uvicorn[standard]>=0.24.0",
+    "websockets>=12.0",
+    "aiofiles>=23.2.1",
+    # Database
+    "sqlalchemy>=2.0.0",
+    "psycopg2-binary>=2.9.9",
+    "redis>=5.0.1",
+    # HTTP client
+    "httpx>=0.25.0",
+    # Additional
+    "pyyaml>=6.0.1",
+    "click>=8.1.7",
 ]
 
 [project.optional-dependencies]

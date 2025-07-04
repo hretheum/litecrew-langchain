@@ -1,0 +1,21 @@
+# Development overrides for docker-compose
+version: '3.8'
+
+services:
+  litecrew:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - ENVIRONMENT=development
+      - DEBUG=true
+    volumes:
+      # Mount source code for hot reload
+      - ./src:/app/src
+      - ./run_server.py:/app/run_server.py
+    command: ["python", "-m", "uvicorn", "litecrew.api:create_app", "--host", "0.0.0.0", "--port", "8000", "--reload", "--factory"]
+  
+  # Use less restrictive settings for development
+  postgres:
+    environment:
+      - POSTGRES_HOST_AUTH_METHOD=trust

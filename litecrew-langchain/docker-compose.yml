@@ -1,0 +1,82 @@
+# Local development docker-compose
+# For production, see .gitlab-ci.yml
+
+version: '3.8'
+
+services:
+  # LiteCrew API service
+  litecrew:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: litecrew_api_dev
+    ports:
+      - "${PORT:-8000}:8000"
+    environment:
+      - ENVIRONMENT=development
+      - DATABASE_URL=postgresql://litecrew:litecrew@postgres:5432/litecrew
+      - REDIS_URL=redis://redis:6379/0
+      # API Keys from .env file
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - GROQ_API_KEY=${GROQ_API_KEY}
+      # Security
+      - SECRET_KEY=${SECRET_KEY:-dev-secret-key}
+      - JWT_SECRET=${JWT_SECRET:-dev-jwt-secret}
+    volumes:
+      - ./src:/app/src  # Mount source for hot reload
+      - ./data:/app/data
+      - ./logs:/app/logs
+    depends_on:
+      - redis
+      - postgres
+    restart: unless-stopped
+    networks:
+      - litecrew-network
+    command: ["python", "-m", "uvicorn", "litecrew.api:create_app", "--host", "0.0.0.0", "--port", "8000", "--reload", "--factory"]
+
+  # Redis for caching
+  redis:
+    image: redis:7-alpine
+    container_name: litecrew_redis_dev
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    networks:
+      - litecrew-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # PostgreSQL for persistence
+  postgres:
+    image: postgres:15-alpine
+    container_name: litecrew_postgres_dev
+    environment:
+      - POSTGRES_USER=litecrew
+      - POSTGRES_PASSWORD=litecrew
+      - POSTGRES_DB=litecrew
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks:
+      - litecrew-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U litecrew"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  redis_data:
+  postgres_data:
+
+networks:
+  litecrew-network:
+    driver: bridge
