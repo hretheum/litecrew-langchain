@@ -110,7 +110,7 @@ class LiteTask(BaseModel):
         for task in self.context:
             if task.output:
                 context_parts.append(
-                    f"Output from {task.agent.role if task.agent else 'previous task'}:\n{task.output.raw}"
+                    f"Output from {task.agent.role if task.agent and hasattr(task.agent, 'role') else 'previous task'}:\n{task.output.raw}"
                 )
 
         return "\n\n".join(context_parts)
