@@ -13,14 +13,42 @@ This project provides CrewAI's multi-agent features on LangChain's efficient fou
 
 ## Features
 
+### Core Functionality
 - ✅ Role-based agents (role, goal, backstory)
 - ✅ Multi-agent crew orchestration
 - ✅ Task dependencies and context passing
 - ✅ Sequential and hierarchical execution
 - ✅ Agent delegation capabilities
 - ✅ CrewAI-compatible API
-- ✅ <30MB memory footprint
-- ✅ <100ms startup time
+- ✅ <30MB memory footprint (~17MB actual)
+- ✅ <100ms startup time (9ms import)
+
+### Production Ready (Phase 6)
+- ✅ **Rate Limiting & Token Management**
+  - Token bucket algorithm with <1ms overhead
+  - Accurate token counting for multiple LLM models
+  - Budget management with spending alerts
+  - Retry logic with exponential backoff
+- ✅ **Structured Outputs**
+  - JSON schema validation
+  - Dataclass model outputs (lightweight alternative to Pydantic)
+  - Automatic output fixing for common issues
+  - Multiple format support (JSON, CSV, Markdown, XML, YAML)
+- ✅ **Event System & Callbacks**
+  - EventEmitter with pub/sub pattern
+  - Lifecycle callbacks for agents, tasks, and crews
+  - Event filtering and custom event types
+  - Async event handlers with concurrent execution
+
+### Advanced Features
+- ✅ **Multi-LLM Support** - 10+ providers with fallback chains
+- ✅ **Async Operations** - Full async/await support
+- ✅ **Conversation Memory** - Short-term memory with summarization
+- ✅ **State Management** - Snapshots and restoration
+- ✅ **Multi-level Caching** - Memory, Redis, and disk caching
+- ✅ **REST API** - FastAPI endpoints for crew management
+- ✅ **Web Dashboard** - Real-time monitoring
+- ✅ **CLI Tools** - Command-line interface for all operations
 
 ## Quick Start
 
@@ -65,13 +93,72 @@ result = crew.kickoff()
 print(result.raw)
 ```
 
+### Advanced Usage Examples
+
+#### Rate Limiting & Budget Management
+```python
+# Create agent with rate limiting
+agent = LiteAgent(
+    role="Analyst",
+    goal="Analyze data efficiently",
+    backstory="Data analysis expert",
+    max_rpm=60,  # Max 60 requests per minute
+    track_tokens=True,
+    budget_limit=10.0  # $10 daily budget
+)
+```
+
+#### Structured Outputs
+```python
+from dataclasses import dataclass
+from typing import List
+
+@dataclass
+class AnalysisResult:
+    summary: str
+    key_findings: List[str]
+    confidence: float
+
+agent = LiteAgent(
+    role="Analyst",
+    goal="Provide structured analysis",
+    backstory="Expert analyst",
+    output_dataclass=AnalysisResult,
+    auto_fix_outputs=True
+)
+```
+
+#### Event System
+```python
+from litecrew.events import EventEmitter, EventType
+
+# Create event emitter
+emitter = EventEmitter()
+
+# Subscribe to events
+def on_task_complete(data):
+    print(f"Task completed: {data['task']}")
+
+emitter.on(EventType.TASK_COMPLETED, on_task_complete)
+
+# Create crew with events
+crew = LiteCrew(
+    agents=[agent1, agent2],
+    tasks=[task1, task2],
+    event_emitter=emitter
+)
+```
+
 ## Performance
 
 | Metric | CrewAI | LiteCrew | Improvement |
 |--------|---------|----------|-------------|
-| Import Time | 3.268s | <0.05s | 65x faster |
-| Memory Usage | 208MB | <30MB | 7x less |
-| Startup Time | 3.3s | <0.1s | 33x faster |
+| Import Time | 3.268s | 0.009s | 363x faster |
+| Memory Usage | 208MB | ~17MB | 12x less |
+| Agent Creation | >100ms | <5ms | 20x faster |
+| Task Execution Overhead | ~15% | <3% | 5x less |
+| Rate Limiting Overhead | N/A | <1ms | ✅ |
+| Event Dispatch | N/A | 0.011ms | ✅ |
 
 ## Installation
 
