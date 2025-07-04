@@ -16,7 +16,7 @@ async def get_task(task_id: str) -> Dict[str, Any]:
     task_info = await storage.get_task(task_id)
     if not task_info:
         raise HTTPException(status_code=404, detail="Task not found")
-    
+
     return task_info
 
 

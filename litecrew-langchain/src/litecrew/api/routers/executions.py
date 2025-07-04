@@ -15,7 +15,7 @@ async def get_execution(execution_id: str) -> Dict[str, Any]:
     execution_info = await storage.get_execution(execution_id)
     if not execution_info:
         raise HTTPException(status_code=404, detail="Execution not found")
-    
+
     return execution_info
 
 

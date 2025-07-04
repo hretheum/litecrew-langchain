@@ -11,7 +11,7 @@ from litecrew.state.migration import StateMigration
 __all__ = [
     "StateError",
     "CrewState",
-    "StateSnapshot", 
+    "StateSnapshot",
     "StateManager",
     "StateMigration",
 ]

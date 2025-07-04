@@ -7,6 +7,7 @@ from datetime import datetime
 
 class CrewCreate(BaseModel):
     """Model for creating a new crew."""
+
     name: str
     description: Optional[str] = None
     agents: List[Dict[str, Any]]
@@ -16,6 +17,7 @@ class CrewCreate(BaseModel):
 
 class CrewResponse(BaseModel):
     """Model for crew response."""
+
     crew_id: str
     name: str
     description: Optional[str] = None
@@ -28,12 +30,14 @@ class CrewResponse(BaseModel):
 
 class CrewUpdate(BaseModel):
     """Model for updating crew."""
+
     name: Optional[str] = None
     description: Optional[str] = None
 
 
 class TaskSubmission(BaseModel):
     """Model for task submission."""
+
     description: str
     expected_output: Optional[str] = "Task result"
     priority: Optional[str] = "medium"
@@ -41,5 +45,6 @@ class TaskSubmission(BaseModel):
 
 class ExecutionRequest(BaseModel):
     """Model for execution request."""
+
     inputs: Dict[str, Any] = {}
     async_execution: bool = False

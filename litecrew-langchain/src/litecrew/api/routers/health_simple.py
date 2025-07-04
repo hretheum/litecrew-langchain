@@ -9,6 +9,7 @@ router = APIRouter()
 
 class HealthStatus(BaseModel):
     """Health check response model."""
+
     status: str
     version: str
     environment: str
@@ -24,9 +25,9 @@ async def health_check():
         environment="production",
         metrics={
             "uptime": "N/A",
-            "memory_usage": "N/A", 
+            "memory_usage": "N/A",
             "cpu_percent": "N/A",
             "active_crews": 0,
-            "total_tasks": 0
-        }
+            "total_tasks": 0,
+        },
     )
