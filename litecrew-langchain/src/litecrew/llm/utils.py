@@ -22,20 +22,29 @@ def unify_response(response: Any, provider: str) -> str:
     # Handle different provider response formats
     if provider == "openai":
         if isinstance(response, dict) and "choices" in response:
-            return response["choices"][0]["message"]["content"]
+            try:
+                return response["choices"][0]["message"]["content"]
+            except (KeyError, IndexError):
+                pass
         elif hasattr(response, "content"):
             return response.content
 
     elif provider == "anthropic":
         if isinstance(response, dict) and "content" in response:
-            return response["content"][0]["text"]
+            try:
+                return response["content"][0]["text"]
+            except (KeyError, IndexError):
+                pass
         elif hasattr(response, "content"):
             return response.content
 
     elif provider in ["groq", "together"]:
         # Similar to OpenAI format
         if isinstance(response, dict) and "choices" in response:
-            return response["choices"][0]["message"]["content"]
+            try:
+                return response["choices"][0]["message"]["content"]
+            except (KeyError, IndexError):
+                pass
         elif hasattr(response, "content"):
             return response.content
 
