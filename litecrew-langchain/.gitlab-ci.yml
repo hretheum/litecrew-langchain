@@ -15,7 +15,7 @@ test:
   image: python:3.11-slim
   before_script:
     - pip install -e .
-    - pip install pytest pytest-asyncio pytest-cov
+    - pip install pytest pytest-asyncio pytest-cov beautifulsoup4
   script:
     - pytest tests/ -v --cov=src/litecrew --cov-report=term-missing
   only:
