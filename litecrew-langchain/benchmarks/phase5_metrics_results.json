@@ -1,0 +1,37 @@
+{
+  "block_5.1": {
+    "api_latency": {
+      "health": 2.9949999880045652,
+      "create_crew": 7.09191698115319,
+      "get_crew": 0.6795410299673676,
+      "submit_task": 0.9692090097814798
+    },
+    "concurrent_requests": {
+      "concurrent_requests": 100,
+      "total_time_seconds": 0.014725249959155917,
+      "avg_latency_ms": 10.50077713211067,
+      "max_latency_ms": 12.00641703326255,
+      "requests_per_second": 6791.056197848897
+    },
+    "websocket_overhead": {
+      "http_baseline_ms": 0.7866249652579427,
+      "websocket_overhead_percent": 3.0,
+      "websocket_estimated_ms": 0.810223714215681
+    }
+  },
+  "block_5.2": {
+    "dashboard": {
+      "load_time_ms": 2.9958749655634165,
+      "update_latency_ms": 0.6505410419777036,
+      "memory_usage_mb": 95.0625
+    }
+  },
+  "block_5.3": {
+    "cli": {
+      "avg_command_execution_ms": 5.462375213392079,
+      "max_command_execution_ms": 26.15833398886025,
+      "help_text_coverage_percent": 100.0,
+      "error_handling": "graceful"
+    }
+  }
+}

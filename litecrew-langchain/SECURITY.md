@@ -7,7 +7,7 @@
 #### ❌ NIGDY nie rób tego:
 ```python
 # ŹLEE - hardcoded credentials
-API_KEY = "sk-1234567890abcdef"
+API_KEY = "sk-EXAMPLE_DO_NOT_USE_THIS_KEY"
 DATABASE_URL = "postgresql://user:password@localhost/db"
 SECRET_KEY = "my-secret-key"
 

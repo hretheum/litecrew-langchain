@@ -1,0 +1,21 @@
+# GitLeaks configuration for LiteCrewAI
+title = "gitleaks config for LiteCrewAI"
+
+[extend]
+# Extend the base configuration
+useDefault = true
+
+[[allowlist.regexes]]
+description = "Allow example API key sk-1234567890abcdef in documentation"
+regex = '''sk-1234567890abcdef'''
+
+[[allowlist.regexes]]
+description = "Allow example API keys starting with sk-EXAMPLE"
+regex = '''sk-EXAMPLE'''
+
+[[allowlist.paths]]
+paths = [
+    '''SECURITY\.md''',
+    '''.*SECURITY\.md''',
+    '''litecrew-langchain/SECURITY\.md'''
+]
