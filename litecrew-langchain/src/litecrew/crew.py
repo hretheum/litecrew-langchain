@@ -14,6 +14,7 @@ from litecrew.agent import LiteAgent
 from litecrew.task import LiteTask, TaskOutput
 from litecrew.memory import ConversationMemory
 from litecrew.state import StateManager, CrewState
+from litecrew.events import EventEmitter, EventType, LifecycleCallbacks
 
 
 class CrewOutput(BaseModel):
@@ -47,6 +48,8 @@ class LiteCrew:
         step_callback: Optional[Any] = None,
         async_execution: bool = False,
         state_manager: Optional[StateManager] = None,
+        event_emitter: Optional[EventEmitter] = None,
+        lifecycle_callbacks: Optional[LifecycleCallbacks] = None,
     ):
         """
         Initialize a crew of agents.
@@ -97,6 +100,16 @@ class LiteCrew:
         # Setup shared memory if enabled
         if self.memory:
             self._setup_shared_memory()
+        
+        # Event system
+        self.event_emitter = event_emitter
+        self.lifecycle_callbacks = lifecycle_callbacks
+        
+        # Share event emitter with agents
+        if self.event_emitter:
+            for agent in self.agents:
+                if not agent.event_emitter:
+                    agent.event_emitter = self.event_emitter
             
     def _validate_setup(self):
         """Validate crew configuration."""
@@ -169,6 +182,18 @@ class LiteCrew:
         if self.verbose:
             print(f"Starting crew execution with {len(self.tasks)} tasks...")
         
+        # Emit crew started event
+        if self.event_emitter:
+            self.event_emitter.emit(
+                EventType.CREW_STARTED,
+                {"crew_id": self.id, "tasks": len(self.tasks), "agents": len(self.agents)},
+                source=self.id
+            )
+        
+        # Trigger lifecycle callback
+        if self.lifecycle_callbacks:
+            self.lifecycle_callbacks.trigger('crew_start', self)
+        
         # Initialize state if state manager is available
         if self._state_manager:
             self._state = CrewState.from_crew(
@@ -228,6 +253,18 @@ class LiteCrew:
                     self._state.update_task_status(i, "completed")
                     self._state.update_task_output(i, output.raw)
                     self._save_state()
+                
+                # Emit task completed event
+                if self.event_emitter:
+                    self.event_emitter.emit(
+                        EventType.TASK_COMPLETED,
+                        {"task_index": i, "task": task.description, "output": str(output)},
+                        source=self.id
+                    )
+                
+                # Trigger lifecycle callback
+                if self.lifecycle_callbacks:
+                    self.lifecycle_callbacks.trigger('crew_task_complete', {"task": task, "output": output})
                 
                 # Callback if provided
                 if self.step_callback:
