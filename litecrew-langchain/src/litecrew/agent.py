@@ -4,7 +4,8 @@ LiteAgent - CrewAI-compatible agent built on LangChain
 
 import time
 import asyncio
-from typing import Any, List, Optional, Dict, Union, TYPE_CHECKING, AsyncIterator, Callable
+from typing import Any, List, Optional, Dict, Union, TYPE_CHECKING, AsyncIterator, Callable, Type
+from pathlib import Path
 from langchain.agents import AgentExecutor, create_react_agent
 from langchain.memory import ConversationBufferMemory
 from langchain.schema import BaseMessage
@@ -17,6 +18,9 @@ from litecrew.llm import LLMProvider, LLMConfig, LLMManager, ResponseCache
 from litecrew.llm.utils import estimate_tokens
 from litecrew.memory import ConversationMemory
 from litecrew.rate_limiter import RateLimiter, TokenCounter, BudgetManager, retry_with_backoff
+from litecrew.outputs import (
+    OutputValidator, DataclassOutputParser, OutputFixer, FileOutputHandler
+)
 
 if TYPE_CHECKING:
     from langchain_core.language_models import BaseChatModel
@@ -69,6 +73,12 @@ class Agent(LiteAgent):
         track_tokens: bool = True,
         budget_limit: Optional[float] = None,
         global_rate_limiter: Optional['GlobalRateLimiter'] = None,
+        # Structured outputs
+        output_dataclass: Optional[Type] = None,
+        output_schema: Optional[Dict[str, Any]] = None,
+        output_dir: Optional[Union[str, Path]] = None,
+        save_outputs: bool = False,
+        auto_fix_outputs: bool = True,
     ):
         self.role = role
         self.goal = goal
@@ -115,6 +125,32 @@ class Agent(LiteAgent):
             )
         else:
             self._budget_manager = None
+        
+        # Initialize structured outputs
+        self.auto_fix_outputs = auto_fix_outputs
+        
+        if output_dataclass:
+            self._output_parser = DataclassOutputParser(
+                dataclass_type=output_dataclass,
+                auto_fix=auto_fix_outputs
+            )
+        else:
+            self._output_parser = None
+        
+        if output_schema:
+            self._output_validator = OutputValidator(schema=output_schema)
+        else:
+            self._output_validator = None
+        
+        if output_dir and save_outputs:
+            self._file_handler = FileOutputHandler(
+                base_dir=output_dir,
+                versioning=True
+            )
+        else:
+            self._file_handler = None
+        
+        self.save_outputs = save_outputs
         
         # Initialize conversation memory
         self._conversation_memory = ConversationMemory() if memory else None
@@ -413,6 +449,14 @@ Question: {{input}}
             # Add to memory
             if self._conversation_memory and response:
                 self._conversation_memory.add_turn("assistant", response)
+            
+            # Process structured output if configured
+            if response and (self._output_parser or self._output_validator):
+                response = self._process_structured_output(response)
+            
+            # Save output if configured
+            if response and self.save_outputs and self._file_handler:
+                self._file_handler.save(response, format="json")
                 
             return response
         except Exception as e:
@@ -429,6 +473,57 @@ Question: {{input}}
             return self.llm.model
         else:
             return "gpt-3.5-turbo"  # Default fallback
+    
+    def _process_structured_output(self, response: str) -> Any:
+        """Process response through structured output handlers."""
+        # Try to parse with dataclass parser
+        if self._output_parser:
+            try:
+                return self._output_parser.parse(response)
+            except Exception as e:
+                if self.verbose:
+                    print(f"Failed to parse output to dataclass: {e}")
+                # If auto_fix is enabled, it should have tried to fix
+                # Return original response if parsing fails
+                return response
+        
+        # Validate with JSON schema
+        if self._output_validator:
+            try:
+                import json
+                data = json.loads(response)
+                if self._output_validator.validate(data):
+                    return data
+                else:
+                    errors = self._output_validator.get_errors(data)
+                    if self.verbose:
+                        print(f"Output validation errors: {errors}")
+                    
+                    # Try to fix if auto_fix is enabled
+                    if self.auto_fix_outputs:
+                        fixer = OutputFixer(schema=self._output_validator.schema)
+                        fixed_data = fixer.fix_to_schema(data)
+                        if self._output_validator.validate(fixed_data):
+                            return fixed_data
+            except json.JSONDecodeError as e:
+                if self.verbose:
+                    print(f"Failed to parse JSON: {e}")
+                
+                # Try to fix JSON if auto_fix is enabled
+                if self.auto_fix_outputs:
+                    fixer = OutputFixer()
+                    try:
+                        fixed_json = fixer.fix_json(response)
+                        data = json.loads(fixed_json)
+                        if self._output_validator:
+                            if self._output_validator.validate(data):
+                                return data
+                        else:
+                            return data
+                    except:
+                        pass
+        
+        return response
             
     def execute_task(self, task: 'Task', context: Optional[str] = None) -> Any:
         """
@@ -563,6 +658,20 @@ Question: {{input}}
             # Add to memory
             if self._conversation_memory and response:
                 self._conversation_memory.add_turn("assistant", response)
+            
+            # Process structured output if configured
+            if response and (self._output_parser or self._output_validator):
+                response = self._process_structured_output(response)
+            
+            # Save output if configured
+            if response and self.save_outputs and self._file_handler:
+                await loop.run_in_executor(
+                    None,
+                    self._file_handler.save,
+                    response,
+                    None,
+                    "json"
+                )
             
             if self.on_progress:
                 self.on_progress("Completed", 100)
