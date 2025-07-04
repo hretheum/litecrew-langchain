@@ -10,10 +10,9 @@ from fastapi import APIRouter, HTTPException, status
 from litecrew import LiteAgent, LiteCrew, LiteTask
 
 from ..models import CrewCreate, CrewResponse, CrewUpdate, TaskSubmission
-from ..storage import APIStorage
+from ..storage import get_storage
 
 router = APIRouter()
-storage = APIStorage()
 
 
 @router.post("/crews", response_model=CrewResponse, status_code=status.HTTP_201_CREATED)
@@ -63,6 +62,7 @@ async def create_crew(crew_data: CrewCreate) -> CrewResponse:
         "crew_instance": crew,
     }
 
+    storage = get_storage()
     await storage.store_crew(crew_id, crew_info)
 
     return CrewResponse(
@@ -79,6 +79,7 @@ async def create_crew(crew_data: CrewCreate) -> CrewResponse:
 @router.get("/crews/{crew_id}", response_model=CrewResponse)
 async def get_crew(crew_id: str) -> CrewResponse:
     """Get crew information."""
+    storage = get_storage()
     crew_info = await storage.get_crew(crew_id)
     if not crew_info:
         raise HTTPException(status_code=404, detail="Crew not found")
@@ -89,6 +90,7 @@ async def get_crew(crew_id: str) -> CrewResponse:
 @router.get("/crews")
 async def list_crews() -> Dict[str, List[CrewResponse]]:
     """List all crews."""
+    storage = get_storage()
     crews = await storage.list_crews()
     crew_responses = [CrewResponse(**crew) for crew in crews]
     return {"crews": crew_responses}
@@ -97,6 +99,7 @@ async def list_crews() -> Dict[str, List[CrewResponse]]:
 @router.patch("/crews/{crew_id}", response_model=CrewResponse)
 async def update_crew(crew_id: str, update_data: CrewUpdate) -> CrewResponse:
     """Update crew configuration."""
+    storage = get_storage()
     crew_info = await storage.get_crew(crew_id)
     if not crew_info:
         raise HTTPException(status_code=404, detail="Crew not found")
@@ -109,6 +112,7 @@ async def update_crew(crew_id: str, update_data: CrewUpdate) -> CrewResponse:
 
     crew_info["updated_at"] = datetime.utcnow().isoformat()
 
+    storage = get_storage()
     await storage.store_crew(crew_id, crew_info)
 
     return CrewResponse(**crew_info)
@@ -117,10 +121,12 @@ async def update_crew(crew_id: str, update_data: CrewUpdate) -> CrewResponse:
 @router.delete("/crews/{crew_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_crew(crew_id: str):
     """Delete a crew."""
+    storage = get_storage()
     crew_info = await storage.get_crew(crew_id)
     if not crew_info:
         raise HTTPException(status_code=404, detail="Crew not found")
 
+    storage = get_storage()
     await storage.delete_crew(crew_id)
     return None
 
@@ -128,6 +134,7 @@ async def delete_crew(crew_id: str):
 @router.post("/crews/{crew_id}/tasks", status_code=status.HTTP_202_ACCEPTED)
 async def submit_task(crew_id: str, task_data: TaskSubmission) -> Dict[str, Any]:
     """Submit a task for execution."""
+    storage = get_storage()
     crew_info = await storage.get_crew(crew_id)
     if not crew_info:
         raise HTTPException(status_code=404, detail="Crew not found")
@@ -145,6 +152,7 @@ async def submit_task(crew_id: str, task_data: TaskSubmission) -> Dict[str, Any]
         "created_at": datetime.utcnow().isoformat(),
     }
 
+    storage = get_storage()
     await storage.store_task(task_id, task_info)
 
     return {
@@ -157,6 +165,7 @@ async def submit_task(crew_id: str, task_data: TaskSubmission) -> Dict[str, Any]
 @router.post("/crews/{crew_id}/execute")
 async def execute_crew(crew_id: str, execution_data: Dict[str, Any]) -> Dict[str, Any]:
     """Execute a crew."""
+    storage = get_storage()
     crew_info = await storage.get_crew(crew_id)
     if not crew_info:
         raise HTTPException(status_code=404, detail="Crew not found")
@@ -189,6 +198,7 @@ async def execute_crew(crew_id: str, execution_data: Dict[str, Any]) -> Dict[str
             "created_at": datetime.utcnow().isoformat(),
         }
 
+        storage = get_storage()
         await storage.store_execution(execution_id, execution_info)
 
         return {
@@ -204,5 +214,6 @@ async def execute_crew(crew_id: str, execution_data: Dict[str, Any]) -> Dict[str
 @router.get("/crews/{crew_id}/executions")
 async def get_crew_executions(crew_id: str) -> Dict[str, List[Dict[str, Any]]]:
     """Get execution history for a crew."""
+    storage = get_storage()
     executions = await storage.get_crew_executions(crew_id)
     return {"executions": executions}

@@ -5,7 +5,7 @@ Tests for multi-LLM support in LiteCrew.
 import pytest
 import sys
 from unittest.mock import Mock, patch, MagicMock
-from litecrew.agent import LiteAgent
+from litecrew import LiteAgent
 from litecrew.llm import LLMProvider, LLMConfig, LLMManager
 
 # Mock missing modules before importing

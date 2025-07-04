@@ -332,27 +332,40 @@ Question: {{input}}
                 provider = LLMProvider.OPENAI
             else:
                 # Return fake model for testing when no API key
-                try:
-                    from langchain_core.language_models.fake import FakeChatModel
-                    return FakeChatModel()
-                except ImportError:
-                    # Use a simple mock if FakeChatModel is not available
-                    from langchain_core.messages import AIMessage
+                from langchain_core.language_models.chat_models import BaseChatModel
+                from langchain_core.messages import AIMessage, BaseMessage
+                from langchain_core.outputs import ChatGeneration, ChatResult
+                from langchain_core.callbacks import CallbackManagerForLLMRun
+                from typing import List, Optional, Any
+                
+                class TestChatModel(BaseChatModel):
+                    """Test chat model compatible with LangChain."""
                     
-                    class SimpleFakeLLM:
-                        def __init__(self):
-                            self.model_name = "fake-test-model"
-                            
-                        def invoke(self, input_data, **kwargs):
-                            return AIMessage(content="I'm a test response from LiteAgent")
-                            
-                        def bind(self, **kwargs):
-                            return self
-                            
-                        def with_structured_output(self, schema):
-                            return self
+                    model_name: str = "test-chat-model"
                     
-                    return SimpleFakeLLM()
+                    def _generate(
+                        self,
+                        messages: List[BaseMessage],
+                        stop: Optional[List[str]] = None,
+                        run_manager: Optional[CallbackManagerForLLMRun] = None,
+                        **kwargs: Any,
+                    ) -> ChatResult:
+                        # Simple response based on last message
+                        last_message = messages[-1] if messages else None
+                        if last_message and "task" in last_message.content.lower():
+                            response = "I'm a test response. Final Answer: Test task completed successfully."
+                        else:
+                            response = "I'm a test response from LiteAgent."
+                            
+                        message = AIMessage(content=response)
+                        generation = ChatGeneration(message=message)
+                        return ChatResult(generations=[generation])
+                    
+                    @property
+                    def _llm_type(self) -> str:
+                        return "test_chat"
+                
+                return TestChatModel()
 
         # Parse config
         if config:
@@ -405,27 +418,34 @@ Question: {{input}}
                     continue
 
             # Final fallback to fake model
-            try:
-                from langchain_core.language_models.fake import FakeChatModel
-                return FakeChatModel()
-            except ImportError:
-                # Use a simple mock if FakeChatModel is not available
-                from langchain_core.messages import AIMessage
+            from langchain_core.language_models.chat_models import BaseChatModel
+            from langchain_core.messages import AIMessage, BaseMessage
+            from langchain_core.outputs import ChatGeneration, ChatResult
+            from langchain_core.callbacks import CallbackManagerForLLMRun
+            from typing import List, Optional, Any
+            
+            class FallbackChatModel(BaseChatModel):
+                """Fallback chat model compatible with LangChain."""
                 
-                class SimpleFakeLLM:
-                    def __init__(self):
-                        self.model_name = "fake-fallback-model"
-                        
-                    def invoke(self, input_data, **kwargs):
-                        return AIMessage(content="I'm a fallback response from LiteAgent")
-                        
-                    def bind(self, **kwargs):
-                        return self
-                        
-                    def with_structured_output(self, schema):
-                        return self
+                model_name: str = "fallback-chat-model"
                 
-                return SimpleFakeLLM()
+                def _generate(
+                    self,
+                    messages: List[BaseMessage],
+                    stop: Optional[List[str]] = None,
+                    run_manager: Optional[CallbackManagerForLLMRun] = None,
+                    **kwargs: Any,
+                ) -> ChatResult:
+                    response = "I'm a fallback response. Final Answer: Fallback task completed."
+                    message = AIMessage(content=response)
+                    generation = ChatGeneration(message=message)
+                    return ChatResult(generations=[generation])
+                
+                @property
+                def _llm_type(self) -> str:
+                    return "fallback_chat"
+            
+            return FallbackChatModel()
 
     def switch_llm_provider(
         self, provider: Union[str, LLMProvider], config: Optional[Dict[str, Any]] = None
@@ -930,3 +950,30 @@ Question: {{input}}
             search = MemorySearch()
             return search.search(self._conversation_memory, query)
         return []
+
+    def _call_llm(self, prompt: str, **kwargs) -> str:
+        """Call LLM with rate limiting integration."""
+        # Apply rate limiting
+        if self._rate_limiter:
+            self._rate_limiter.acquire()
+        elif self.global_rate_limiter:
+            self.global_rate_limiter.acquire(self)
+
+        # Call LLM through agent executor
+        try:
+            result = self._agent_executor.invoke({"input": prompt})
+            response = result.get("output", "")
+            
+            # Track token usage if enabled
+            if self._token_counter and response:
+                self._token_counter.track_usage(
+                    model=self._get_model_name(),
+                    input_text=prompt,
+                    output_text=response,
+                )
+            
+            return response
+        except Exception as e:
+            if self.verbose:
+                print(f"LLM call failed: {e}")
+            raise
