@@ -228,7 +228,7 @@ docker-compose up -d
 ```
 
 Production deployment uses GitLab CI/CD:
-1. Push to `main` branch
+1. Push to `master` branch
 2. CI/CD builds Docker image
 3. Automatic deployment to server
 4. Zero-downtime updates
