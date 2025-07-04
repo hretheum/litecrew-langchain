@@ -20,7 +20,7 @@ test:
     - pytest tests/ -v --cov=src/litecrew --cov-report=term-missing
   only:
     - merge_requests
-    - main
+    - master
     - develop
 
 # Build Docker image
