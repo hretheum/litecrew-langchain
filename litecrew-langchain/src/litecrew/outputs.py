@@ -8,8 +8,12 @@ from dataclasses import fields, is_dataclass
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Type, Union, get_type_hints
-from xml.dom import minidom  # nosec B408 - Used for pretty printing only, not parsing untrusted input
-from xml.etree import ElementTree as ET  # nosec B405 - Used for structured output, not untrusted input
+from xml.dom import (
+    minidom,
+)  # nosec B408 - Used for pretty printing only, not parsing untrusted input
+from xml.etree import (
+    ElementTree as ET,
+)  # nosec B405 - Used for structured output, not untrusted input
 
 import yaml
 
@@ -420,7 +424,9 @@ class OutputFormatter:
 
         # Pretty print
         xml_str = ET.tostring(root, encoding="unicode")
-        dom = minidom.parseString(xml_str)  # nosec B318 - Parsing our own generated XML, not untrusted input
+        dom = minidom.parseString(
+            xml_str
+        )  # nosec B318 - Parsing our own generated XML, not untrusted input
         return dom.toprettyxml(indent="  ").split("\n", 1)[1]  # Skip XML declaration
 
     def _dict_to_xml(self, data: Any, parent: ET.Element, name: str = None):

@@ -85,7 +85,9 @@ class L3Cache:
 
             try:
                 with open(file_path, "rb") as f:
-                    return pickle.load(f)  # nosec B301 - Loading trusted local cache files only
+                    return pickle.load(
+                        f
+                    )  # nosec B301 - Loading trusted local cache files only
             except Exception:
                 return None
 
