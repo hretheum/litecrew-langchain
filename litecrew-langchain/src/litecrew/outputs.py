@@ -175,7 +175,7 @@ Example format:
         try:
             # Try to parse as JSON
             data = json.loads(text)
-        except json.JSONDecodeError as e:
+        except json.JSONDecodeError:
             if self.auto_fix:
                 # Try to fix and parse again
                 fixer = OutputFixer()
