@@ -8,7 +8,8 @@ import uuid
 from typing import Dict, Any, List, Optional
 from datetime import datetime
 
-from .routers import crews, tasks, executions, health
+from .routers import crews, tasks, executions
+from .routers import health_simple as health
 from .websocket import websocket_router
 from fastapi.staticfiles import StaticFiles
 import os
