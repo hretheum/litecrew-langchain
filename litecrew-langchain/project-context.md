@@ -142,23 +142,24 @@ pre-commit run --all-files
 ### Deployment
 ```bash
 # Manual deployment
-git push origin main
-# Then in GitLab: manually trigger deploy job
+git push origin master
+# Deployment is automated via GitLab CI/CD
 
-# Rollback if needed
-# In GitLab: trigger rollback job
+# New production server (as of 2025-07-04)
+# IP: 152.42.139.18
+# Access: ssh -i ~/.ssh/id_rag litecrewai@152.42.139.18
 ```
 
 ### Monitoring
 ```bash
-# View logs
-ssh -p 2222 -i ~/.ssh/id_rag litecrewai@46.101.181.183 'tail -f /opt/litecrewai/logs/app.log'
+# View logs (new server)
+ssh -i ~/.ssh/id_rag litecrewai@152.42.139.18 'docker logs litecrew-api'
 
 # Check metrics
-curl http://46.101.181.183:8000/metrics
+curl http://152.42.139.18:8000/metrics
 
-# Run validation
-ssh -p 2222 -i ~/.ssh/id_rag litecrewai@46.101.181.183 '/opt/litecrewai/masterplan/src/faza-0/validate_monitoring.py'
+# Check service status
+ssh -i ~/.ssh/id_rag litecrewai@152.42.139.18 'docker-compose ps'
 ```
 
 ## 📊 Key Metrics & Goals
@@ -172,7 +173,7 @@ ssh -p 2222 -i ~/.ssh/id_rag litecrewai@46.101.181.183 '/opt/litecrewai/masterpl
 ### Current Performance
 - **Memory**: ~200MB total (app + services)
 - **Uptime**: 99.9%
-- **Cost**: ~$24/month (DigitalOcean droplet)
+- **Cost**: ~$24/month (DigitalOcean droplet - 2vCPU, 4GB RAM)
 - **LLM**: Ollama generation ~5s (hardware limited)
 
 ## 🗺️ Roadmap
