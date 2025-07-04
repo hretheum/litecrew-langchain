@@ -21,6 +21,9 @@ from litecrew.rate_limiter import RateLimiter, TokenCounter, BudgetManager, retr
 from litecrew.outputs import (
     OutputValidator, DataclassOutputParser, OutputFixer, FileOutputHandler
 )
+from litecrew.events import (
+    EventEmitter, EventType, LifecycleCallbacks, emit_event
+)
 
 if TYPE_CHECKING:
     from langchain_core.language_models import BaseChatModel
@@ -79,6 +82,9 @@ class Agent(LiteAgent):
         output_dir: Optional[Union[str, Path]] = None,
         save_outputs: bool = False,
         auto_fix_outputs: bool = True,
+        # Event system
+        event_emitter: Optional[EventEmitter] = None,
+        lifecycle_callbacks: Optional[LifecycleCallbacks] = None,
     ):
         self.role = role
         self.goal = goal
@@ -178,8 +184,24 @@ class Agent(LiteAgent):
             return_messages=True
         ) if memory else None
         
+        # Event system
+        self.event_emitter = event_emitter
+        self.lifecycle_callbacks = lifecycle_callbacks
+        
         # Create LangChain agent
         self._agent_executor = self._create_agent_executor()
+        
+        # Emit creation event
+        if self.event_emitter:
+            self.event_emitter.emit(
+                EventType.AGENT_CREATED,
+                {"agent": self.role, "goal": self.goal},
+                source=self.role
+            )
+        
+        # Trigger lifecycle callback
+        if self.lifecycle_callbacks:
+            self.lifecycle_callbacks.trigger('agent_create', self)
         
     def _build_system_message(self) -> str:
         """Build system message from role, goal, and backstory."""
@@ -376,6 +398,18 @@ Question: {{input}}
         """
         self._execution_count += 1
         
+        # Emit start event
+        if self.event_emitter:
+            self.event_emitter.emit(
+                EventType.AGENT_STARTED,
+                {"task": task_description, "context": context},
+                source=self.role
+            )
+        
+        # Trigger lifecycle callback
+        if self.lifecycle_callbacks:
+            self.lifecycle_callbacks.trigger('agent_start', self)
+        
         # Apply rate limiting
         if self._rate_limiter:
             self._rate_limiter.acquire()
@@ -457,11 +491,36 @@ Question: {{input}}
             # Save output if configured
             if response and self.save_outputs and self._file_handler:
                 self._file_handler.save(response, format="json")
+            
+            # Emit completion event
+            if self.event_emitter:
+                self.event_emitter.emit(
+                    EventType.AGENT_COMPLETED,
+                    {"task": task_description, "result": response},
+                    source=self.role
+                )
+            
+            # Trigger lifecycle callback
+            if self.lifecycle_callbacks:
+                self.lifecycle_callbacks.trigger('agent_complete', self, result=response)
                 
             return response
         except Exception as e:
             if self.verbose:
                 print(f"Agent {self.role} encountered error: {e}")
+            
+            # Emit failure event
+            if self.event_emitter:
+                self.event_emitter.emit(
+                    EventType.AGENT_FAILED,
+                    {"task": task_description, "error": str(e)},
+                    source=self.role
+                )
+            
+            # Trigger error callback
+            if self.lifecycle_callbacks:
+                self.lifecycle_callbacks.trigger('agent_error', self, error=e)
+            
             # Re-raise for retry decorator
             raise
     
