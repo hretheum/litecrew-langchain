@@ -16,12 +16,18 @@ from langchain.tools import Tool
 from litecrew.llm import LLMProvider, LLMConfig, LLMManager, ResponseCache
 from litecrew.llm.utils import estimate_tokens
 from litecrew.memory import ConversationMemory
+from litecrew.rate_limiter import RateLimiter, TokenCounter, BudgetManager, retry_with_backoff
 
 if TYPE_CHECKING:
     from langchain_core.language_models import BaseChatModel
 
 
 class LiteAgent:
+    """Lightweight agent implementation."""
+    pass
+
+
+class Agent(LiteAgent):
     """
     A lightweight agent implementation compatible with CrewAI API
     but built on LangChain for better performance.
@@ -58,6 +64,11 @@ class LiteAgent:
         on_chunk: Optional[Callable[[str], None]] = None,
         on_token: Optional[Callable[[str], None]] = None,
         async_execution: bool = True,
+        # Rate limiting and token management
+        max_rpm: Optional[int] = None,
+        track_tokens: bool = True,
+        budget_limit: Optional[float] = None,
+        global_rate_limiter: Optional['GlobalRateLimiter'] = None,
     ):
         self.role = role
         self.goal = goal
@@ -79,6 +90,31 @@ class LiteAgent:
         self._creation_time = time.perf_counter()
         self._execution_count = 0
         self._memory_enabled = memory
+        
+        # Rate limiting and token management
+        self.max_rpm = max_rpm
+        self.track_tokens = track_tokens
+        self.global_rate_limiter = global_rate_limiter
+        
+        # Initialize rate limiter if max_rpm specified
+        if max_rpm and not global_rate_limiter:
+            self._rate_limiter = RateLimiter(max_rpm=max_rpm)
+        else:
+            self._rate_limiter = None
+        
+        # Initialize token counter and budget manager
+        if track_tokens:
+            self._token_counter = TokenCounter()
+        else:
+            self._token_counter = None
+        
+        if budget_limit:
+            self._budget_manager = BudgetManager(
+                daily_limit=budget_limit,
+                alert_callback=self._budget_alert_handler
+            )
+        else:
+            self._budget_manager = None
         
         # Initialize conversation memory
         self._conversation_memory = ConversationMemory() if memory else None
@@ -285,6 +321,12 @@ Question: {{input}}
         # Recreate agent executor with new LLM
         self._agent_executor = self._create_agent_executor()
         
+    def _budget_alert_handler(self, message: str, spent: float, limit: float):
+        """Handle budget alerts."""
+        if self.verbose:
+            print(f"⚠️ Budget Alert: {message} (Spent: ${spent:.2f} / Limit: ${limit:.2f})")
+    
+    @retry_with_backoff(max_retries=3, base_delay=1.0)
     def execute(self, task_description: str, context: str = "") -> str:
         """
         Execute a task using the agent.
@@ -297,6 +339,12 @@ Question: {{input}}
             The agent's response as a string
         """
         self._execution_count += 1
+        
+        # Apply rate limiting
+        if self._rate_limiter:
+            self._rate_limiter.acquire()
+        elif self.global_rate_limiter:
+            self.global_rate_limiter.acquire(self)
         
         # Build full prompt with context and memory
         full_prompt = ""
@@ -326,10 +374,33 @@ Question: {{input}}
                     print(f"Using cached response for agent {self.role}")
                 return cached
         
+        # Check budget if enabled
+        if self._budget_manager and self._token_counter:
+            # Estimate cost
+            estimated_tokens = estimate_tokens(full_prompt)
+            estimated_cost = self._token_counter.calculate_cost(
+                input_tokens=estimated_tokens,
+                output_tokens=estimated_tokens // 2,  # Rough estimate
+                model=self._get_model_name()
+            )
+            self._budget_manager.check_budget(estimated_cost)
+        
         # Execute through LangChain
         try:
             result = self._agent_executor.invoke({"input": full_prompt})
             response = result.get("output", "")
+            
+            # Track token usage
+            if self._token_counter and response:
+                usage_stats = self._token_counter.track_usage(
+                    model=self._get_model_name(),
+                    input_text=full_prompt,
+                    output_text=response
+                )
+                
+                # Track cost in budget manager
+                if self._budget_manager:
+                    self._budget_manager.track_cost(self.role, usage_stats["cost"])
             
             # Cache response if enabled
             if self._response_cache and response:
@@ -347,7 +418,17 @@ Question: {{input}}
         except Exception as e:
             if self.verbose:
                 print(f"Agent {self.role} encountered error: {e}")
-            return f"Error executing task: {str(e)}"
+            # Re-raise for retry decorator
+            raise
+    
+    def _get_model_name(self) -> str:
+        """Get the model name for token counting."""
+        if hasattr(self.llm, 'model_name'):
+            return self.llm.model_name
+        elif hasattr(self.llm, 'model'):
+            return self.llm.model
+        else:
+            return "gpt-3.5-turbo"  # Default fallback
             
     def execute_task(self, task: 'Task', context: Optional[str] = None) -> Any:
         """
@@ -376,6 +457,7 @@ Question: {{input}}
             
         return result
     
+    @retry_with_backoff(max_retries=3, base_delay=1.0)
     async def aexecute(self, task_description: str, context: str = "") -> str:
         """
         Asynchronously execute a task.
@@ -388,6 +470,12 @@ Question: {{input}}
             The agent's response
         """
         self._execution_count += 1
+        
+        # Apply rate limiting
+        if self._rate_limiter:
+            await self._rate_limiter.acquire_async()
+        elif self.global_rate_limiter:
+            await self.global_rate_limiter.acquire_async(self)
         
         # Report progress
         if self.on_progress:
@@ -423,6 +511,17 @@ Question: {{input}}
                     self.on_progress("Completed (cached)", 100)
                 return cached
         
+        # Check budget if enabled
+        if self._budget_manager and self._token_counter:
+            # Estimate cost
+            estimated_tokens = estimate_tokens(full_prompt)
+            estimated_cost = self._token_counter.calculate_cost(
+                input_tokens=estimated_tokens,
+                output_tokens=estimated_tokens // 2,  # Rough estimate
+                model=self._get_model_name()
+            )
+            self._budget_manager.check_budget(estimated_cost)
+        
         if self.on_progress:
             self.on_progress("Executing LLM", 25)
         
@@ -440,6 +539,18 @@ Question: {{input}}
             
             if self.on_progress:
                 self.on_progress("Processing response", 75)
+            
+            # Track token usage
+            if self._token_counter and response:
+                usage_stats = self._token_counter.track_usage(
+                    model=self._get_model_name(),
+                    input_text=full_prompt,
+                    output_text=response
+                )
+                
+                # Track cost in budget manager
+                if self._budget_manager:
+                    self._budget_manager.track_cost(self.role, usage_stats["cost"])
             
             # Cache response
             if self._response_cache and response:
@@ -462,7 +573,8 @@ Question: {{input}}
                 print(f"Agent {self.role} encountered error: {e}")
             if self.on_progress:
                 self.on_progress("Error", 100)
-            return f"Error executing task: {str(e)}"
+            # Re-raise for retry decorator
+            raise
     
     def __repr__(self) -> str:
         """String representation of the agent."""
@@ -561,7 +673,29 @@ Question: {{input}}
         if self._response_cache:
             metrics["cache_stats"] = self._response_cache.get_stats()
         
+        # Add token usage metrics
+        if self._token_counter:
+            token_stats = self._token_counter.get_usage_stats()
+            metrics["total_tokens"] = token_stats["total_tokens"]
+            metrics["total_cost"] = token_stats["total_cost"]
+            metrics["token_breakdown"] = token_stats["token_breakdown"]
+        
+        # Add rate limiting metrics
+        if self._rate_limiter:
+            metrics["rate_limit_overhead_ms"] = self._rate_limiter.get_overhead() * 1000
+        
+        # Add budget metrics
+        if self._budget_manager:
+            budget_report = self._budget_manager.get_usage_report()
+            metrics["budget_spent"] = budget_report["total_spent"]
+            metrics["budget_remaining"] = budget_report["remaining"]
+            metrics["budget_limit"] = budget_report["limit"]
+        
         return metrics
+    
+    def get_metrics(self) -> Dict[str, Any]:
+        """Get comprehensive agent metrics (alias for compatibility)."""
+        return self.metrics
     
     def clear_memory(self):
         """Clear conversation memory."""
