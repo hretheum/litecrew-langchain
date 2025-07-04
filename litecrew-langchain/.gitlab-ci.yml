@@ -36,7 +36,7 @@ build:
     - docker push $IMAGE_TAG
     - docker push $IMAGE_LATEST
   only:
-    - main
+    - master
     - develop
 
 # Deploy to production
@@ -164,7 +164,7 @@ deploy:
     name: production
     url: http://$DROPLET_IP
   only:
-    - main
+    - master
   when: manual
 
 # Deploy to staging (automatic)
