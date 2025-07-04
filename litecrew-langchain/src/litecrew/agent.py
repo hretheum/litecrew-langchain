@@ -332,17 +332,18 @@ Question: {{input}}
                 provider = LLMProvider.OPENAI
             else:
                 # Return fake model for testing when no API key
+                from typing import Any, List, Optional
+
+                from langchain_core.callbacks import CallbackManagerForLLMRun
                 from langchain_core.language_models.chat_models import BaseChatModel
                 from langchain_core.messages import AIMessage, BaseMessage
                 from langchain_core.outputs import ChatGeneration, ChatResult
-                from langchain_core.callbacks import CallbackManagerForLLMRun
-                from typing import List, Optional, Any
-                
+
                 class TestChatModel(BaseChatModel):
                     """Test chat model compatible with LangChain."""
-                    
+
                     model_name: str = "test-chat-model"
-                    
+
                     def _generate(
                         self,
                         messages: List[BaseMessage],
@@ -356,15 +357,15 @@ Question: {{input}}
                             response = "I'm a test response. Final Answer: Test task completed successfully."
                         else:
                             response = "I'm a test response from LiteAgent."
-                            
+
                         message = AIMessage(content=response)
                         generation = ChatGeneration(message=message)
                         return ChatResult(generations=[generation])
-                    
+
                     @property
                     def _llm_type(self) -> str:
                         return "test_chat"
-                
+
                 return TestChatModel()
 
         # Parse config
@@ -418,17 +419,18 @@ Question: {{input}}
                     continue
 
             # Final fallback to fake model
+            from typing import Any, List, Optional
+
+            from langchain_core.callbacks import CallbackManagerForLLMRun
             from langchain_core.language_models.chat_models import BaseChatModel
             from langchain_core.messages import AIMessage, BaseMessage
             from langchain_core.outputs import ChatGeneration, ChatResult
-            from langchain_core.callbacks import CallbackManagerForLLMRun
-            from typing import List, Optional, Any
-            
+
             class FallbackChatModel(BaseChatModel):
                 """Fallback chat model compatible with LangChain."""
-                
+
                 model_name: str = "fallback-chat-model"
-                
+
                 def _generate(
                     self,
                     messages: List[BaseMessage],
@@ -440,11 +442,11 @@ Question: {{input}}
                     message = AIMessage(content=response)
                     generation = ChatGeneration(message=message)
                     return ChatResult(generations=[generation])
-                
+
                 @property
                 def _llm_type(self) -> str:
                     return "fallback_chat"
-            
+
             return FallbackChatModel()
 
     def switch_llm_provider(
@@ -963,7 +965,7 @@ Question: {{input}}
         try:
             result = self._agent_executor.invoke({"input": prompt})
             response = result.get("output", "")
-            
+
             # Track token usage if enabled
             if self._token_counter and response:
                 self._token_counter.track_usage(
@@ -971,7 +973,7 @@ Question: {{input}}
                     input_text=prompt,
                     output_text=response,
                 )
-            
+
             return response
         except Exception as e:
             if self.verbose:
