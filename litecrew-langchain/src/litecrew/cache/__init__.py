@@ -11,7 +11,7 @@ from litecrew.cache.policy import CachePolicy
 __all__ = [
     "MultiLevelCache",
     "L1Cache",
-    "L2Cache", 
+    "L2Cache",
     "L3Cache",
     "CacheWarmer",
     "CacheInvalidator",

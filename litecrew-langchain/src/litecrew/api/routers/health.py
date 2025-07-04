@@ -17,5 +17,5 @@ async def health_check() -> Dict[str, Any]:
         "timestamp": datetime.utcnow().isoformat(),
         "version": "1.0.0",
         "memory_mb": psutil.Process().memory_info().rss / 1024 / 1024,
-        "uptime": time.time()
+        "uptime": time.time(),
     }

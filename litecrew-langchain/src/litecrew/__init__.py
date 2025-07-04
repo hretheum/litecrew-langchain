@@ -17,11 +17,11 @@ Task = LiteTask
 
 __all__ = [
     "LiteAgent",
-    "LiteCrew", 
+    "LiteCrew",
     "LiteTask",
     "TaskOutput",
     # Compatibility
     "Agent",
-    "Crew", 
+    "Crew",
     "Task",
 ]
