@@ -338,7 +338,7 @@ deploy:production:
       cd /opt/litecrewai/litecrew-langchain
       
       # Login to GitLab registry
-      echo "$1" | docker login -u "$2" --password-stdin "$3"
+      echo "$1" | sudo docker login -u "$2" --password-stdin "$3"
       
       # Create docker-compose.yml for deployment
       cat > docker-compose.yml << EOF
@@ -355,15 +355,15 @@ deploy:production:
       EOF
       
       # Pull latest image
-      docker pull $4
+      sudo docker pull $4
       
       # Stop and start containers
-      docker compose down || true
-      docker compose up -d
+      sudo docker compose down || true
+      sudo docker compose up -d
       
       # Health check 
       sleep 10
-      docker ps
+      sudo docker ps
       
       echo "✅ Deployment completed!"
       DEPLOY_SCRIPT
@@ -399,8 +399,8 @@ rollback:production:
         cd /opt/litecrewai/litecrew-langchain
         
         # Just restart with previous image tag
-        docker compose down
-        docker compose up -d
+        sudo docker compose down
+        sudo docker compose up -d
         
         echo "✅ Rollback completed!"
       EOF
