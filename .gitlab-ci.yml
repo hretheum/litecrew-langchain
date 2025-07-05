@@ -278,10 +278,10 @@ deploy:production:
     - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
     - mkdir -p ~/.ssh
     - chmod 700 ~/.ssh
-    - ssh-keyscan -H -p 2222 $DROPLET_IP >> ~/.ssh/known_hosts
+    - ssh-keyscan -H $DROPLET_IP >> ~/.ssh/known_hosts
   script:
     - |
-      ssh -p 2222 litecrewai@$DROPLET_IP << 'EOF'
+      ssh root@$DROPLET_IP << 'EOF'
         set -e
         echo "🚀 Starting deployment..."
         
@@ -347,10 +347,10 @@ rollback:production:
     - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
     - mkdir -p ~/.ssh
     - chmod 700 ~/.ssh
-    - ssh-keyscan -H -p 2222 $DROPLET_IP >> ~/.ssh/known_hosts
+    - ssh-keyscan -H $DROPLET_IP >> ~/.ssh/known_hosts
   script:
     - |
-      ssh -p 2222 litecrewai@$DROPLET_IP << 'EOF'
+      ssh root@$DROPLET_IP << 'EOF'
         set -e
         echo "🔄 Starting rollback..."
         
@@ -389,10 +389,10 @@ backup:daily:
     - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
     - mkdir -p ~/.ssh
     - chmod 700 ~/.ssh
-    - ssh-keyscan -H -p 2222 $DROPLET_IP >> ~/.ssh/known_hosts
+    - ssh-keyscan -H $DROPLET_IP >> ~/.ssh/known_hosts
   script:
     - |
-      ssh -p 2222 litecrewai@$DROPLET_IP << 'EOF'
+      ssh root@$DROPLET_IP << 'EOF'
         set -e
         echo "📦 Starting backup..."
         
