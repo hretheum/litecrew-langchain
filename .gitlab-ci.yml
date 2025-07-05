@@ -13,6 +13,11 @@ variables:
   PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
   PIP_WHEEL_DIR: "$CI_PROJECT_DIR/.cache/wheels"
   DOCKER_BUILDKIT: 1
+  # Speed up builds
+  FF_USE_FASTZIP: "true"
+  ARTIFACT_COMPRESSION_LEVEL: "fast"
+  CACHE_COMPRESSION_LEVEL: "fast"
+  TRANSFER_METER_FREQUENCY: "5s"
 
 # Global cache configuration
 .cache_config: &cache_config
@@ -33,6 +38,7 @@ test:unit:
   stage: test
   image: python:3.12-slim
   <<: *cache_config
+  interruptible: true
   before_script:
     - python -m venv venv
     - source venv/bin/activate
@@ -88,15 +94,24 @@ test:unit:
       - litecrew-langchain/htmlcov/
       - litecrew-langchain/coverage.xml
     expire_in: 1 week
-  only:
-    - branches
-    - merge_requests
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS'
+      when: never
+    - if: '$CI_COMMIT_BRANCH'
+    - changes:
+      - "**/*.py"
+      - "**/requirements*.txt"
+      - "**/pyproject.toml"
+      - "**/setup.py"
+      when: on_success
 
 lint:
   stage: test
   image: python:3.12-slim
   <<: *cache_config
   allow_failure: true
+  interruptible: true
   before_script:
     - python -m venv venv
     - source venv/bin/activate
@@ -121,15 +136,24 @@ lint:
       else
         echo "No source directory found, skipping lint"
       fi
-  only:
-    - branches
-    - merge_requests
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS'
+      when: never
+    - if: '$CI_COMMIT_BRANCH'
+    - changes:
+      - "**/*.py"
+      - "**/requirements*.txt"
+      - "**/pyproject.toml"
+      - "**/setup.py"
+      when: on_success
 
 # Security scanning stage
 security:bandit:
   stage: security
   image: python:3.12-slim
   <<: *cache_config
+  interruptible: true
   before_script:
     - python -m venv venv
     - source venv/bin/activate
@@ -168,9 +192,17 @@ security:bandit:
     expire_in: 1 week
     when: always
   allow_failure: false  # Block pipeline on security issues
-  only:
-    - branches
-    - merge_requests
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS'
+      when: never
+    - if: '$CI_COMMIT_BRANCH'
+    - changes:
+      - "**/*.py"
+      - "**/requirements*.txt"
+      - "**/pyproject.toml"
+      - "**/setup.py"
+      when: on_success
 
 # DISABLED - too many false positives
 .security:secrets:
@@ -207,15 +239,24 @@ security:bandit:
     expire_in: 1 week
     when: always
   allow_failure: true  # Don't block pipeline on secret detection - too many false positives
-  only:
-    - branches
-    - merge_requests
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS'
+      when: never
+    - if: '$CI_COMMIT_BRANCH'
+    - changes:
+      - "**/*.py"
+      - "**/requirements*.txt"
+      - "**/pyproject.toml"
+      - "**/setup.py"
+      when: on_success
 
 security:container:
   stage: security
   image: docker:latest
   services:
     - docker:dind
+  interruptible: true
   before_script:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
     # Install Trivy for container vulnerability scanning
@@ -238,9 +279,17 @@ security:container:
     expire_in: 1 week
     when: always
   allow_failure: true  # Don't block on container issues initially
-  only:
-    - branches
-    - merge_requests
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS'
+      when: never
+    - if: '$CI_COMMIT_BRANCH'
+    - changes:
+      - "**/*.py"
+      - "**/requirements*.txt"
+      - "**/pyproject.toml"
+      - "**/setup.py"
+      when: on_success
 
 # Build stage
 build:docker:
@@ -251,18 +300,16 @@ build:docker:
   before_script:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
   script:
+    # Try to pull previous image for cache
+    - docker pull $IMAGE_NAME:latest || true
     # Build with BuildKit for better caching
     - DOCKER_BUILDKIT=1 docker build 
       --cache-from $IMAGE_NAME:latest 
       --build-arg BUILDKIT_INLINE_CACHE=1 
-      -t $IMAGE_NAME:$IMAGE_TAG .
-    - docker tag $IMAGE_NAME:$IMAGE_TAG $IMAGE_NAME:latest
+      -t $IMAGE_NAME:$IMAGE_TAG 
+      -t $IMAGE_NAME:latest .
     - docker push $IMAGE_NAME:$IMAGE_TAG
     - docker push $IMAGE_NAME:latest
-  cache:
-    key: docker-layers-$CI_COMMIT_REF_SLUG
-    paths:
-      - /var/lib/docker
   only:
     - main
     - master
