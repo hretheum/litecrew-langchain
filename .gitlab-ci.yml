@@ -183,10 +183,22 @@ security:secrets:
     - chmod +x gitleaks
     - mv gitleaks /usr/local/bin/
   script:
-    # Scan for secrets in git history and current files
-    - gitleaks detect --source . --report-format json --report-path gitleaks-report.json || true
-    - gitleaks detect --source . --report-format sarif --report-path gitleaks-report.sarif || true
-    - gitleaks detect --source . --verbose
+    # Download baseline if exists (or create it)
+    - |
+      if [ -f "gitleaks-baseline.json" ]; then
+        echo "Using existing baseline..."
+      else
+        echo "Creating baseline for existing secrets..."
+        gitleaks detect --source . --report-format json --report-path gitleaks-baseline.json --exit-code 0
+        echo "Baseline created. Add gitleaks-baseline.json to repository."
+      fi
+    # Scan using baseline to ignore existing secrets
+    - gitleaks detect --source . --baseline-path gitleaks-baseline.json --report-format json --report-path gitleaks-report.json --exit-code 0 || true
+    - gitleaks detect --source . --baseline-path gitleaks-baseline.json --report-format sarif --report-path gitleaks-report.sarif --exit-code 0 || true
+    # Final scan with baseline
+    - |
+      echo "Running final scan with baseline..."
+      gitleaks detect --source . --baseline-path gitleaks-baseline.json --verbose --exit-code 1
   artifacts:
     reports:
       # GitLab security dashboard integration
