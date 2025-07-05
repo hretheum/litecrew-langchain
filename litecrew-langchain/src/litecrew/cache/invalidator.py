@@ -31,7 +31,7 @@ class CacheInvalidator:
         invalidated = 0
 
         # Get all keys from all levels
-        all_keys = set()
+        all_keys: Set[str] = set()
 
         # L1 keys
         if hasattr(self.cache.l1._cache, "_cache"):

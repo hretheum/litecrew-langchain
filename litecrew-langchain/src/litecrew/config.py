@@ -49,7 +49,7 @@ class Config:
     TOGETHER_API_KEY = os.getenv("TOGETHER_API_KEY")
 
     @classmethod
-    def validate(cls):
+    def validate(cls) -> None:
         """Validate required configuration."""
         errors = []
 

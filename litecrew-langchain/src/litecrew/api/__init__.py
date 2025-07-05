@@ -2,6 +2,7 @@
 
 import os
 import time
+from typing import Any
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -44,7 +45,7 @@ def create_app() -> FastAPI:
         app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
     @app.get("/")
-    async def dashboard():
+    async def dashboard() -> Any:
         """Serve the monitoring dashboard."""
         from fastapi.responses import FileResponse
 
@@ -54,14 +55,14 @@ def create_app() -> FastAPI:
         return {"message": "LiteCrew API", "docs": "/docs"}
 
     @app.get("/dashboard")
-    async def dashboard_redirect():
+    async def dashboard_redirect() -> Any:
         """Redirect to dashboard."""
         from fastapi.responses import RedirectResponse
 
         return RedirectResponse(url="/")
 
     @app.middleware("http")
-    async def add_process_time_header(request, call_next):
+    async def add_process_time_header(request: Any, call_next: Any) -> Any:
         """Add response time header."""
         start_time = time.perf_counter()
         response = await call_next(request)

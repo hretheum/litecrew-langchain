@@ -23,42 +23,42 @@ def unify_response(response: Any, provider: str) -> str:
     if provider == "openai":
         if isinstance(response, dict) and "choices" in response:
             try:
-                return response["choices"][0]["message"]["content"]
+                return str(response["choices"][0]["message"]["content"])
             except (KeyError, IndexError):
                 pass
         elif hasattr(response, "content"):
-            return response.content
+            return str(response.content)
 
     elif provider == "anthropic":
         if isinstance(response, dict) and "content" in response:
             try:
-                return response["content"][0]["text"]
+                return str(response["content"][0]["text"])
             except (KeyError, IndexError):
                 pass
         elif hasattr(response, "content"):
-            return response.content
+            return str(response.content)
 
     elif provider in ["groq", "together"]:
         # Similar to OpenAI format
         if isinstance(response, dict) and "choices" in response:
             try:
-                return response["choices"][0]["message"]["content"]
+                return str(response["choices"][0]["message"]["content"])
             except (KeyError, IndexError):
                 pass
         elif hasattr(response, "content"):
-            return response.content
+            return str(response.content)
 
     elif provider == "cohere":
         if isinstance(response, dict) and "text" in response:
-            return response["text"]
+            return str(response["text"])
         elif hasattr(response, "text"):
-            return response.text
+            return str(response.text)
 
     elif provider == "ollama":
         if isinstance(response, dict) and "response" in response:
-            return response["response"]
+            return str(response["response"])
         elif hasattr(response, "content"):
-            return response.content
+            return str(response.content)
 
     # Fallback to string conversion
     return str(response)

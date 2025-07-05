@@ -110,7 +110,7 @@ class AsyncEventHandler:
         self.handler = handler
         self.is_async = asyncio.iscoroutinefunction(handler)
 
-    async def __call__(self, *args, **kwargs):
+    async def __call__(self, *args: Any, **kwargs: Any) -> Any:
         """Call the handler, converting to async if needed."""
         if self.is_async:
             return await self.handler(*args, **kwargs)
@@ -123,12 +123,12 @@ class AsyncEventHandler:
 class EventEmitter:
     """Event emitter for publishing and subscribing to events."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._handlers: Dict[str, List[tuple[Callable, Optional[EventFilter]]]] = (
             defaultdict(list)
         )
         self._once_handlers: Set[tuple[str, Callable]] = set()
-        self._metrics = {
+        self._metrics: Dict[str, Any] = {
             "total_events_emitted": 0,
             "events_per_type": defaultdict(int),
             "total_handlers": 0,
@@ -151,7 +151,7 @@ class EventEmitter:
         event_key = self._get_event_key(event_type)
 
         @wraps(handler)
-        def once_wrapper(*args, **kwargs):
+        def once_wrapper(*args: Any, **kwargs: Any) -> Any:
             # Remove handler after first call
             self.off(event_type, once_wrapper)
             return handler(*args, **kwargs)
@@ -308,7 +308,7 @@ class EventEmitter:
 class LifecycleCallbacks:
     """Manager for lifecycle callbacks."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._callbacks: Dict[str, List[Callable]] = defaultdict(list)
 
     # Agent callbacks
@@ -358,7 +358,7 @@ class LifecycleCallbacks:
         """Register callback for crew completion."""
         self._callbacks["crew_complete"].append(callback)
 
-    def trigger(self, event: str, *args, **kwargs) -> None:
+    def trigger(self, event: str, *args: Any, **kwargs: Any) -> None:
         """Trigger callbacks for an event."""
         for callback in self._callbacks.get(event, []):
             try:
@@ -366,7 +366,7 @@ class LifecycleCallbacks:
             except Exception as e:
                 logger.error(f"Error in lifecycle callback {event}: {e}")
 
-    async def trigger_async(self, event: str, *args, **kwargs) -> None:
+    async def trigger_async(self, event: str, *args: Any, **kwargs: Any) -> None:
         """Trigger callbacks asynchronously."""
         tasks = []
         for callback in self._callbacks.get(event, []):
@@ -385,13 +385,13 @@ class LifecycleCallbacks:
 global_emitter = EventEmitter()
 
 
-def emit_event(event_type: Union[EventType, str], data: Any = None, **kwargs) -> None:
+def emit_event(event_type: Union[EventType, str], data: Any = None, **kwargs: Any) -> None:
     """Convenience function to emit events globally."""
     global_emitter.emit(event_type, data, **kwargs)
 
 
 async def emit_event_async(
-    event_type: Union[EventType, str], data: Any = None, **kwargs
+    event_type: Union[EventType, str], data: Any = None, **kwargs: Any
 ) -> None:
     """Convenience function to emit events globally (async)."""
     await global_emitter.emit_async(event_type, data, **kwargs)

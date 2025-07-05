@@ -3,13 +3,14 @@
 import json
 import os
 from pathlib import Path
+from typing import Any, Optional
 
 import click
 import yaml
 
 
 @click.group(name="config")
-def config_group():
+def config_group() -> None:
     """Manage LiteCrew configuration."""
     pass
 
@@ -29,7 +30,7 @@ def config_group():
     default="basic",
     help="Configuration template",
 )
-def init(output_format, output, template):
+def init(output_format: str, output: Optional[str], template: str) -> None:
     """Initialize a new configuration file."""
 
     # Configuration templates
@@ -146,7 +147,7 @@ def init(output_format, output, template):
 
 @config_group.command()
 @click.argument("config_file", type=click.Path(exists=True))
-def validate(config_file):
+def validate(config_file: str) -> None:
     """Validate configuration file.
 
     CONFIG_FILE: Path to configuration file to validate
@@ -281,7 +282,7 @@ def validate(config_file):
 @click.argument("config_file", type=click.Path(exists=True))
 @click.argument("key")
 @click.argument("value", required=False)
-def set(config_file, key, value):
+def set(config_file: str, key: str, value: Optional[str]) -> None:
     """Set or view configuration value.
 
     CONFIG_FILE: Path to configuration file
@@ -323,7 +324,7 @@ def set(config_file, key, value):
                 current = current[part]
 
             # Try to parse value as appropriate type
-            parsed_value = value
+            parsed_value: Any = value
             if value.lower() in ("true", "false"):
                 parsed_value = value.lower() == "true"
             elif value.isdigit():
@@ -349,7 +350,7 @@ def set(config_file, key, value):
 
 @config_group.command()
 @click.option("--system", is_flag=True, help="Show system configuration paths")
-def show(system):
+def show(system: bool) -> None:
     """Show configuration information."""
     if system:
         click.echo("🔧 LiteCrew Configuration Paths:")
@@ -412,7 +413,7 @@ def show(system):
 @click.argument("source_file", type=click.Path(exists=True))
 @click.argument("target_format", type=click.Choice(["json", "yaml"]))
 @click.option("--output", "-o", type=click.Path(), help="Output file path")
-def convert(source_file, target_format, output):
+def convert(source_file: str, target_format: str, output: Optional[str]) -> None:
     """Convert configuration between formats.
 
     SOURCE_FILE: Path to source configuration file
