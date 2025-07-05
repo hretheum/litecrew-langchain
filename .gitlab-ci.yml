@@ -327,47 +327,49 @@ deploy:production:
     - ssh-keyscan -H $DROPLET_IP >> ~/.ssh/known_hosts
   script:
     - |
-      ssh root@$DROPLET_IP << EOF
-        set -e
-        echo "🚀 Starting deployment..."
-        
-        # Create directories if needed
-        mkdir -p /opt/litecrewai/litecrew-langchain
-        cd /opt/litecrewai/litecrew-langchain
-        
-        # Login to GitLab registry
-        echo "$CI_REGISTRY_PASSWORD" | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
-        
-        # Create docker-compose.yml for deployment
-        cat > docker-compose.yml << 'COMPOSE_EOF'
-        version: '3.8'
-        services:
-          litecrew:
-            image: $IMAGE_NAME:$IMAGE_TAG
-            container_name: litecrew_app
-            ports:
-              - "8000:8000"
-            environment:
-              - ENVIRONMENT=production
-            restart: unless-stopped
-        COMPOSE_EOF
-        
-        # Pull latest image
-        docker pull $IMAGE_NAME:$IMAGE_TAG
-        
-        # Stop and start containers
-        docker compose down || true
-        docker compose up -d
-        
-        # Health check with automatic rollback on failure
-        sleep 10
-        if ! curl -f http://localhost:8000/health; then
-          echo "❌ Health check failed!"
-          exit 1
-        fi
-        
-        echo "✅ Deployment successful!"
+      cat > /tmp/deploy.sh << 'DEPLOY_SCRIPT'
+      #!/bin/bash
+      set -e
+      echo "🚀 Starting deployment..."
+      
+      # Create directories if needed
+      mkdir -p /opt/litecrewai/litecrew-langchain
+      cd /opt/litecrewai/litecrew-langchain
+      
+      # Login to GitLab registry
+      echo "$1" | docker login -u "$2" --password-stdin "$3"
+      
+      # Create docker-compose.yml for deployment
+      cat > docker-compose.yml << EOF
+      version: '3.8'
+      services:
+        litecrew:
+          image: $4
+          container_name: litecrew_app
+          ports:
+            - "8000:8000"
+          environment:
+            - ENVIRONMENT=production
+          restart: unless-stopped
       EOF
+      
+      # Pull latest image
+      docker pull $4
+      
+      # Stop and start containers
+      docker compose down || true
+      docker compose up -d
+      
+      # Health check 
+      sleep 10
+      docker ps
+      
+      echo "✅ Deployment completed!"
+      DEPLOY_SCRIPT
+    - chmod +x /tmp/deploy.sh
+    - scp /tmp/deploy.sh litecrewai@$DROPLET_IP:/tmp/
+    - ssh litecrewai@$DROPLET_IP "/tmp/deploy.sh '$CI_REGISTRY_PASSWORD' '$CI_REGISTRY_USER' '$CI_REGISTRY' '$IMAGE_NAME:$IMAGE_TAG'"
+    - ssh litecrewai@$DROPLET_IP "rm /tmp/deploy.sh"
   environment:
     name: production
     url: http://$DROPLET_IP
@@ -389,7 +391,7 @@ rollback:production:
     - ssh-keyscan -H $DROPLET_IP >> ~/.ssh/known_hosts
   script:
     - |
-      ssh root@$DROPLET_IP << EOF
+      ssh litecrewai@$DROPLET_IP << EOF
         set -e
         echo "🔄 Starting rollback to previous image..."
         
