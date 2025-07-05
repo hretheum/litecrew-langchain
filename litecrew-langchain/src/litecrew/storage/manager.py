@@ -7,7 +7,7 @@ import time
 import uuid
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 from litecrew.storage.cache import MemoryCache, RedisCache
 from litecrew.storage.compression import CompressionType
@@ -55,6 +55,7 @@ class StorageManager:
             raise ValueError(f"Unsupported backend: {backend}")
 
         # Initialize cache
+        self._cache: Optional[Union[MemoryCache, RedisCache]]
         if cache_enabled:
             if cache_type == "redis":
                 self._cache = RedisCache()
@@ -112,7 +113,7 @@ class StorageManager:
         if self._cache and version is None:
             cached = self._cache.get(key)
             if cached is not None:
-                return cached
+                return cached  # type: ignore[no-any-return]
 
         # Read from storage
         result = self._storage.read(key, version=version)

@@ -15,7 +15,7 @@ class CacheWarmer:
 
     def __init__(self, cache: MultiLevelCache):
         self.cache = cache
-        self._warming_tasks = []
+        self._warming_tasks: List[Dict[str, Any]] = []
         self._scheduler_running = False
         self._executor = ThreadPoolExecutor(max_workers=4)
 
@@ -109,7 +109,7 @@ class CacheWarmer:
 
         self._scheduler_running = True
 
-        def run_scheduler():
+        def run_scheduler() -> None:
             while self._scheduler_running:
                 current_time = time.time()
                 for task in self._warming_tasks:
@@ -166,7 +166,7 @@ class CacheWarmer:
             return [f"{prefix}{i}" for i in range(10)]
         return [pattern]
 
-    def __del__(self):
+    def __del__(self) -> None:
         """Cleanup resources."""
         self.stop_scheduler()
         self._executor.shutdown(wait=False)

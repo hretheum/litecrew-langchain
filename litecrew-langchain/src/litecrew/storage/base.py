@@ -70,7 +70,7 @@ class StorageBackend(ABC):
     def search(self, pattern: str) -> List[Dict[str, Any]]:
         """Search for keys matching pattern."""
         keys = self.list_keys(pattern)
-        return [self.read(key) for key in keys]
+        return [result for result in (self.read(key) for key in keys) if result is not None]
 
     @abstractmethod
     def get_metrics(self) -> StorageMetrics:

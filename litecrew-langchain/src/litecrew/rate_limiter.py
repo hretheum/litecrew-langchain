@@ -106,7 +106,7 @@ class RateLimiter:
                 if wait_time > 0:
                     await asyncio.sleep(wait_time)
 
-    def reset(self):
+    def reset(self) -> None:
         """Reset the rate limiter."""
         self._request_times.clear()
         self._overhead_sum = 0.0
@@ -186,7 +186,7 @@ class TokenCounter:
         "claude-3-haiku": {"input": 0.00025, "output": 0.00125},
     }
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize token counter."""
         self._token_counts: Dict[str, int] = defaultdict(int)
         self._cost_tracking: Dict[str, float] = defaultdict(float)
@@ -258,12 +258,12 @@ def retry_with_backoff(
     max_delay: float = 60.0,
     exponential_base: float = 2.0,
     handle_rate_limits: bool = True,
-):
+) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
     """Decorator for retry logic with exponential backoff."""
 
-    def decorator(func):
+    def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
         @wraps(func)
-        async def async_wrapper(*args, **kwargs):
+        async def async_wrapper(*args: Any, **kwargs: Any) -> Any:
             last_exception = None
 
             for attempt in range(max_retries):
@@ -289,10 +289,13 @@ def retry_with_backoff(
                         await asyncio.sleep(delay)
 
             # All retries exhausted
-            raise last_exception
+            if last_exception:
+                raise last_exception
+            else:
+                raise Exception("Unexpected error in retry logic")
 
         @wraps(func)
-        def sync_wrapper(*args, **kwargs):
+        def sync_wrapper(*args: Any, **kwargs: Any) -> Any:
             last_exception = None
 
             for attempt in range(max_retries):
@@ -311,7 +314,10 @@ def retry_with_backoff(
                         )
                         time.sleep(delay)
 
-            raise last_exception
+            if last_exception:
+                raise last_exception
+            else:
+                raise Exception("Unexpected error in retry logic")
 
         # Return appropriate wrapper
         if asyncio.iscoroutinefunction(func):
@@ -334,7 +340,7 @@ class BudgetManager:
     _last_reset: float = field(default_factory=time.time)
     _alerts_sent: set = field(default_factory=set)
 
-    def track_cost(self, agent_id: str, cost: float):
+    def track_cost(self, agent_id: str, cost: float) -> None:
         """Track cost for an agent."""
         self._check_reset()
         self._spent[agent_id] += cost
@@ -388,7 +394,7 @@ class BudgetManager:
         """Check if budget is exceeded."""
         return self.get_total_spent() >= self.daily_limit
 
-    def _check_reset(self):
+    def _check_reset(self) -> None:
         """Check if we need to reset daily counters."""
         current_time = time.time()
         if current_time - self._last_reset >= 86400:  # 24 hours

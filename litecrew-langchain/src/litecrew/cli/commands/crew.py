@@ -2,6 +2,7 @@
 
 import json
 import sys
+from typing import Optional
 
 import click
 import httpx
@@ -9,7 +10,7 @@ import yaml
 
 
 @click.group(name="crew")
-def crew_group():
+def crew_group() -> None:
     """Manage crews - create, list, execute, and monitor AI agent teams."""
     pass
 
@@ -19,7 +20,7 @@ def crew_group():
 @click.option("--name", "-n", help="Override crew name")
 @click.option("--dry-run", is_flag=True, help="Validate configuration without creating")
 @click.pass_context
-def create(ctx, crew_file, name, dry_run):
+def create(ctx: click.Context, crew_file: str, name: Optional[str], dry_run: bool) -> None:
     """Create a new crew from configuration file.
 
     CREW_FILE: Path to YAML or JSON file containing crew configuration
@@ -125,7 +126,7 @@ def create(ctx, crew_file, name, dry_run):
 )
 @click.option("--filter", "name_filter", help="Filter crews by name (substring match)")
 @click.pass_context
-def list(ctx, output_format, name_filter):
+def list(ctx: click.Context, output_format: str, name_filter: Optional[str]) -> None:
     """List all crews."""
     api_url = ctx.obj["api_url"]
 
@@ -182,7 +183,7 @@ def list(ctx, output_format, name_filter):
 @click.option("--async", "async_exec", is_flag=True, help="Execute asynchronously")
 @click.option("--wait", is_flag=True, help="Wait for async execution to complete")
 @click.pass_context
-def execute(ctx, crew_id, inputs, async_exec, wait):
+def execute(ctx: click.Context, crew_id: str, inputs: Optional[str], async_exec: bool, wait: bool) -> None:
     """Execute a crew.
 
     CREW_ID: The ID of the crew to execute
@@ -261,7 +262,7 @@ def execute(ctx, crew_id, inputs, async_exec, wait):
 @crew_group.command()
 @click.argument("crew_id")
 @click.pass_context
-def delete(ctx, crew_id):
+def delete(ctx: click.Context, crew_id: str) -> None:
     """Delete a crew.
 
     CREW_ID: The ID of the crew to delete
@@ -302,7 +303,7 @@ def delete(ctx, crew_id):
     help="Output format",
 )
 @click.pass_context
-def show(ctx, crew_id, output_format):
+def show(ctx: click.Context, crew_id: str, output_format: str) -> None:
     """Show detailed information about a crew.
 
     CREW_ID: The ID of the crew to inspect

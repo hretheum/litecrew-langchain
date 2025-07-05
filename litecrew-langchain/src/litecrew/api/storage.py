@@ -8,13 +8,13 @@ from typing import Any, Dict, List, Optional
 class APIStorage:
     """In-memory storage for API data."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._crews: Dict[str, Dict[str, Any]] = {}
         self._tasks: Dict[str, Dict[str, Any]] = {}
         self._executions: Dict[str, Dict[str, Any]] = {}
         self._lock = asyncio.Lock()
 
-    async def store_crew(self, crew_id: str, crew_info: Dict[str, Any]):
+    async def store_crew(self, crew_id: str, crew_info: Dict[str, Any]) -> None:
         """Store crew information."""
         async with self._lock:
             # Remove crew_instance before storing (not serializable)
@@ -44,12 +44,12 @@ class APIStorage:
                 crews.append(crew_copy)
             return crews
 
-    async def delete_crew(self, crew_id: str):
+    async def delete_crew(self, crew_id: str) -> None:
         """Delete crew."""
         async with self._lock:
             self._crews.pop(crew_id, None)
 
-    async def store_task(self, task_id: str, task_info: Dict[str, Any]):
+    async def store_task(self, task_id: str, task_info: Dict[str, Any]) -> None:
         """Store task information."""
         async with self._lock:
             self._tasks[task_id] = task_info
@@ -64,7 +64,7 @@ class APIStorage:
         async with self._lock:
             return list(self._tasks.values())
 
-    async def store_execution(self, execution_id: str, execution_info: Dict[str, Any]):
+    async def store_execution(self, execution_id: str, execution_info: Dict[str, Any]) -> None:
         """Store execution information."""
         async with self._lock:
             self._executions[execution_id] = execution_info
@@ -107,8 +107,8 @@ class APIStorage:
             return executions
 
     async def execute_crew_async(
-        self, execution_id: str, crew, execution_data: Dict[str, Any]
-    ):
+        self, execution_id: str, crew: Any, execution_data: Dict[str, Any]
+    ) -> None:
         """Execute crew asynchronously."""
         try:
             result = await crew.kickoff_async(execution_data.get("inputs", {}))
