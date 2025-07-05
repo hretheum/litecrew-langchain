@@ -60,4 +60,10 @@ site/
 
 # Benchmarks
 benchmarks/results/
-*.benchmarkgitlab-ci-variables.md
+*.benchmark
+
+# CI/CD Secrets
+gitlab-ci-variables.md
+
+# Cache
+.ruff_cache/
