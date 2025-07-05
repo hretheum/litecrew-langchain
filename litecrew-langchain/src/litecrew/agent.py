@@ -3,7 +3,6 @@ LiteAgent - CrewAI-compatible agent built on LangChain
 """
 
 import asyncio
-import json
 import time
 from pathlib import Path
 from typing import (
