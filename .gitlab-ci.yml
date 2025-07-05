@@ -339,7 +339,7 @@ deploy:production:
         echo "$CI_REGISTRY_PASSWORD" | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
         
         # Create docker-compose.yml for deployment
-        cat > docker-compose.yml << 'COMPOSE_EOF'
+        cat > docker-compose.yml << COMPOSE_EOF
         version: '3.8'
         services:
           litecrew:
@@ -350,7 +350,7 @@ deploy:production:
             environment:
               - ENVIRONMENT=production
             restart: unless-stopped
-        COMPOSE_EOF
+COMPOSE_EOF
         
         # Pull latest image
         docker pull $IMAGE_NAME:$IMAGE_TAG
