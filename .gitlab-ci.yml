@@ -69,6 +69,13 @@ test:unit:
     - |
       if [ -d "tests/" ]; then
         pytest tests/ -v --cov=src/litecrew --cov-report=html --cov-report=term --cov-report=xml --cov-fail-under=70
+        # Copy coverage.xml to root directory for artifact upload
+        if [ -f "coverage.xml" ]; then
+          cp coverage.xml ../coverage.xml
+        fi
+        if [ -d "htmlcov/" ]; then
+          cp -r htmlcov/ ../htmlcov/
+        fi
       else
         echo "No tests directory found, skipping tests"
       fi
