@@ -3,7 +3,6 @@ stages:
   - security
   - build
   - deploy
-  - backup
 
 variables:
   DOCKER_DRIVER: overlay2
@@ -281,49 +280,42 @@ deploy:production:
     - ssh-keyscan -H $DROPLET_IP >> ~/.ssh/known_hosts
   script:
     - |
-      ssh root@$DROPLET_IP << 'EOF'
+      ssh root@$DROPLET_IP << EOF
         set -e
         echo "🚀 Starting deployment..."
         
-        # Backup current version
-        if [ -d /opt/litecrewai/app ]; then
-          sudo tar -czf /opt/litecrewai/backups/backup-$(date +%Y%m%d-%H%M%S).tar.gz \
-            -C /opt/litecrewai app data config
-        fi
+        # Create directories if needed
+        mkdir -p /opt/litecrewai/litecrew-langchain
+        cd /opt/litecrewai/litecrew-langchain
         
-        # Pull latest code
-        cd /opt/litecrewai
-        git pull origin main || git pull origin master
+        # Login to GitLab registry
+        echo "$CI_REGISTRY_PASSWORD" | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
         
-        # Update Docker image
-        docker compose pull
+        # Create docker-compose.yml for deployment
+        cat > docker-compose.yml << 'COMPOSE_EOF'
+        version: '3.8'
+        services:
+          litecrew:
+            image: $IMAGE_NAME:$IMAGE_TAG
+            container_name: litecrew_app
+            ports:
+              - "8000:8000"
+            environment:
+              - ENVIRONMENT=production
+            restart: unless-stopped
+        COMPOSE_EOF
         
-        # Stop current container
-        docker compose down
+        # Pull latest image
+        docker pull $IMAGE_NAME:$IMAGE_TAG
         
-        # Run database migrations if needed
-        # docker compose run --rm litecrewai alembic upgrade head
-        
-        # Start new version
+        # Stop and start containers
+        docker compose down || true
         docker compose up -d
         
         # Health check with automatic rollback on failure
         sleep 10
         if ! curl -f http://localhost:8000/health; then
-          echo "❌ Health check failed! Starting automatic rollback..."
-          
-          # Find latest backup
-          LATEST_BACKUP=$(ls -t /opt/litecrewai/backups/*.tar.gz | head -1)
-          
-          if [ ! -z "$LATEST_BACKUP" ]; then
-            docker compose down
-            sudo tar -xzf "$LATEST_BACKUP" -C /opt/litecrewai
-            docker compose up -d
-            echo "✅ Automatic rollback completed!"
-          else
-            echo "❌ No backup found for rollback!"
-          fi
-          
+          echo "❌ Health check failed!"
           exit 1
         fi
         
@@ -337,7 +329,7 @@ deploy:production:
     - master
   when: manual
 
-# Rollback job
+# Rollback job - simplified to just restart previous image
 rollback:production:
   stage: deploy
   image: alpine:latest
@@ -350,26 +342,14 @@ rollback:production:
     - ssh-keyscan -H $DROPLET_IP >> ~/.ssh/known_hosts
   script:
     - |
-      ssh root@$DROPLET_IP << 'EOF'
+      ssh root@$DROPLET_IP << EOF
         set -e
-        echo "🔄 Starting rollback..."
+        echo "🔄 Starting rollback to previous image..."
         
-        # Find latest backup
-        LATEST_BACKUP=$(ls -t /opt/litecrewai/backups/*.tar.gz | head -1)
+        cd /opt/litecrewai/litecrew-langchain
         
-        if [ -z "$LATEST_BACKUP" ]; then
-          echo "❌ No backup found!"
-          exit 1
-        fi
-        
-        # Stop current container
-        cd /opt/litecrewai
+        # Just restart with previous image tag
         docker compose down
-        
-        # Restore from backup
-        sudo tar -xzf "$LATEST_BACKUP" -C /opt/litecrewai
-        
-        # Start previous version
         docker compose up -d
         
         echo "✅ Rollback completed!"
@@ -379,50 +359,3 @@ rollback:production:
     - main
     - master
 
-# Scheduled backup
-backup:daily:
-  stage: backup
-  image: alpine:latest
-  before_script:
-    - apk add --no-cache openssh-client
-    - eval $(ssh-agent -s)
-    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
-    - mkdir -p ~/.ssh
-    - chmod 700 ~/.ssh
-    - ssh-keyscan -H $DROPLET_IP >> ~/.ssh/known_hosts
-  script:
-    - |
-      ssh root@$DROPLET_IP << 'EOF'
-        set -e
-        echo "📦 Starting backup..."
-        
-        # Create backup
-        BACKUP_NAME="backup-$(date +%Y%m%d-%H%M%S).tar.gz"
-        cd /opt/litecrewai
-        
-        # Stop container for consistent backup
-        docker compose stop litecrewai
-        
-        # Create backup
-        sudo tar -czf "/opt/litecrewai/backups/$BACKUP_NAME" \
-          app data config logs
-        
-        # Encrypt backup if encryption key is set
-        if [ ! -z "$BACKUP_ENCRYPTION_KEY" ]; then
-          openssl enc -aes-256-cbc -salt -in "/opt/litecrewai/backups/$BACKUP_NAME" \
-            -out "/opt/litecrewai/backups/$BACKUP_NAME.enc" \
-            -k "$BACKUP_ENCRYPTION_KEY"
-          rm "/opt/litecrewai/backups/$BACKUP_NAME"
-          BACKUP_NAME="$BACKUP_NAME.enc"
-        fi
-        
-        # Start container again
-        docker compose start litecrewai
-        
-        # Clean old backups (keep last 7 days)
-        find /opt/litecrewai/backups -name "backup-*.tar.gz*" -mtime +7 -delete
-        
-        echo "✅ Backup completed: $BACKUP_NAME"
-      EOF
-  only:
-    - schedules
