@@ -101,8 +101,9 @@ class L3Cache:
                 with open(file_path, "wb") as f:
                     pickle.dump(value, f)
                 self._index[key] = {"created": time.time(), "ttl": ttl}
-            except Exception:
-                pass
+            except Exception as e:
+                # Log error but don't fail the operation
+                print(f"Failed to write cache file for key {key}: {e}")
 
     def delete(self, key: str) -> None:
         with self._lock:

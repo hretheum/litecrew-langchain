@@ -117,8 +117,8 @@ class CacheWarmer:
                         try:
                             task["func"]()
                             task["last_run"] = current_time
-                        except Exception:
-                            pass
+                        except Exception as e:
+                            print(f"Failed to run warming task: {e}")
                 time.sleep(1)
 
         # Run in background thread
@@ -152,7 +152,8 @@ class CacheWarmer:
                     value = data_source(key)
                     self.cache.set(key, value, level=2)
                     warmed += 1
-                except Exception:
+                except Exception as e:
+                    print(f"Failed to warm cache for key {key}: {e}")
                     continue
 
         return warmed

@@ -39,15 +39,19 @@ class ConnectionManager:
             for connection in self.crew_connections[crew_id]:
                 try:
                     await connection.send_text(message)
-                except Exception:
-                    pass
+                except Exception as e:
+                    # Connection might be closed, remove it
+                    print(f"Failed to send message to crew {crew_id}: {e}")
+                    self.crew_connections[crew_id].discard(connection)
 
     async def broadcast(self, message: str) -> None:
         for connection in self.active_connections:
             try:
                 await connection.send_text(message)
-            except Exception:
-                pass
+            except Exception as e:
+                # Connection might be closed, remove it
+                print(f"Failed to broadcast message: {e}")
+                self.active_connections.remove(connection)
 
 
 manager = ConnectionManager()

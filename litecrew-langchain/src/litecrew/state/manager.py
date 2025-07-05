@@ -173,7 +173,9 @@ class StateManager:
                         try:
                             v = int(key.split("_v")[-1])
                             versions.append(v)
-                        except Exception:
+                        except (ValueError, IndexError) as e:
+                            # Skip invalid version format
+                            print(f"Skipping invalid version format in key {key}: {e}")
                             continue
 
                     if not versions:
