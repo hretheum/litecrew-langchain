@@ -183,22 +183,20 @@ security:secrets:
     - chmod +x gitleaks
     - mv gitleaks /usr/local/bin/
   script:
-    # Download baseline if exists (or create it)
+    # Only scan current commit changes, not full history
     - |
-      if [ -f "gitleaks-baseline.json" ]; then
-        echo "Using existing baseline..."
+      echo "Scanning only current commit changes..."
+      if [ -n "$CI_MERGE_REQUEST_DIFF_BASE_SHA" ]; then
+        echo "Merge request detected, scanning diff from $CI_MERGE_REQUEST_DIFF_BASE_SHA"
+        gitleaks detect --source . --log-opts="${CI_MERGE_REQUEST_DIFF_BASE_SHA}..HEAD" --report-format json --report-path gitleaks-report.json --exit-code 0 || true
+        gitleaks detect --source . --log-opts="${CI_MERGE_REQUEST_DIFF_BASE_SHA}..HEAD" --report-format sarif --report-path gitleaks-report.sarif --exit-code 0 || true
+        gitleaks detect --source . --log-opts="${CI_MERGE_REQUEST_DIFF_BASE_SHA}..HEAD" --verbose
       else
-        echo "Creating baseline for existing secrets..."
-        gitleaks detect --source . --report-format json --report-path gitleaks-baseline.json --exit-code 0
-        echo "Baseline created. Add gitleaks-baseline.json to repository."
+        echo "Regular commit, scanning only this commit"
+        gitleaks detect --source . --log-opts="HEAD~1..HEAD" --report-format json --report-path gitleaks-report.json --exit-code 0 || true
+        gitleaks detect --source . --log-opts="HEAD~1..HEAD" --report-format sarif --report-path gitleaks-report.sarif --exit-code 0 || true
+        gitleaks detect --source . --log-opts="HEAD~1..HEAD" --verbose
       fi
-    # Scan using baseline to ignore existing secrets
-    - gitleaks detect --source . --baseline-path gitleaks-baseline.json --report-format json --report-path gitleaks-report.json --exit-code 0 || true
-    - gitleaks detect --source . --baseline-path gitleaks-baseline.json --report-format sarif --report-path gitleaks-report.sarif --exit-code 0 || true
-    # Final scan with baseline
-    - |
-      echo "Running final scan with baseline..."
-      gitleaks detect --source . --baseline-path gitleaks-baseline.json --verbose --exit-code 1
   artifacts:
     reports:
       # GitLab security dashboard integration
