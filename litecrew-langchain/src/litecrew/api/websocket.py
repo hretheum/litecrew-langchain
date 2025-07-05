@@ -42,13 +42,13 @@ class ConnectionManager:
                     break
 
     async def broadcast(self, message: str):
-        for connection in self.active_connections:
+        for connection in self.active_connections[:]:  # Copy list to avoid modification during iteration
             try:
                 await connection.send_text(message)
             except (ConnectionError, RuntimeError, WebSocketDisconnect):
-                # Client disconnected, stop trying to send
-                if execution_id in cls._connections:
-                    del cls._connections[execution_id]
+                # Client disconnected, remove from active connections
+                if connection in self.active_connections:
+                    self.active_connections.remove(connection)
 
 
 manager = ConnectionManager()
