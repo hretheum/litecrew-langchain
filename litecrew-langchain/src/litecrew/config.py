@@ -39,9 +39,13 @@ class Config:
 
     # Security
     # Use environment-specific defaults
-    _DEFAULT_SECRET = "dev-secret-" + os.urandom(16).hex() if ENVIRONMENT != "production" else None
-    _DEFAULT_JWT = "dev-jwt-" + os.urandom(16).hex() if ENVIRONMENT != "production" else None
-    
+    _DEFAULT_SECRET = (
+        "dev-secret-" + os.urandom(16).hex() if ENVIRONMENT != "production" else None
+    )
+    _DEFAULT_JWT = (
+        "dev-jwt-" + os.urandom(16).hex() if ENVIRONMENT != "production" else None
+    )
+
     SECRET_KEY = os.getenv("SECRET_KEY", _DEFAULT_SECRET)
     JWT_SECRET = os.getenv("JWT_SECRET", _DEFAULT_JWT)
 

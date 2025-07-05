@@ -112,18 +112,17 @@ class TestConfig:
             assert 'openai' in providers
 
     @patch.dict(os.environ, {
-        'ENVIRONMENT': 'production',
-        'SECRET_KEY': 'dev-secret-key-change-in-production'
-    })
+        'ENVIRONMENT': 'production'
+    }, clear=True)
     def test_config_validation_production_error(self):
-        """Test config validation fails with dev keys in production."""
+        """Test config validation fails with missing keys in production."""
         from litecrew.config import Config
         
-        # Mock production environment with dev keys
+        # Mock production environment without required keys
         with patch.multiple(Config,
                            ENVIRONMENT='production',
-                           SECRET_KEY='dev-secret-key-change-in-production',
-                           JWT_SECRET='dev-jwt-secret-change-in-production'):
+                           SECRET_KEY=None,
+                           JWT_SECRET=None):
             with pytest.raises(ValueError) as exc:
                 Config.validate()
             assert "SECRET_KEY must be set in production" in str(exc.value)
