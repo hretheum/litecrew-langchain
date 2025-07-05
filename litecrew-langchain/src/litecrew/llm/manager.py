@@ -101,7 +101,11 @@ class LLMManager:
             kwargs["max_tokens"] = config.max_tokens
         if config.api_key:
             # Convert string to SecretStr for LangChain
-            kwargs["openai_api_key"] = SecretStr(config.api_key) if hasattr(SecretStr, '__init__') else config.api_key
+            kwargs["openai_api_key"] = (
+                SecretStr(config.api_key)
+                if hasattr(SecretStr, "__init__")
+                else config.api_key
+            )
         if config.api_base:
             kwargs["openai_api_base"] = config.api_base
         if config.streaming:
@@ -132,7 +136,11 @@ class LLMManager:
         if config.max_tokens:
             kwargs["max_tokens_to_sample"] = config.max_tokens
         if config.api_key:
-            kwargs["anthropic_api_key"] = SecretStr(config.api_key) if hasattr(SecretStr, '__init__') else config.api_key
+            kwargs["anthropic_api_key"] = (
+                SecretStr(config.api_key)
+                if hasattr(SecretStr, "__init__")
+                else config.api_key
+            )
         if config.streaming:
             kwargs["streaming"] = config.streaming
 
@@ -157,7 +165,11 @@ class LLMManager:
         if config.max_tokens:
             kwargs["max_tokens"] = config.max_tokens
         if config.api_key:
-            kwargs["groq_api_key"] = SecretStr(config.api_key) if hasattr(SecretStr, '__init__') else config.api_key
+            kwargs["groq_api_key"] = (
+                SecretStr(config.api_key)
+                if hasattr(SecretStr, "__init__")
+                else config.api_key
+            )
         if config.streaming:
             kwargs["streaming"] = config.streaming
 
@@ -201,7 +213,11 @@ class LLMManager:
         if config.max_tokens:
             kwargs["max_tokens"] = config.max_tokens
         if config.api_key:
-            kwargs["cohere_api_key"] = SecretStr(config.api_key) if hasattr(SecretStr, '__init__') else config.api_key
+            kwargs["cohere_api_key"] = (
+                SecretStr(config.api_key)
+                if hasattr(SecretStr, "__init__")
+                else config.api_key
+            )
 
         return ChatCohere(**kwargs)
 
@@ -219,7 +235,7 @@ class LLMManager:
             "temperature": config.temperature,
         }
         kwargs.update(config.extra_params)
-        
+
         return AzureChatOpenAI(**kwargs)
 
     def _create_bedrock(self, config: LLMConfig) -> Any:
@@ -236,7 +252,7 @@ class LLMManager:
             "model_kwargs": {"temperature": config.temperature},
         }
         kwargs.update(config.extra_params)
-        
+
         return ChatBedrock(**kwargs)
 
     def _create_vertexai(self, config: LLMConfig) -> Any:
@@ -253,7 +269,7 @@ class LLMManager:
             "temperature": config.temperature,
         }
         kwargs.update(config.extra_params)
-        
+
         return ChatVertexAI(**kwargs)
 
     def _create_huggingface(self, config: LLMConfig) -> Any:
@@ -270,7 +286,7 @@ class LLMManager:
             "model_kwargs": {"temperature": config.temperature},
         }
         kwargs.update(config.extra_params)
-        
+
         return ChatHuggingFace(**kwargs)
 
     def _create_together(self, config: LLMConfig) -> Any:
@@ -288,12 +304,16 @@ class LLMManager:
             "model": config.model,
             "temperature": config.temperature,
         }
-        
+
         if config.api_key:
-            kwargs["together_api_key"] = SecretStr(config.api_key) if hasattr(SecretStr, '__init__') else config.api_key
-            
+            kwargs["together_api_key"] = (
+                SecretStr(config.api_key)
+                if hasattr(SecretStr, "__init__")
+                else config.api_key
+            )
+
         kwargs.update(config.extra_params)
-        
+
         return ChatTogether(**kwargs)
 
     def get_metrics(self) -> Dict[str, Any]:

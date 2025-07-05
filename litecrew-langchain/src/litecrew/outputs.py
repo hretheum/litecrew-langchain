@@ -8,8 +8,12 @@ from dataclasses import fields, is_dataclass
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Type, Union, get_type_hints
-from xml.dom import minidom  # nosec B408 - Used for pretty printing only, not parsing untrusted input
-from xml.etree import ElementTree as ET  # nosec B405 - Used for structured output, not untrusted input
+from xml.dom import (
+    minidom,
+)  # nosec B408 - Used for pretty printing only, not parsing untrusted input
+from xml.etree import (
+    ElementTree as ET,
+)  # nosec B405 - Used for structured output, not untrusted input
 
 import yaml  # type: ignore[import-untyped]
 
@@ -219,7 +223,10 @@ Example format:
             elif field.default is not field.default_factory:
                 # Use default value
                 fixed_data[field.name] = field.default
-            elif hasattr(field, 'default_factory') and field.default_factory is not field.default_factory:
+            elif (
+                hasattr(field, "default_factory")
+                and field.default_factory is not field.default_factory
+            ):
                 # Use default factory
                 fixed_data[field.name] = field.default_factory()  # type: ignore[misc]
 
@@ -420,10 +427,14 @@ class OutputFormatter:
 
         # Pretty print
         xml_str = ET.tostring(root, encoding="unicode")
-        dom = minidom.parseString(xml_str)  # nosec B318 - Parsing our own generated XML, not untrusted input
+        dom = minidom.parseString(
+            xml_str
+        )  # nosec B318 - Parsing our own generated XML, not untrusted input
         return dom.toprettyxml(indent="  ").split("\n", 1)[1]  # Skip XML declaration
 
-    def _dict_to_xml(self, data: Any, parent: ET.Element, name: Optional[str] = None) -> None:
+    def _dict_to_xml(
+        self, data: Any, parent: ET.Element, name: Optional[str] = None
+    ) -> None:
         """Convert dict to XML elements."""
         if isinstance(data, dict):
             for key, value in data.items():

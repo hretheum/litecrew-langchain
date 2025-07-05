@@ -4,13 +4,14 @@ import json
 import sys
 import time
 from datetime import datetime, timedelta
+from typing import Any, Dict, List
 
 import click
 import httpx
 
 
 @click.group(name="debug")
-def debug_group():
+def debug_group() -> None:
     """Debug and troubleshooting commands."""
     pass
 
@@ -24,7 +25,7 @@ def debug_group():
 )
 @click.option("--follow", "-f", is_flag=True, help="Follow log output in real-time")
 @click.pass_context
-def logs(ctx, tail, level, follow):
+def logs(ctx: click.Context, tail: int, level: str | None, follow: bool) -> None:
     """View system logs.
 
     Note: This is a mock implementation. In production, this would
@@ -33,7 +34,7 @@ def logs(ctx, tail, level, follow):
     verbose = ctx.obj["verbose"]  # noqa: F841
 
     # Mock log data (in production, this would read from actual log sources)
-    mock_logs = [
+    mock_logs: List[Dict[str, Any]] = [
         {
             "timestamp": datetime.now() - timedelta(minutes=5),
             "level": "info",
@@ -108,7 +109,7 @@ def logs(ctx, tail, level, follow):
             while True:
                 time.sleep(2)
                 # In production, this would tail actual log files
-                new_entry = {
+                new_entry: Dict[str, Any] = {
                     "timestamp": datetime.now(),
                     "level": "info",
                     "message": f"Heartbeat check at {datetime.now().strftime('%H:%M:%S')}",
@@ -129,7 +130,7 @@ def logs(ctx, tail, level, follow):
 
 @debug_group.command()
 @click.pass_context
-def connectivity(ctx):
+def connectivity(ctx: click.Context) -> None:
     """Test connectivity to all system components."""
     api_url = ctx.obj["api_url"]
     verbose = ctx.obj["verbose"]  # noqa: F841
@@ -205,7 +206,7 @@ def connectivity(ctx):
 @debug_group.command()
 @click.argument("crew_id")
 @click.pass_context
-def trace(ctx, crew_id):
+def trace(ctx: click.Context, crew_id: str) -> None:
     """Trace crew execution flow.
 
     CREW_ID: The ID of the crew to trace
@@ -301,7 +302,7 @@ def trace(ctx, crew_id):
 
 @debug_group.command()
 @click.pass_context
-def performance(ctx):
+def performance(ctx: click.Context) -> None:
     """Analyze system performance."""
     api_url = ctx.obj["api_url"]
 

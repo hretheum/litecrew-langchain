@@ -26,7 +26,13 @@ def task_group() -> None:
     help="Task priority",
 )
 @click.pass_context
-def run(ctx: click.Context, description: str, crew_id: Optional[str], expected_output: Optional[str], priority: str) -> None:
+def run(
+    ctx: click.Context,
+    description: str,
+    crew_id: Optional[str],
+    expected_output: Optional[str],
+    priority: str,
+) -> None:
     """Run a single task.
 
     DESCRIPTION: The task description to execute
@@ -191,7 +197,9 @@ def status(ctx: click.Context, task_id: str, wait: bool, timeout: int) -> None:
 @click.option("--status", help="Filter tasks by status")
 @click.option("--limit", default=10, help="Maximum number of tasks to show")
 @click.pass_context
-def list(ctx: click.Context, crew_id: Optional[str], status: Optional[str], limit: int) -> None:
+def list(
+    ctx: click.Context, crew_id: Optional[str], status: Optional[str], limit: int
+) -> None:
     """List tasks."""
     api_url = ctx.obj["api_url"]
 

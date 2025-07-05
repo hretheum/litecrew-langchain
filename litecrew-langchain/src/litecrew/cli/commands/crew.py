@@ -20,7 +20,9 @@ def crew_group() -> None:
 @click.option("--name", "-n", help="Override crew name")
 @click.option("--dry-run", is_flag=True, help="Validate configuration without creating")
 @click.pass_context
-def create(ctx: click.Context, crew_file: str, name: Optional[str], dry_run: bool) -> None:
+def create(
+    ctx: click.Context, crew_file: str, name: Optional[str], dry_run: bool
+) -> None:
     """Create a new crew from configuration file.
 
     CREW_FILE: Path to YAML or JSON file containing crew configuration
@@ -183,7 +185,13 @@ def list(ctx: click.Context, output_format: str, name_filter: Optional[str]) -> 
 @click.option("--async", "async_exec", is_flag=True, help="Execute asynchronously")
 @click.option("--wait", is_flag=True, help="Wait for async execution to complete")
 @click.pass_context
-def execute(ctx: click.Context, crew_id: str, inputs: Optional[str], async_exec: bool, wait: bool) -> None:
+def execute(
+    ctx: click.Context,
+    crew_id: str,
+    inputs: Optional[str],
+    async_exec: bool,
+    wait: bool,
+) -> None:
     """Execute a crew.
 
     CREW_ID: The ID of the crew to execute

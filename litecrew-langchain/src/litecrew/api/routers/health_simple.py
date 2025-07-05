@@ -21,21 +21,19 @@ class HealthStatus(BaseModel):
 
 
 @router.get("/health", response_model=HealthStatus)
-async def health_check():
+async def health_check() -> HealthStatus:
     """Simple health check endpoint."""
-    health_data = {
-        "status": "healthy",
-        "version": "0.6.0",
-        "environment": "production",
-        "metrics": {
+    return HealthStatus(
+        status="healthy",
+        version="0.6.0",
+        environment="production",
+        metrics={
             "uptime": "N/A",
             "memory_usage": "N/A",
             "cpu_percent": "N/A",
             "active_crews": 0,
             "total_tasks": 0,
         },
-        "timestamp": datetime.now().isoformat(),
-        "memory_mb": 50,  # Estimated for test environment
-    }
-
-    return HealthStatus(**health_data)
+        timestamp=datetime.now().isoformat(),
+        memory_mb=50.0,  # Estimated for test environment
+    )

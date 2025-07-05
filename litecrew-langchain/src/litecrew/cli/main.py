@@ -21,7 +21,7 @@ from .commands.task import task_group
 @click.option("--verbose", "-v", is_flag=True, help="Enable verbose output")
 @click.option("--api-url", default="http://localhost:8000", help="API server URL")
 @click.pass_context
-def cli(ctx, config, verbose, api_url):
+def cli(ctx: click.Context, config: str | None, verbose: bool, api_url: str) -> None:
     """🚀 LiteCrew - Lightweight AI Agent Orchestration CLI
 
     A fast, efficient alternative to CrewAI built on LangChain.
@@ -73,7 +73,7 @@ cli.add_command(export_group)
 
 @cli.command()
 @click.pass_context
-def status(ctx):
+def status(ctx: click.Context) -> None:
     """Show LiteCrew system status."""
     import httpx
 
@@ -135,7 +135,7 @@ def status(ctx):
 
 @cli.command()
 @click.pass_context
-def benchmark(ctx):
+def benchmark(ctx: click.Context) -> None:
     """Run performance benchmarks."""
     import statistics
 

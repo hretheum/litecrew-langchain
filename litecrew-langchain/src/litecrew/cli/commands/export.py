@@ -28,7 +28,13 @@ def export_group() -> None:
 @click.option("--output", "-o", type=click.Path(), help="Output file path")
 @click.option("--include-metadata", is_flag=True, help="Include execution metadata")
 @click.pass_context
-def execution(ctx: click.Context, execution_id: str, output_format: str, output: Optional[str], include_metadata: bool) -> None:
+def execution(
+    ctx: click.Context,
+    execution_id: str,
+    output_format: str,
+    output: Optional[str],
+    include_metadata: bool,
+) -> None:
     """Export execution results.
 
     EXECUTION_ID: The ID of the execution to export
@@ -116,7 +122,13 @@ def execution(ctx: click.Context, execution_id: str, output_format: str, output:
 @click.option("--output", "-o", type=click.Path(), help="Output file path")
 @click.option("--limit", default=100, help="Maximum number of executions to export")
 @click.pass_context
-def executions(ctx: click.Context, crew_id: Optional[str], output_format: str, output: Optional[str], limit: int) -> None:
+def executions(
+    ctx: click.Context,
+    crew_id: Optional[str],
+    output_format: str,
+    output: Optional[str],
+    limit: int,
+) -> None:
     """Export multiple execution results."""
     api_url = ctx.obj["api_url"]
     verbose = ctx.obj["verbose"]
@@ -192,7 +204,9 @@ def executions(ctx: click.Context, crew_id: Optional[str], output_format: str, o
     "--include-config", is_flag=True, help="Include crew configuration details"
 )
 @click.pass_context
-def crews(ctx: click.Context, output_format: str, output: Optional[str], include_config: bool) -> None:
+def crews(
+    ctx: click.Context, output_format: str, output: Optional[str], include_config: bool
+) -> None:
     """Export crew definitions."""
     api_url = ctx.obj["api_url"]
     verbose = ctx.obj["verbose"]

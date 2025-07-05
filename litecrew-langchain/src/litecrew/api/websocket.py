@@ -15,7 +15,9 @@ class ConnectionManager:
         self.active_connections: List[WebSocket] = []
         self.crew_connections: Dict[str, List[WebSocket]] = {}
 
-    async def connect(self, websocket: WebSocket, crew_id: Optional[str] = None) -> None:
+    async def connect(
+        self, websocket: WebSocket, crew_id: Optional[str] = None
+    ) -> None:
         await websocket.accept()
         self.active_connections.append(websocket)
         if crew_id:
