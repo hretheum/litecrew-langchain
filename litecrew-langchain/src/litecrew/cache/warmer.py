@@ -117,8 +117,10 @@ class CacheWarmer:
                         try:
                             task["func"]()
                             task["last_run"] = current_time
-                        except Exception:
-                            pass
+                        except (ValueError, RuntimeError, AttributeError) as e:
+                            # Log warming failure but continue
+                            import logging
+                            logging.warning(f"Cache warming task failed: {e}")
                 time.sleep(1)
 
         # Run in background thread
@@ -152,7 +154,10 @@ class CacheWarmer:
                     value = data_source(key)
                     self.cache.set(key, value, level=2)
                     warmed += 1
-                except Exception:
+                except (KeyError, ValueError, TypeError) as e:
+                    # Skip key if warming fails
+                    if self._verbose:
+                        print(f"Failed to warm key {key}: {e}")
                     continue
 
         return warmed

@@ -9,6 +9,8 @@ from dataclasses import dataclass
 from threading import RLock
 from typing import Any, Dict, Optional
 
+import redis
+
 
 @dataclass
 class CacheEntry:
@@ -177,8 +179,9 @@ class RedisCache:
                 self._client.setex(key, ttl, serialized)
             else:
                 self._client.set(key, serialized)
-        except Exception:
-            pass  # Fail silently for cache
+        except (redis.RedisError, ConnectionError, TimeoutError):
+            # Fail silently for cache operations - it's non-critical
+            pass
 
     def delete(self, key: str) -> None:
         """Delete key from cache."""
@@ -188,7 +191,8 @@ class RedisCache:
 
         try:
             self._client.delete(key)
-        except Exception:
+        except (redis.RedisError, ConnectionError, KeyError):
+            # Ignore cache deletion errors - key might not exist
             pass
 
     def clear(self) -> None:
@@ -199,7 +203,8 @@ class RedisCache:
 
         try:
             self._client.flushdb()
-        except Exception:
+        except (redis.RedisError, ConnectionError, KeyError):
+            # Ignore cache deletion errors - key might not exist
             pass
 
     def get_stats(self) -> Dict[str, Any]:

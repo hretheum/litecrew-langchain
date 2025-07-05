@@ -37,15 +37,18 @@ class ConnectionManager:
             for connection in self.crew_connections[crew_id]:
                 try:
                     await connection.send_text(message)
-                except Exception:
-                    pass
+                except (ConnectionError, RuntimeError, WebSocketDisconnect):
+                    # Connection closed, skip sending
+                    break
 
     async def broadcast(self, message: str):
         for connection in self.active_connections:
             try:
                 await connection.send_text(message)
-            except Exception:
-                pass
+            except (ConnectionError, RuntimeError, WebSocketDisconnect):
+                # Client disconnected, stop trying to send
+                if execution_id in cls._connections:
+                    del cls._connections[execution_id]
 
 
 manager = ConnectionManager()

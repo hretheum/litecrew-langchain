@@ -50,6 +50,11 @@ dmypy.json
 .env.production
 !.env.example
 
+# Security - never commit these
+gitlab-ci-variables.md
+*-secrets.md
+*-credentials.md
+
 # Logs
 *.log
 logs/

@@ -173,7 +173,8 @@ class StateManager:
                         try:
                             v = int(key.split("_v")[-1])
                             versions.append(v)
-                        except Exception:
+                        except (IOError, json.JSONDecodeError, ValueError):
+                            # Skip invalid or corrupted version file
                             continue
 
                     if not versions:

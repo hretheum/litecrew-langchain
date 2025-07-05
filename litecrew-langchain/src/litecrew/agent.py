@@ -3,6 +3,7 @@ LiteAgent - CrewAI-compatible agent built on LangChain
 """
 
 import asyncio
+import json
 import time
 from pathlib import Path
 from typing import (
@@ -415,7 +416,10 @@ Question: {{input}}
                         temperature=llm_config.temperature,
                     )
                     return self._llm_manager.create_llm(fallback_config)
-                except Exception:
+                except (ValueError, KeyError, AttributeError) as e:
+                    # Skip to next fallback provider if creation fails
+                    if self.verbose:
+                        print(f"Failed to create LLM with {provider}: {e}")
                     continue
 
             # Final fallback to fake model
@@ -659,7 +663,10 @@ Question: {{input}}
                                 return data
                         else:
                             return data
-                    except Exception:
+                    except (json.JSONDecodeError, KeyError, TypeError):
+                        # Skip invalid JSON response
+                        if self.verbose:
+                            print("Failed to parse LLM response as JSON")
                         pass
 
         return response
