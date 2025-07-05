@@ -333,7 +333,8 @@ deploy:production:
       echo "🚀 Starting deployment..."
       
       # Create directories if needed
-      mkdir -p /opt/litecrewai/litecrew-langchain
+      sudo mkdir -p /opt/litecrewai/litecrew-langchain
+      sudo chown -R litecrewai:litecrewai /opt/litecrewai
       cd /opt/litecrewai/litecrew-langchain
       
       # Login to GitLab registry
