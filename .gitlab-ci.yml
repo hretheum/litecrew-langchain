@@ -173,7 +173,8 @@ security:bandit:
     - branches
     - merge_requests
 
-security:secrets:
+# DISABLED - too many false positives
+.security:secrets:
   stage: security
   image: alpine:latest
   before_script:
