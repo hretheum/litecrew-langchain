@@ -190,7 +190,7 @@ class RedisCache:
         try:
             self._client.delete(key)
         except Exception as e:
-            # Log error but don't fail the operation  
+            # Log error but don't fail the operation
             print(f"Failed to delete cache key {key}: {e}")
 
     def clear(self) -> None:

@@ -424,7 +424,9 @@ Question: {{input}}
                     return self._llm_manager.create_llm(fallback_config)
                 except Exception as fallback_error:
                     if self.verbose:
-                        print(f"Failed to create {fallback.value} LLM: {fallback_error}")
+                        print(
+                            f"Failed to create {fallback.value} LLM: {fallback_error}"
+                        )
                     continue
 
             # Final fallback to fake model

@@ -42,7 +42,8 @@ class ConnectionManager:
                 except Exception as e:
                     # Connection might be closed, remove it
                     print(f"Failed to send message to crew {crew_id}: {e}")
-                    self.crew_connections[crew_id].discard(connection)
+                    if connection in self.crew_connections[crew_id]:
+                        self.crew_connections[crew_id].remove(connection)
 
     async def broadcast(self, message: str) -> None:
         for connection in self.active_connections:
