@@ -5,6 +5,9 @@
 app/src/crewai/cli/authentication/constants.py
 app/tests/utilities/cassettes/test_crew_emits_end_task_event.yaml
 
+# Ignore entire app directory (old CrewAI code)
+app/
+
 # Example API key in security documentation
 d842f2a6b1d271e0971b119cf53e3f46b9713c47:litecrew-langchain/SECURITY.md:generic-api-key:10
 7edfc3253f6bbd53b943a1b3e34df5a31b310b2f:litecrew-langchain/SECURITY.md:generic-api-key:10
