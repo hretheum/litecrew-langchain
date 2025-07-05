@@ -27,7 +27,7 @@ class StateMigration:
 class MigrationChain:
     """Manages a chain of migrations."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.migrations: List[StateMigration] = []
 
     def add_migration(self, migration: StateMigration) -> None:

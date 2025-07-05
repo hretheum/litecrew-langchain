@@ -25,7 +25,7 @@ class StateSnapshot:
     compression_type: CompressionType = CompressionType.ZLIB
     metadata: Dict[str, Any] = field(default_factory=dict)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Calculate checksum if not provided."""
         if self.checksum is None:
             self.checksum = self._calculate_checksum()
@@ -77,10 +77,10 @@ class StateSnapshot:
         """Restore crew state from snapshot."""
         if self.compressed:
             # Decompress data
-            decompressed = Compressor.decompress(self.data, self.compression_type)
+            decompressed = Compressor.decompress(self.data, self.compression_type)  # type: ignore[arg-type]
             data = json.loads(decompressed.decode("utf-8"))
         else:
-            data = self.data
+            data = self.data  # type: ignore[assignment]
 
         return CrewState.from_dict(data)
 
@@ -100,7 +100,7 @@ class StateSnapshot:
         """Convert snapshot to dictionary."""
         # Handle binary data for JSON serialization
         if isinstance(self.data, bytes):
-            data_repr = self.data.hex()
+            data_repr: Union[str, Dict[str, Any]] = self.data.hex()
         else:
             data_repr = self.data
 
