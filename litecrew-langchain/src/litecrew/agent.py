@@ -422,7 +422,9 @@ Question: {{input}}
                         temperature=llm_config.temperature,
                     )
                     return self._llm_manager.create_llm(fallback_config)
-                except Exception:
+                except Exception as fallback_error:
+                    if self.verbose:
+                        print(f"Failed to create {fallback.value} LLM: {fallback_error}")
                     continue
 
             # Final fallback to fake model
@@ -666,8 +668,9 @@ Question: {{input}}
                                 return data
                         else:
                             return data
-                    except Exception:
-                        pass
+                    except Exception as fix_error:
+                        if self.verbose:
+                            print(f"Failed to fix JSON output: {fix_error}")
 
         return response
 
