@@ -38,8 +38,16 @@ class Config:
     REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 
     # Security
-    SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret-key-change-in-production")
-    JWT_SECRET = os.getenv("JWT_SECRET", "dev-jwt-secret-change-in-production")
+    # Use environment-specific defaults
+    _DEFAULT_SECRET = (
+        "dev-secret-" + os.urandom(16).hex() if ENVIRONMENT != "production" else None
+    )
+    _DEFAULT_JWT = (
+        "dev-jwt-" + os.urandom(16).hex() if ENVIRONMENT != "production" else None
+    )
+
+    SECRET_KEY = os.getenv("SECRET_KEY", _DEFAULT_SECRET)
+    JWT_SECRET = os.getenv("JWT_SECRET", _DEFAULT_JWT)
 
     # Additional providers
     AZURE_OPENAI_API_KEY = os.getenv("AZURE_OPENAI_API_KEY")
@@ -49,21 +57,15 @@ class Config:
     TOGETHER_API_KEY = os.getenv("TOGETHER_API_KEY")
 
     @classmethod
-    def validate(cls):
+    def validate(cls) -> None:
         """Validate required configuration."""
         errors = []
 
         # Check required API keys based on environment
         if cls.ENVIRONMENT == "production":
-            if (
-                not cls.SECRET_KEY
-                or cls.SECRET_KEY == "dev-secret-key-change-in-production"
-            ):
+            if not cls.SECRET_KEY:
                 errors.append("SECRET_KEY must be set in production")
-            if (
-                not cls.JWT_SECRET
-                or cls.JWT_SECRET == "dev-jwt-secret-change-in-production"
-            ):
+            if not cls.JWT_SECRET:
                 errors.append("JWT_SECRET must be set in production")
 
         # Warn about missing API keys

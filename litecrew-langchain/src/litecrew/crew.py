@@ -112,7 +112,7 @@ class LiteCrew:
                 if not agent.event_emitter:
                     agent.event_emitter = self.event_emitter
 
-    def _validate_setup(self):
+    def _validate_setup(self) -> None:
         """Validate crew configuration."""
         if not self.agents:
             raise ValueError("Crew must have at least one agent")
@@ -128,7 +128,7 @@ class LiteCrew:
                 backstory="Experienced project manager skilled at delegation",
             )
 
-    def _auto_assign_tasks(self):
+    def _auto_assign_tasks(self) -> None:
         """Auto-assign tasks to agents if not assigned."""
         unassigned_tasks = [task for task in self.tasks if not task.agent]
 
@@ -137,17 +137,18 @@ class LiteCrew:
             for i, task in enumerate(unassigned_tasks):
                 task.agent = self.agents[i % len(self.agents)]
 
-    def _setup_delegation(self):
+    def _setup_delegation(self) -> None:
         """Setup delegation tools for agents."""
         from litecrew.tools import DelegationTool
 
-        delegation_tool = DelegationTool(self.agents)
+        # Cast is safe here since Agent and LiteAgent are the same type
+        delegation_tool = DelegationTool(self.agents)  # type: ignore[arg-type]
 
         for agent in self.agents:
             if agent.allow_delegation:
                 agent.tools.append(delegation_tool)
 
-    def _setup_shared_memory(self):
+    def _setup_shared_memory(self) -> None:
         """Setup shared memory for crew."""
         self._shared_memory = ConversationMemory()
 
@@ -167,7 +168,7 @@ class LiteCrew:
     def get_memory_context(self) -> str:
         """Get shared memory context."""
         if hasattr(self, "_shared_memory"):
-            return self._shared_memory.build_context()
+            return str(self._shared_memory.build_context())
         return ""
 
     def kickoff(self, inputs: Optional[Dict[str, Any]] = None) -> CrewOutput:
@@ -238,7 +239,7 @@ class LiteCrew:
         self, inputs: Optional[Dict[str, Any]] = None
     ) -> CrewOutput:
         """Execute tasks sequentially."""
-        outputs = []
+        outputs: List[TaskOutput] = []
 
         for i, task in enumerate(self.tasks):
             if self.verbose:
@@ -379,7 +380,7 @@ Respond with just the agent's role."""
         self, inputs: Optional[Dict[str, Any]] = None
     ) -> CrewOutput:
         """Execute tasks sequentially using async."""
-        outputs = []
+        outputs: List[TaskOutput] = []
 
         for i, task in enumerate(self.tasks):
             if self.verbose:
@@ -388,7 +389,7 @@ Respond with just the agent's role."""
                 )
 
             # Execute task asynchronously
-            if hasattr(task.agent, "aexecute"):
+            if task.agent and hasattr(task.agent, "aexecute"):
                 output_text = await task.agent.aexecute(
                     task.description, "\n".join([o.raw for o in outputs])
                 )
@@ -398,9 +399,7 @@ Respond with just the agent's role."""
                 output_text = await loop.run_in_executor(None, task.execute, inputs)
 
             output = TaskOutput(
-                raw=output_text if isinstance(output_text, str) else output_text.raw,
-                agent=task.agent.role,
-                task=task.description,
+                raw=output_text if isinstance(output_text, str) else output_text.raw
             )
             outputs.append(output)
 

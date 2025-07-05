@@ -21,8 +21,8 @@ class DelegationTool(Tool):
             agents: List of agents that can be delegated to
         """
         # Store agents in a way that works with Pydantic models
-        agents_dict = {agent.role: agent for agent in agents}
-        
+        agents_dict = {getattr(agent, "role", "Unknown"): agent for agent in agents}
+
         super().__init__(
             name="delegate_task",
             description=f"Delegate a task to another agent. Available agents: {', '.join(agents_dict.keys())}. Input format: 'Ask the [Role] to [task description]'",

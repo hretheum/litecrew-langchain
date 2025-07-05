@@ -3,7 +3,7 @@
 import csv
 import json
 import sys
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 import click
 import httpx
@@ -11,7 +11,7 @@ import yaml
 
 
 @click.group(name="export")
-def export_group():
+def export_group() -> None:
     """Export results and data in various formats."""
     pass
 
@@ -28,7 +28,13 @@ def export_group():
 @click.option("--output", "-o", type=click.Path(), help="Output file path")
 @click.option("--include-metadata", is_flag=True, help="Include execution metadata")
 @click.pass_context
-def execution(ctx, execution_id, output_format, output, include_metadata):
+def execution(
+    ctx: click.Context,
+    execution_id: str,
+    output_format: str,
+    output: Optional[str],
+    include_metadata: bool,
+) -> None:
     """Export execution results.
 
     EXECUTION_ID: The ID of the execution to export
@@ -116,7 +122,13 @@ def execution(ctx, execution_id, output_format, output, include_metadata):
 @click.option("--output", "-o", type=click.Path(), help="Output file path")
 @click.option("--limit", default=100, help="Maximum number of executions to export")
 @click.pass_context
-def executions(ctx, crew_id, output_format, output, limit):
+def executions(
+    ctx: click.Context,
+    crew_id: Optional[str],
+    output_format: str,
+    output: Optional[str],
+    limit: int,
+) -> None:
     """Export multiple execution results."""
     api_url = ctx.obj["api_url"]
     verbose = ctx.obj["verbose"]
@@ -192,7 +204,9 @@ def executions(ctx, crew_id, output_format, output, limit):
     "--include-config", is_flag=True, help="Include crew configuration details"
 )
 @click.pass_context
-def crews(ctx, output_format, output, include_config):
+def crews(
+    ctx: click.Context, output_format: str, output: Optional[str], include_config: bool
+) -> None:
     """Export crew definitions."""
     api_url = ctx.obj["api_url"]
     verbose = ctx.obj["verbose"]
@@ -266,7 +280,7 @@ def crews(ctx, output_format, output, include_config):
 @export_group.command()
 @click.option("--output", "-o", type=click.Path(), help="Output file path")
 @click.pass_context
-def metrics(ctx, output):
+def metrics(ctx: click.Context, output: Optional[str]) -> None:
     """Export system metrics and performance data."""
     api_url = ctx.obj["api_url"]
     verbose = ctx.obj["verbose"]
@@ -348,7 +362,7 @@ def _flatten_dict(
     d: Dict[str, Any], parent_key: str = "", sep: str = "_"
 ) -> Dict[str, Any]:
     """Flatten nested dictionary for CSV export."""
-    items = []
+    items: List[Tuple[str, Any]] = []
     for k, v in d.items():
         new_key = f"{parent_key}{sep}{k}" if parent_key else k
         if isinstance(v, dict):
@@ -370,13 +384,13 @@ def _dict_to_csv(data: List[Dict[str, Any]]) -> str:
     output = io.StringIO()
 
     # Get all possible field names
-    fieldnames = set()
+    fieldnames: Set[str] = set()
     for row in data:
         fieldnames.update(row.keys())
 
-    fieldnames = sorted(list(fieldnames))
+    fieldnames_list = sorted(list(fieldnames))
 
-    writer = csv.DictWriter(output, fieldnames=fieldnames)
+    writer = csv.DictWriter(output, fieldnames=fieldnames_list)
     writer.writeheader()
     writer.writerows(data)
 

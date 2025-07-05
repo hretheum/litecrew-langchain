@@ -2,7 +2,7 @@
 
 import asyncio
 import json
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
@@ -11,11 +11,13 @@ router = APIRouter()
 
 # Connection manager
 class ConnectionManager:
-    def __init__(self):
+    def __init__(self) -> None:
         self.active_connections: List[WebSocket] = []
         self.crew_connections: Dict[str, List[WebSocket]] = {}
 
-    async def connect(self, websocket: WebSocket, crew_id: str = None):
+    async def connect(
+        self, websocket: WebSocket, crew_id: Optional[str] = None
+    ) -> None:
         await websocket.accept()
         self.active_connections.append(websocket)
         if crew_id:
@@ -23,36 +25,41 @@ class ConnectionManager:
                 self.crew_connections[crew_id] = []
             self.crew_connections[crew_id].append(websocket)
 
-    def disconnect(self, websocket: WebSocket, crew_id: str = None):
+    def disconnect(self, websocket: WebSocket, crew_id: Optional[str] = None) -> None:
         self.active_connections.remove(websocket)
         if crew_id and crew_id in self.crew_connections:
             if websocket in self.crew_connections[crew_id]:
                 self.crew_connections[crew_id].remove(websocket)
 
-    async def send_personal_message(self, message: str, websocket: WebSocket):
+    async def send_personal_message(self, message: str, websocket: WebSocket) -> None:
         await websocket.send_text(message)
 
-    async def send_crew_message(self, message: str, crew_id: str):
+    async def send_crew_message(self, message: str, crew_id: str) -> None:
         if crew_id in self.crew_connections:
             for connection in self.crew_connections[crew_id]:
                 try:
                     await connection.send_text(message)
-                except Exception:
-                    pass
+                except Exception as e:
+                    # Connection might be closed, remove it
+                    print(f"Failed to send message to crew {crew_id}: {e}")
+                    if connection in self.crew_connections[crew_id]:
+                        self.crew_connections[crew_id].remove(connection)
 
-    async def broadcast(self, message: str):
+    async def broadcast(self, message: str) -> None:
         for connection in self.active_connections:
             try:
                 await connection.send_text(message)
-            except Exception:
-                pass
+            except Exception as e:
+                # Connection might be closed, remove it
+                print(f"Failed to broadcast message: {e}")
+                self.active_connections.remove(connection)
 
 
 manager = ConnectionManager()
 
 
 @router.websocket("/ws")
-async def websocket_endpoint(websocket: WebSocket):
+async def websocket_endpoint(websocket: WebSocket) -> None:
     """Global WebSocket endpoint."""
     await manager.connect(websocket)
     try:
@@ -67,7 +74,7 @@ async def websocket_endpoint(websocket: WebSocket):
 
 
 @router.websocket("/ws/crews/{crew_id}")
-async def crew_websocket_endpoint(websocket: WebSocket, crew_id: str):
+async def crew_websocket_endpoint(websocket: WebSocket, crew_id: str) -> None:
     """Crew-specific WebSocket endpoint."""
     await manager.connect(websocket, crew_id)
     try:

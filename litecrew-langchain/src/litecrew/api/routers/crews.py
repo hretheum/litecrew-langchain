@@ -72,7 +72,7 @@ async def create_crew(crew_data: CrewCreate) -> CrewResponse:
         agents=crew_data.agents,
         tasks=crew_data.tasks,
         process=crew_data.process or "sequential",
-        created_at=crew_info["created_at"],
+        created_at=str(crew_info["created_at"]),
     )
 
 
@@ -84,7 +84,11 @@ async def get_crew(crew_id: str) -> CrewResponse:
     if not crew_info:
         raise HTTPException(status_code=404, detail="Crew not found")
 
-    return CrewResponse(**crew_info)
+    # Remove non-serializable fields before returning
+    response_data = {
+        k: v for k, v in crew_info.items() if k not in ["crew_instance", "_instance"]
+    }
+    return CrewResponse(**response_data)
 
 
 @router.get("/crews")
@@ -115,11 +119,15 @@ async def update_crew(crew_id: str, update_data: CrewUpdate) -> CrewResponse:
     storage = get_storage()
     await storage.store_crew(crew_id, crew_info)
 
-    return CrewResponse(**crew_info)
+    # Remove non-serializable fields before returning
+    response_data = {
+        k: v for k, v in crew_info.items() if k not in ["crew_instance", "_instance"]
+    }
+    return CrewResponse(**response_data)
 
 
 @router.delete("/crews/{crew_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_crew(crew_id: str):
+async def delete_crew(crew_id: str) -> None:
     """Delete a crew."""
     storage = get_storage()
     crew_info = await storage.get_crew(crew_id)

@@ -3,7 +3,7 @@ LLM Manager for creating and managing different LLM providers.
 """
 
 import time
-from typing import TYPE_CHECKING, Any, Dict, List
+from typing import TYPE_CHECKING, Any, Dict, List, cast
 
 from litecrew.llm.config import LLMConfig, LLMProvider
 
@@ -14,10 +14,10 @@ if TYPE_CHECKING:
 class LLMManager:
     """Manages LLM provider creation and switching."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize LLM manager."""
-        self._providers = {}
-        self._metrics = {
+        self._providers: Dict[str, Any] = {}
+        self._metrics: Dict[str, Any] = {
             "provider_switches": 0,
             "total_creations": 0,
             "creation_times": {},
@@ -70,7 +70,7 @@ class LLMManager:
                 self._metrics["creation_times"][config.provider.value] = []
             self._metrics["creation_times"][config.provider.value].append(creation_time)
 
-            return llm
+            return cast("BaseChatModel", llm)
 
         except ImportError as e:
             install_instructions = self._get_install_instructions(config.provider)
@@ -84,13 +84,15 @@ class LLMManager:
         """Create OpenAI LLM."""
         try:
             from langchain_openai import ChatOpenAI
+            from pydantic import SecretStr
         except ImportError:
             # Fallback for testing
             from unittest.mock import Mock
 
-            ChatOpenAI = Mock  # noqa: N806
+            ChatOpenAI = Mock  # type: ignore[misc]
+            SecretStr = str  # type: ignore[misc,assignment]
 
-        kwargs = {
+        kwargs: Dict[str, Any] = {
             "model": config.model,
             "temperature": config.temperature,
         }
@@ -98,7 +100,12 @@ class LLMManager:
         if config.max_tokens:
             kwargs["max_tokens"] = config.max_tokens
         if config.api_key:
-            kwargs["openai_api_key"] = config.api_key
+            # Convert string to SecretStr for LangChain
+            kwargs["openai_api_key"] = (
+                SecretStr(config.api_key)
+                if hasattr(SecretStr, "__init__")
+                else config.api_key
+            )
         if config.api_base:
             kwargs["openai_api_base"] = config.api_base
         if config.streaming:
@@ -114,12 +121,14 @@ class LLMManager:
         """Create Anthropic LLM."""
         try:
             from langchain_anthropic import ChatAnthropic
+            from pydantic import SecretStr
         except ImportError:
             from unittest.mock import Mock
 
-            ChatAnthropic = Mock  # noqa: N806
+            ChatAnthropic = Mock  # type: ignore[misc]
+            SecretStr = str  # type: ignore[misc,assignment]
 
-        kwargs = {
+        kwargs: Dict[str, Any] = {
             "model_name": config.model,
             "temperature": config.temperature,
         }
@@ -127,7 +136,11 @@ class LLMManager:
         if config.max_tokens:
             kwargs["max_tokens_to_sample"] = config.max_tokens
         if config.api_key:
-            kwargs["anthropic_api_key"] = config.api_key
+            kwargs["anthropic_api_key"] = (
+                SecretStr(config.api_key)
+                if hasattr(SecretStr, "__init__")
+                else config.api_key
+            )
         if config.streaming:
             kwargs["streaming"] = config.streaming
 
@@ -137,12 +150,14 @@ class LLMManager:
         """Create Groq LLM."""
         try:
             from langchain_groq import ChatGroq
+            from pydantic import SecretStr
         except ImportError:
             from unittest.mock import Mock
 
-            ChatGroq = Mock  # noqa: N806
+            ChatGroq = Mock  # type: ignore[misc]
+            SecretStr = str  # type: ignore[misc,assignment]
 
-        kwargs = {
+        kwargs: Dict[str, Any] = {
             "model_name": config.model,
             "temperature": config.temperature,
         }
@@ -150,7 +165,11 @@ class LLMManager:
         if config.max_tokens:
             kwargs["max_tokens"] = config.max_tokens
         if config.api_key:
-            kwargs["groq_api_key"] = config.api_key
+            kwargs["groq_api_key"] = (
+                SecretStr(config.api_key)
+                if hasattr(SecretStr, "__init__")
+                else config.api_key
+            )
         if config.streaming:
             kwargs["streaming"] = config.streaming
 
@@ -163,9 +182,9 @@ class LLMManager:
         except ImportError:
             from unittest.mock import Mock
 
-            ChatOllama = Mock  # noqa: N806
+            ChatOllama = Mock  # type: ignore[misc]
 
-        kwargs = {
+        kwargs: Dict[str, Any] = {
             "model": config.model,
             "temperature": config.temperature,
         }
@@ -179,12 +198,14 @@ class LLMManager:
         """Create Cohere LLM."""
         try:
             from langchain_cohere import ChatCohere
+            from pydantic import SecretStr
         except ImportError:
             from unittest.mock import Mock
 
-            ChatCohere = Mock  # noqa: N806
+            ChatCohere = Mock  # type: ignore[misc]
+            SecretStr = str  # type: ignore[misc,assignment]
 
-        kwargs = {
+        kwargs: Dict[str, Any] = {
             "model": config.model,
             "temperature": config.temperature,
         }
@@ -192,7 +213,11 @@ class LLMManager:
         if config.max_tokens:
             kwargs["max_tokens"] = config.max_tokens
         if config.api_key:
-            kwargs["cohere_api_key"] = config.api_key
+            kwargs["cohere_api_key"] = (
+                SecretStr(config.api_key)
+                if hasattr(SecretStr, "__init__")
+                else config.api_key
+            )
 
         return ChatCohere(**kwargs)
 
@@ -203,13 +228,15 @@ class LLMManager:
         except ImportError:
             from unittest.mock import Mock
 
-            AzureChatOpenAI = Mock  # noqa: N806
+            AzureChatOpenAI = Mock  # type: ignore[misc]
 
-        return AzureChatOpenAI(
-            deployment_name=config.model,
-            temperature=config.temperature,
-            **config.extra_params,
-        )
+        kwargs: Dict[str, Any] = {
+            "azure_deployment": config.model,
+            "temperature": config.temperature,
+        }
+        kwargs.update(config.extra_params)
+
+        return AzureChatOpenAI(**kwargs)
 
     def _create_bedrock(self, config: LLMConfig) -> Any:
         """Create AWS Bedrock LLM."""
@@ -218,13 +245,15 @@ class LLMManager:
         except ImportError:
             from unittest.mock import Mock
 
-            ChatBedrock = Mock  # noqa: N806
+            ChatBedrock = Mock  # type: ignore[misc]
 
-        return ChatBedrock(
-            model_id=config.model,
-            model_kwargs={"temperature": config.temperature},
-            **config.extra_params,
-        )
+        kwargs: Dict[str, Any] = {
+            "model_id": config.model,
+            "model_kwargs": {"temperature": config.temperature},
+        }
+        kwargs.update(config.extra_params)
+
+        return ChatBedrock(**kwargs)
 
     def _create_vertexai(self, config: LLMConfig) -> Any:
         """Create Google Vertex AI LLM."""
@@ -233,13 +262,15 @@ class LLMManager:
         except ImportError:
             from unittest.mock import Mock
 
-            ChatVertexAI = Mock  # noqa: N806
+            ChatVertexAI = Mock  # type: ignore[misc]
 
-        return ChatVertexAI(
-            model_name=config.model,
-            temperature=config.temperature,
-            **config.extra_params,
-        )
+        kwargs: Dict[str, Any] = {
+            "model_name": config.model,
+            "temperature": config.temperature,
+        }
+        kwargs.update(config.extra_params)
+
+        return ChatVertexAI(**kwargs)
 
     def _create_huggingface(self, config: LLMConfig) -> Any:
         """Create HuggingFace LLM."""
@@ -248,33 +279,46 @@ class LLMManager:
         except ImportError:
             from unittest.mock import Mock
 
-            ChatHuggingFace = Mock  # noqa: N806
+            ChatHuggingFace = Mock  # type: ignore[misc]
 
-        return ChatHuggingFace(
-            model_id=config.model,
-            model_kwargs={"temperature": config.temperature},
-            **config.extra_params,
-        )
+        kwargs: Dict[str, Any] = {
+            "model_id": config.model,
+            "model_kwargs": {"temperature": config.temperature},
+        }
+        kwargs.update(config.extra_params)
+
+        return ChatHuggingFace(**kwargs)
 
     def _create_together(self, config: LLMConfig) -> Any:
         """Create Together AI LLM."""
         try:
             from langchain_together import ChatTogether
+            from pydantic import SecretStr
         except ImportError:
             from unittest.mock import Mock
 
-            ChatTogether = Mock  # noqa: N806
+            ChatTogether = Mock  # type: ignore[misc]
+            SecretStr = str  # type: ignore[misc,assignment]
 
-        return ChatTogether(
-            model=config.model,
-            temperature=config.temperature,
-            together_api_key=config.api_key,
-            **config.extra_params,
-        )
+        kwargs: Dict[str, Any] = {
+            "model": config.model,
+            "temperature": config.temperature,
+        }
+
+        if config.api_key:
+            kwargs["together_api_key"] = (
+                SecretStr(config.api_key)
+                if hasattr(SecretStr, "__init__")
+                else config.api_key
+            )
+
+        kwargs.update(config.extra_params)
+
+        return ChatTogether(**kwargs)
 
     def get_metrics(self) -> Dict[str, Any]:
         """Get LLM manager metrics."""
-        return self._metrics.copy()
+        return cast(Dict[str, Any], self._metrics.copy())
 
     def _get_install_instructions(self, provider: LLMProvider) -> str:
         """Get installation instructions for a provider."""

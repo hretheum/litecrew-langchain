@@ -20,7 +20,7 @@ class ResultVersion:
     checksum: Optional[str] = None
     metadata: Dict[str, Any] = field(default_factory=dict)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Calculate checksum if not provided."""
         if self.checksum is None:
             self.checksum = self._calculate_checksum()
@@ -53,11 +53,11 @@ class ResultVersion:
 
         for key in all_keys:
             if key not in other.data:
-                diff["changes"][key] = {"type": "added", "value": self.data[key]}
+                diff["changes"][key] = {"type": "added", "value": self.data[key]}  # type: ignore[index]
             elif key not in self.data:
-                diff["changes"][key] = {"type": "removed", "old_value": other.data[key]}
+                diff["changes"][key] = {"type": "removed", "old_value": other.data[key]}  # type: ignore[index]
             elif self.data[key] != other.data[key]:
-                diff["changes"][key] = {
+                diff["changes"][key] = {  # type: ignore[index]
                     "type": "modified",
                     "old_value": other.data[key],
                     "new_value": self.data[key],
@@ -76,7 +76,7 @@ class ResultVersion:
         while current:
             history.append(current)
             if current.parent_version and current.parent_version in version_map:
-                current = version_map[current.parent_version]
+                current = version_map[current.parent_version]  # type: ignore[assignment]
             else:
                 break
 

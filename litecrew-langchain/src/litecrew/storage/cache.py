@@ -177,8 +177,9 @@ class RedisCache:
                 self._client.setex(key, ttl, serialized)
             else:
                 self._client.set(key, serialized)
-        except Exception:
-            pass  # Fail silently for cache
+        except Exception as e:
+            # Log error but don't fail the operation
+            print(f"Failed to set cache key {key}: {e}")
 
     def delete(self, key: str) -> None:
         """Delete key from cache."""
@@ -188,8 +189,9 @@ class RedisCache:
 
         try:
             self._client.delete(key)
-        except Exception:
-            pass
+        except Exception as e:
+            # Log error but don't fail the operation
+            print(f"Failed to delete cache key {key}: {e}")
 
     def clear(self) -> None:
         """Clear all cache entries."""
@@ -199,8 +201,9 @@ class RedisCache:
 
         try:
             self._client.flushdb()
-        except Exception:
-            pass
+        except Exception as e:
+            # Log error but don't fail the operation
+            print(f"Failed to clear cache: {e}")
 
     def get_stats(self) -> Dict[str, Any]:
         """Get cache statistics."""

@@ -8,10 +8,14 @@ from dataclasses import fields, is_dataclass
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Type, Union, get_type_hints
-from xml.dom import minidom  # nosec B408 - Used for pretty printing only, not parsing untrusted input
-from xml.etree import ElementTree as ET  # nosec B405 - Used for structured output, not untrusted input
+from xml.dom import (
+    minidom,
+)  # nosec B408 - Used for pretty printing only, not parsing untrusted input
+from xml.etree import (
+    ElementTree as ET,
+)  # nosec B405 - Used for structured output, not untrusted input
 
-import yaml
+import yaml  # type: ignore[import-untyped]
 
 
 class OutputValidator:
@@ -219,9 +223,12 @@ Example format:
             elif field.default is not field.default_factory:
                 # Use default value
                 fixed_data[field.name] = field.default
-            elif field.default_factory is not field.default_factory:
+            elif (
+                hasattr(field, "default_factory")
+                and field.default_factory is not field.default_factory
+            ):
                 # Use default factory
-                fixed_data[field.name] = field.default_factory()
+                fixed_data[field.name] = field.default_factory()  # type: ignore[misc]
 
         return fixed_data
 
@@ -339,7 +346,7 @@ class OutputFormatter:
             return json.dumps(data, indent=2)
 
         elif self.output_format == "yaml":
-            return yaml.dump(data, default_flow_style=False)
+            return str(yaml.dump(data, default_flow_style=False))
 
         elif self.output_format == "csv":
             return self._format_csv(data)
@@ -351,7 +358,7 @@ class OutputFormatter:
             return self._format_xml(data)
 
         elif self.output_format == "custom" and self.custom_formatter:
-            return self.custom_formatter(data)
+            return str(self.custom_formatter(data))
 
         else:
             return str(data)
@@ -369,9 +376,9 @@ class OutputFormatter:
         # Get field names
         if isinstance(data[0], dict):
             fieldnames = list(data[0].keys())
-            writer = csv.DictWriter(output, fieldnames=fieldnames)
-            writer.writeheader()
-            writer.writerows(data)
+            dict_writer = csv.DictWriter(output, fieldnames=fieldnames)
+            dict_writer.writeheader()
+            dict_writer.writerows(data)
         else:
             writer = csv.writer(output)
             for row in data:
@@ -420,10 +427,14 @@ class OutputFormatter:
 
         # Pretty print
         xml_str = ET.tostring(root, encoding="unicode")
-        dom = minidom.parseString(xml_str)  # nosec B318 - Parsing our own generated XML, not untrusted input
+        dom = minidom.parseString(
+            xml_str
+        )  # nosec B318 - Parsing our own generated XML, not untrusted input
         return dom.toprettyxml(indent="  ").split("\n", 1)[1]  # Skip XML declaration
 
-    def _dict_to_xml(self, data: Any, parent: ET.Element, name: str = None):
+    def _dict_to_xml(
+        self, data: Any, parent: ET.Element, name: Optional[str] = None
+    ) -> None:
         """Convert dict to XML elements."""
         if isinstance(data, dict):
             for key, value in data.items():

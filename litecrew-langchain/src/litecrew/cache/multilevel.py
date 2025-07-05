@@ -40,7 +40,7 @@ class L1Cache:
 class L2Cache:
     """Level 2 - Redis cache (fast, distributed)."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._cache = RedisCache(mock=True)  # Use mock for tests
 
     def get(self, key: str) -> Optional[Any]:
@@ -70,7 +70,9 @@ class L3Cache:
     def __init__(self, cache_dir: Optional[Path] = None):
         self.cache_dir = cache_dir or Path(tempfile.gettempdir()) / "litecrew_cache"
         self.cache_dir.mkdir(exist_ok=True)
-        self._index = {}  # In-memory index for faster lookups
+        self._index: Dict[str, Dict[str, Any]] = (
+            {}
+        )  # In-memory index for faster lookups
         self._lock = RLock()
 
     def get(self, key: str) -> Optional[Any]:
@@ -85,7 +87,9 @@ class L3Cache:
 
             try:
                 with open(file_path, "rb") as f:
-                    return pickle.load(f)  # nosec B301 - Loading trusted local cache files only
+                    return pickle.load(
+                        f
+                    )  # nosec B301 - Loading trusted local cache files only
             except Exception:
                 return None
 
@@ -97,8 +101,9 @@ class L3Cache:
                 with open(file_path, "wb") as f:
                     pickle.dump(value, f)
                 self._index[key] = {"created": time.time(), "ttl": ttl}
-            except Exception:
-                pass
+            except Exception as e:
+                # Log error but don't fail the operation
+                print(f"Failed to write cache file for key {key}: {e}")
 
     def delete(self, key: str) -> None:
         with self._lock:
@@ -244,12 +249,12 @@ class MultiLevelCache:
         """Get TTL for a key."""
         return self.policy.get_ttl_for_key(key)
 
-    def _record_access(self, key: str, level: int, hit: bool, latency: float):
+    def _record_access(self, key: str, level: int, hit: bool, latency: float) -> None:
         """Record cache access."""
         self._access_counts[key] = self._access_counts.get(key, 0) + 1
         self.metrics.record_get(hit, level, latency)
 
-    def _maybe_promote(self, key: str, value: Any, current_level: int):
+    def _maybe_promote(self, key: str, value: Any, current_level: int) -> None:
         """Promote to higher cache level if access threshold met."""
         access_count = self._access_counts.get(key, 0)
 

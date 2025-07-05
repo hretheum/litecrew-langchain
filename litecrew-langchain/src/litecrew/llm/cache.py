@@ -30,16 +30,18 @@ class ResponseCache:
         }
 
     def _generate_key(
-        self, prompt: str, provider: Optional[str] = None, **kwargs
+        self, prompt: str, provider: Optional[str] = None, **kwargs: Any
     ) -> str:
         """Generate cache key from prompt and parameters."""
         key_data = {"prompt": prompt, "provider": provider, **kwargs}
         key_str = json.dumps(key_data, sort_keys=True)
         # Using MD5 for cache keys, not security - disable bandit warning
-        return hashlib.md5(key_str.encode(), usedforsecurity=False).hexdigest()  # nosec B324
+        return hashlib.md5(
+            key_str.encode(), usedforsecurity=False
+        ).hexdigest()  # nosec B324
 
     def get(
-        self, prompt: str, provider: Optional[str] = None, **kwargs
+        self, prompt: str, provider: Optional[str] = None, **kwargs: Any
     ) -> Optional[str]:
         """
         Get cached response.
@@ -66,12 +68,14 @@ class ResponseCache:
             # Move to end (LRU)
             self._cache.move_to_end(key)
             self._stats["hits"] += 1
-            return entry["response"]
+            return str(entry["response"])
 
         self._stats["misses"] += 1
         return None
 
-    def add(self, prompt: str, response: str, provider: Optional[str] = None, **kwargs):
+    def add(
+        self, prompt: str, response: str, provider: Optional[str] = None, **kwargs: Any
+    ) -> None:
         """
         Add response to cache.
 
@@ -98,7 +102,7 @@ class ResponseCache:
             self._cache.popitem(last=False)
             self._stats["evictions"] += 1
 
-    def clear(self):
+    def clear(self) -> None:
         """Clear the cache."""
         self._cache.clear()
 

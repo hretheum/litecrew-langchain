@@ -50,11 +50,11 @@ class StateManager:
         )
 
         # Version tracking
-        self._version_counter = {}
+        self._version_counter: Dict[str, int] = {}
         self._lock = threading.RLock()
 
         # Auto-snapshot tracking
-        self._last_snapshot_time = {}
+        self._last_snapshot_time: Dict[str, float] = {}
 
         # Migration chain
         self.migrations = BUILTIN_MIGRATIONS
@@ -124,7 +124,7 @@ class StateManager:
                 return self.save_state(state)
 
             # Create incremental update
-            update = {
+            update: Dict[str, Any] = {
                 "crew_id": state.crew_id,
                 "base_version": self._version_counter.get(state.crew_id, 0),
                 "timestamp": time.time(),
@@ -173,7 +173,9 @@ class StateManager:
                         try:
                             v = int(key.split("_v")[-1])
                             versions.append(v)
-                        except Exception:
+                        except (ValueError, IndexError) as e:
+                            # Skip invalid version format
+                            print(f"Skipping invalid version format in key {key}: {e}")
                             continue
 
                     if not versions:
@@ -273,12 +275,12 @@ class StateManager:
             return False
 
         last_time = self._last_snapshot_time.get(crew_id, 0)
-        return time.time() - last_time >= self.snapshot_interval
+        return bool(time.time() - last_time >= self.snapshot_interval)
 
     def _get_next_version(self, crew_id: str) -> int:
         """Get next version number for crew."""
         current = self._version_counter.get(crew_id, 0)
-        return current + 1
+        return int(current + 1)
 
     def _cleanup_old_snapshots(self, crew_id: str) -> None:
         """Remove old snapshots beyond max_snapshots limit."""

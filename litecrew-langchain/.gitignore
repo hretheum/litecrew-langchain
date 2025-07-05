@@ -60,4 +60,4 @@ site/
 
 # Benchmarks
 benchmarks/results/
-*.benchmark
+*.benchmarkgitlab-ci-variables.md

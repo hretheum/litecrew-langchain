@@ -50,7 +50,7 @@ if TYPE_CHECKING:
 class LiteAgent:
     """Lightweight agent implementation."""
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         """Accept any arguments for compatibility."""
         pass
 
@@ -134,17 +134,20 @@ class Agent(LiteAgent):
         self.global_rate_limiter = global_rate_limiter
 
         # Initialize rate limiter if max_rpm specified
+        self._rate_limiter: Optional[RateLimiter]
         if max_rpm and not global_rate_limiter:
             self._rate_limiter = RateLimiter(max_rpm=max_rpm)
         else:
             self._rate_limiter = None
 
         # Initialize token counter and budget manager
+        self._token_counter: Optional[TokenCounter]
         if track_tokens:
             self._token_counter = TokenCounter()
         else:
             self._token_counter = None
 
+        self._budget_manager: Optional[BudgetManager]
         if budget_limit:
             self._budget_manager = BudgetManager(
                 daily_limit=budget_limit, alert_callback=self._budget_alert_handler
@@ -155,6 +158,7 @@ class Agent(LiteAgent):
         # Initialize structured outputs
         self.auto_fix_outputs = auto_fix_outputs
 
+        self._output_parser: Optional[DataclassOutputParser]
         if output_dataclass:
             self._output_parser = DataclassOutputParser(
                 dataclass_type=output_dataclass, auto_fix=auto_fix_outputs
@@ -162,11 +166,13 @@ class Agent(LiteAgent):
         else:
             self._output_parser = None
 
+        self._output_validator: Optional[OutputValidator]
         if output_schema:
             self._output_validator = OutputValidator(schema=output_schema)
         else:
             self._output_validator = None
 
+        self._file_handler: Optional[FileOutputHandler]
         if output_dir and save_outputs:
             self._file_handler = FileOutputHandler(base_dir=output_dir, versioning=True)
         else:
@@ -353,7 +359,8 @@ Question: {{input}}
                     ) -> ChatResult:
                         # Simple response based on last message
                         last_message = messages[-1] if messages else None
-                        if last_message and "task" in last_message.content.lower():
+                        content = last_message.content if last_message else ""
+                        if isinstance(content, str) and "task" in content.lower():
                             response = "I'm a test response. Final Answer: Test task completed successfully."
                         else:
                             response = "I'm a test response from LiteAgent."
@@ -415,7 +422,11 @@ Question: {{input}}
                         temperature=llm_config.temperature,
                     )
                     return self._llm_manager.create_llm(fallback_config)
-                except Exception:
+                except Exception as fallback_error:
+                    if self.verbose:
+                        print(
+                            f"Failed to create {fallback.value} LLM: {fallback_error}"
+                        )
                     continue
 
             # Final fallback to fake model
@@ -451,13 +462,13 @@ Question: {{input}}
 
     def switch_llm_provider(
         self, provider: Union[str, LLMProvider], config: Optional[Dict[str, Any]] = None
-    ):
+    ) -> None:
         """Switch to a different LLM provider."""
         self.llm = self._initialize_llm(provider, config)
         # Recreate agent executor with new LLM
         self._agent_executor = self._create_agent_executor()
 
-    def _budget_alert_handler(self, message: str, spent: float, limit: float):
+    def _budget_alert_handler(self, message: str, spent: float, limit: float) -> None:
         """Handle budget alerts."""
         if self.verbose:
             print(
@@ -494,7 +505,7 @@ Question: {{input}}
         if self._rate_limiter:
             self._rate_limiter.acquire()
         elif self.global_rate_limiter:
-            self.global_rate_limiter.acquire(self)
+            self.global_rate_limiter.acquire(1)
 
         # Build full prompt with context and memory
         full_prompt = ""
@@ -521,7 +532,7 @@ Question: {{input}}
             if cached:
                 if self.verbose:
                     print(f"Using cached response for agent {self.role}")
-                return cached
+                return str(cached)
 
         # Check budget if enabled
         if self._budget_manager and self._token_counter:
@@ -583,7 +594,7 @@ Question: {{input}}
                     "agent_complete", self, result=response
                 )
 
-            return response
+            return str(response)
         except Exception as e:
             if self.verbose:
                 print(f"Agent {self.role} encountered error: {e}")
@@ -606,9 +617,9 @@ Question: {{input}}
     def _get_model_name(self) -> str:
         """Get the model name for token counting."""
         if hasattr(self.llm, "model_name"):
-            return self.llm.model_name
+            return str(self.llm.model_name)
         elif hasattr(self.llm, "model"):
-            return self.llm.model
+            return str(self.llm.model)
         else:
             return "gpt-3.5-turbo"  # Default fallback
 
@@ -659,8 +670,9 @@ Question: {{input}}
                                 return data
                         else:
                             return data
-                    except Exception:
-                        pass
+                    except Exception as fix_error:
+                        if self.verbose:
+                            print(f"Failed to fix JSON output: {fix_error}")
 
         return response
 
@@ -709,7 +721,7 @@ Question: {{input}}
         if self._rate_limiter:
             await self._rate_limiter.acquire_async()
         elif self.global_rate_limiter:
-            await self.global_rate_limiter.acquire_async(self)
+            await self.global_rate_limiter.acquire_async(1)
 
         # Report progress
         if self.on_progress:
@@ -742,7 +754,7 @@ Question: {{input}}
                     print(f"Using cached response for agent {self.role}")
                 if self.on_progress:
                     self.on_progress("Completed (cached)", 100)
-                return cached
+                return str(cached)
 
         # Check budget if enabled
         if self._budget_manager and self._token_counter:
@@ -806,7 +818,7 @@ Question: {{input}}
             if self.on_progress:
                 self.on_progress("Completed", 100)
 
-            return response
+            return str(response)
         except Exception as e:
             if self.verbose:
                 print(f"Agent {self.role} encountered error: {e}")
@@ -891,7 +903,7 @@ Question: {{input}}
         """
         # This would integrate with LLM-specific partial response handling
         # For now, just execute normally
-        return self.execute(task_description, context)
+        return str(self.execute(task_description, context))
 
     @property
     def metrics(self) -> Dict[str, Any]:
@@ -939,7 +951,7 @@ Question: {{input}}
         """Get comprehensive agent metrics (alias for compatibility)."""
         return self.metrics
 
-    def clear_memory(self):
+    def clear_memory(self) -> None:
         """Clear conversation memory."""
         if self._conversation_memory:
             self._conversation_memory.clear()
@@ -953,13 +965,13 @@ Question: {{input}}
             return search.search(self._conversation_memory, query)
         return []
 
-    def _call_llm(self, prompt: str, **kwargs) -> str:
+    def _call_llm(self, prompt: str, **kwargs: Any) -> str:
         """Call LLM with rate limiting integration."""
         # Apply rate limiting
         if self._rate_limiter:
             self._rate_limiter.acquire()
         elif self.global_rate_limiter:
-            self.global_rate_limiter.acquire(self)
+            self.global_rate_limiter.acquire(1)
 
         # Call LLM through agent executor
         try:
@@ -974,7 +986,7 @@ Question: {{input}}
                     output_text=response,
                 )
 
-            return response
+            return str(response)
         except Exception as e:
             if self.verbose:
                 print(f"LLM call failed: {e}")

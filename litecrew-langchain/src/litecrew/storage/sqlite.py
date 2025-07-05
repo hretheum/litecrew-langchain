@@ -28,7 +28,7 @@ class SQLiteStorage(StorageBackend):
         self._metrics = StorageMetrics()
         self._init_db()
 
-    def _init_db(self):
+    def _init_db(self) -> None:
         """Initialize database schema."""
         with self._get_connection() as conn:
             conn.execute(
@@ -71,7 +71,7 @@ class SQLiteStorage(StorageBackend):
             )
 
     @contextmanager
-    def _get_connection(self):
+    def _get_connection(self):  # type: ignore[no-untyped-def]
         """Get database connection context manager."""
         conn = sqlite3.connect(
             str(self.db_path), isolation_level=None, timeout=30.0  # Autocommit mode
@@ -120,7 +120,7 @@ class SQLiteStorage(StorageBackend):
                     + read_time
                 ) / self._metrics.total_reads
 
-                return result
+                return result  # type: ignore[no-any-return]
 
         except Exception as e:
             raise StorageError(f"Failed to read key '{key}': {str(e)}")
