@@ -36,7 +36,9 @@ class ResponseCache:
         key_data = {"prompt": prompt, "provider": provider, **kwargs}
         key_str = json.dumps(key_data, sort_keys=True)
         # Using MD5 for cache keys, not security - disable bandit warning
-        return hashlib.md5(key_str.encode(), usedforsecurity=False).hexdigest()  # nosec B324
+        return hashlib.md5(
+            key_str.encode(), usedforsecurity=False
+        ).hexdigest()  # nosec B324
 
     def get(
         self, prompt: str, provider: Optional[str] = None, **kwargs: Any
@@ -71,7 +73,9 @@ class ResponseCache:
         self._stats["misses"] += 1
         return None
 
-    def add(self, prompt: str, response: str, provider: Optional[str] = None, **kwargs: Any) -> None:
+    def add(
+        self, prompt: str, response: str, provider: Optional[str] = None, **kwargs: Any
+    ) -> None:
         """
         Add response to cache.
 

@@ -385,7 +385,9 @@ class LifecycleCallbacks:
 global_emitter = EventEmitter()
 
 
-def emit_event(event_type: Union[EventType, str], data: Any = None, **kwargs: Any) -> None:
+def emit_event(
+    event_type: Union[EventType, str], data: Any = None, **kwargs: Any
+) -> None:
     """Convenience function to emit events globally."""
     global_emitter.emit(event_type, data, **kwargs)
 

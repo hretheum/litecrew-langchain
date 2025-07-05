@@ -70,7 +70,9 @@ class L3Cache:
     def __init__(self, cache_dir: Optional[Path] = None):
         self.cache_dir = cache_dir or Path(tempfile.gettempdir()) / "litecrew_cache"
         self.cache_dir.mkdir(exist_ok=True)
-        self._index: Dict[str, Dict[str, Any]] = {}  # In-memory index for faster lookups
+        self._index: Dict[str, Dict[str, Any]] = (
+            {}
+        )  # In-memory index for faster lookups
         self._lock = RLock()
 
     def get(self, key: str) -> Optional[Any]:
@@ -85,7 +87,9 @@ class L3Cache:
 
             try:
                 with open(file_path, "rb") as f:
-                    return pickle.load(f)  # nosec B301 - Loading trusted local cache files only
+                    return pickle.load(
+                        f
+                    )  # nosec B301 - Loading trusted local cache files only
             except Exception:
                 return None
 

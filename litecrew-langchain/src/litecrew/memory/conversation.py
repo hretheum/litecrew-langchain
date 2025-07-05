@@ -200,7 +200,11 @@ class ConversationMemory:
         """Trigger automatic summarization."""
         # This would be implemented with actual summarization
         # For now, just mark that summarization is needed
-        if not self._summary and self.summarize_after is not None and len(self._turns) > self.summarize_after:
+        if (
+            not self._summary
+            and self.summarize_after is not None
+            and len(self._turns) > self.summarize_after
+        ):
             # Take first half of turns as "summarized"
             summarized_count = len(self._turns) // 2
             self._summary = f"[Summary of first {summarized_count} turns]"

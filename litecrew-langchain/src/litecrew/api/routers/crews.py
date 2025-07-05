@@ -85,7 +85,9 @@ async def get_crew(crew_id: str) -> CrewResponse:
         raise HTTPException(status_code=404, detail="Crew not found")
 
     # Remove non-serializable fields before returning
-    response_data = {k: v for k, v in crew_info.items() if k not in ["crew_instance", "_instance"]}
+    response_data = {
+        k: v for k, v in crew_info.items() if k not in ["crew_instance", "_instance"]
+    }
     return CrewResponse(**response_data)
 
 
@@ -118,7 +120,9 @@ async def update_crew(crew_id: str, update_data: CrewUpdate) -> CrewResponse:
     await storage.store_crew(crew_id, crew_info)
 
     # Remove non-serializable fields before returning
-    response_data = {k: v for k, v in crew_info.items() if k not in ["crew_instance", "_instance"]}
+    response_data = {
+        k: v for k, v in crew_info.items() if k not in ["crew_instance", "_instance"]
+    }
     return CrewResponse(**response_data)
 
 

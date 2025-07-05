@@ -64,7 +64,9 @@ class APIStorage:
         async with self._lock:
             return list(self._tasks.values())
 
-    async def store_execution(self, execution_id: str, execution_info: Dict[str, Any]) -> None:
+    async def store_execution(
+        self, execution_id: str, execution_info: Dict[str, Any]
+    ) -> None:
         """Store execution information."""
         async with self._lock:
             self._executions[execution_id] = execution_info
