@@ -1,0 +1,5 @@
+# Gitleaks ignore file
+# This file contains patterns for false positives that should be ignored
+
+# Example API key in security documentation
+55d36aeee6dc51343e9e28336faf46b0ee7c51f3:litecrew-langchain/SECURITY.md:generic-api-key:10

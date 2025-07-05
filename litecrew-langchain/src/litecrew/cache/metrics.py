@@ -80,7 +80,7 @@ class CacheMetrics:
         except Exception:
             return max(self.get_latencies) * 1000
 
-    def record_get(self, hit: bool, level: Optional[int], latency: float):
+    def record_get(self, hit: bool, level: Optional[int], latency: float) -> None:
         """Record a GET operation."""
         if hit:
             self.hits += 1
@@ -99,7 +99,7 @@ class CacheMetrics:
         if len(self.get_latencies) > 1000:
             self.get_latencies.pop(0)
 
-    def record_set(self, latency: float):
+    def record_set(self, latency: float) -> None:
         """Record a SET operation."""
         self.sets += 1
         self.set_latencies.append(latency)
@@ -108,20 +108,34 @@ class CacheMetrics:
         if len(self.set_latencies) > 1000:
             self.set_latencies.pop(0)
 
-    def record_eviction(self):
+    def record_eviction(self) -> None:
         """Record a cache eviction."""
         self.evictions += 1
 
-    def update_sizes(self, l1: int, l2: int, l3: int, total_bytes: int):
+    def update_sizes(self, l1: int, l2: int, l3: int, total_bytes: int) -> None:
         """Update size metrics."""
         self.l1_entries = l1
         self.l2_entries = l2
         self.l3_entries = l3
         self.total_size_bytes = total_bytes
 
-    def reset(self):
+    def reset(self) -> None:
         """Reset all metrics."""
-        self.__init__()
+        # Reset all fields to their defaults
+        self.hits = 0
+        self.misses = 0
+        self.sets = 0
+        self.evictions = 0
+        self.l1_hits = 0
+        self.l2_hits = 0
+        self.l3_hits = 0
+        self.l1_entries = 0
+        self.l2_entries = 0
+        self.l3_entries = 0
+        self.total_size_bytes = 0
+        self.get_latencies = []
+        self.set_latencies = []
+        self.window_start = time.time()
 
     def get_summary(self) -> Dict[str, Any]:
         """Get metrics summary."""

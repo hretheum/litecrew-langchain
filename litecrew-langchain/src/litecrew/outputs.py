@@ -11,7 +11,7 @@ from typing import Any, Dict, List, Optional, Type, Union, get_type_hints
 from xml.dom import minidom  # nosec B408 - Used for pretty printing only, not parsing untrusted input
 from xml.etree import ElementTree as ET  # nosec B405 - Used for structured output, not untrusted input
 
-import yaml
+import yaml  # type: ignore[import-untyped]
 
 
 class OutputValidator:
@@ -339,7 +339,7 @@ class OutputFormatter:
             return json.dumps(data, indent=2)
 
         elif self.output_format == "yaml":
-            return yaml.dump(data, default_flow_style=False)
+            return str(yaml.dump(data, default_flow_style=False))
 
         elif self.output_format == "csv":
             return self._format_csv(data)
@@ -351,7 +351,7 @@ class OutputFormatter:
             return self._format_xml(data)
 
         elif self.output_format == "custom" and self.custom_formatter:
-            return self.custom_formatter(data)
+            return str(self.custom_formatter(data))
 
         else:
             return str(data)
@@ -369,9 +369,9 @@ class OutputFormatter:
         # Get field names
         if isinstance(data[0], dict):
             fieldnames = list(data[0].keys())
-            writer = csv.DictWriter(output, fieldnames=fieldnames)
-            writer.writeheader()
-            writer.writerows(data)
+            dict_writer = csv.DictWriter(output, fieldnames=fieldnames)
+            dict_writer.writeheader()
+            dict_writer.writerows(data)
         else:
             writer = csv.writer(output)
             for row in data:

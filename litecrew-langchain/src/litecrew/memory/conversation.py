@@ -36,7 +36,7 @@ class ConversationMemory:
 
     def add_turn(
         self, role: str, content: str, metadata: Optional[Dict[str, Any]] = None
-    ):
+    ) -> None:
         """
         Add a conversation turn.
 
@@ -128,7 +128,7 @@ class ConversationMemory:
 
         return results
 
-    def clear(self):
+    def clear(self) -> None:
         """Clear all memory."""
         self._turns.clear()
         self._summary = None
@@ -137,21 +137,21 @@ class ConversationMemory:
         """Get number of turns in memory."""
         return len(self._turns)
 
-    def set_save_hook(self, hook: Callable[[Dict[str, Any]], None]):
+    def set_save_hook(self, hook: Callable[[Dict[str, Any]], None]) -> None:
         """Set persistence save hook."""
         self._save_hook = hook
 
-    def set_load_hook(self, hook: Callable[[], Dict[str, Any]]):
+    def set_load_hook(self, hook: Callable[[], Dict[str, Any]]) -> None:
         """Set persistence load hook."""
         self._load_hook = hook
 
-    def save(self):
+    def save(self) -> None:
         """Save memory using configured hook."""
         if self._save_hook:
             data = self.export()
             self._save_hook(data)
 
-    def load(self):
+    def load(self) -> None:
         """Load memory using configured hook."""
         if self._load_hook:
             data = self._load_hook()
@@ -173,7 +173,7 @@ class ConversationMemory:
             "summarize_after": self.summarize_after,
         }
 
-    def import_data(self, data: Dict[str, Any]):
+    def import_data(self, data: Dict[str, Any]) -> None:
         """
         Import memory from dictionary.
 
@@ -192,15 +192,15 @@ class ConversationMemory:
         """Get memory summary."""
         return self._summary
 
-    def set_summary(self, summary: str):
+    def set_summary(self, summary: str) -> None:
         """Set memory summary."""
         self._summary = summary
 
-    def _trigger_summarization(self):
+    def _trigger_summarization(self) -> None:
         """Trigger automatic summarization."""
         # This would be implemented with actual summarization
         # For now, just mark that summarization is needed
-        if not self._summary and len(self._turns) > self.summarize_after:
+        if not self._summary and self.summarize_after is not None and len(self._turns) > self.summarize_after:
             # Take first half of turns as "summarized"
             summarized_count = len(self._turns) // 2
             self._summary = f"[Summary of first {summarized_count} turns]"

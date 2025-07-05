@@ -33,7 +33,7 @@ class CrewState:
     total_tokens: int = 0
     total_cost: float = 0.0
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Initialize task states."""
         if not self.task_states:
             self.task_states = [

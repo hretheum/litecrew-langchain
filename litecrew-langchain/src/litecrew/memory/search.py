@@ -14,7 +14,7 @@ class MemorySearch:
     Search functionality for conversation memory with relevance scoring.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize memory search."""
         self._stop_words = {
             "the",
@@ -303,7 +303,7 @@ class MemorySearch:
         exact_score = exact_matches / len(query_tokens) if query_tokens else 0
 
         # 2. Partial matches (substring)
-        partial_matches = 0
+        partial_matches = 0.0
         for query_token in query_tokens:
             for turn_token in turn_tokens:
                 if len(query_token) > 3 and query_token in turn_token:
@@ -313,11 +313,11 @@ class MemorySearch:
 
         # 3. Term frequency
         turn_counter = Counter(turn_tokens)
-        tf_score = sum(turn_counter.get(token, 0) for token in query_tokens)
-        tf_score = min(tf_score / (len(turn_tokens) * 0.1), 1.0)  # Normalize
+        tf_sum = sum(turn_counter.get(token, 0) for token in query_tokens)
+        tf_score = min(float(tf_sum) / (len(turn_tokens) * 0.1), 1.0)  # Normalize
 
         # 4. Role weight (user queries might be more important)
-        role_weight = 1.2 if turn["role"] == "user" else 1.0
+        role_weight: float = 1.2 if turn["role"] == "user" else 1.0
 
         # Combine scores
         final_score = (
