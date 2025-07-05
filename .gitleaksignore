@@ -8,6 +8,7 @@ d842f2a6b1d271e0971b119cf53e3f46b9713c47:litecrew-langchain/SECURITY.md:generic-
 # Auth0 public client ID (not a secret)
 cd1107556b539ddeab66a45414b37149daa62195:app/src/crewai/cli/authentication/constants.py:generic-api-key:3
 60e2bc7c96d34535a7c0c9c41de2e67ff5e85489:app/src/crewai/cli/authentication/constants.py:generic-api-key:3
+0f5c33d36f698eb406a9324640c4652827be9239:app/src/crewai/cli/authentication/constants.py:generic-api-key:3
 
 # False positive in minified JavaScript
 94e3378ad5691d350707d0d3e3e02d61e0ac4eb0:lib/vis-9.1.2/vis-network.min.js:generic-api-key:26
@@ -17,3 +18,5 @@ cd1107556b539ddeab66a45414b37149daa62195:app/tests/utilities/cassettes/test_crew
 cd1107556b539ddeab66a45414b37149daa62195:app/tests/utilities/cassettes/test_crew_emits_end_task_event.yaml:jwt:1498
 60e2bc7c96d34535a7c0c9c41de2e67ff5e85489:app/tests/utilities/cassettes/test_crew_emits_end_task_event.yaml:jwt:621
 60e2bc7c96d34535a7c0c9c41de2e67ff5e85489:app/tests/utilities/cassettes/test_crew_emits_end_task_event.yaml:jwt:1498
+0f5c33d36f698eb406a9324640c4652827be9239:app/tests/utilities/cassettes/test_crew_emits_end_task_event.yaml:jwt:621
+0f5c33d36f698eb406a9324640c4652827be9239:app/tests/utilities/cassettes/test_crew_emits_end_task_event.yaml:jwt:1498
