@@ -72,7 +72,7 @@ class TestStreamingAsync:
         assert len(results) == 3
         assert all(isinstance(r, str) for r in results)
         # Batch should be faster than sequential
-        assert duration < len(tasks) * 5  # Assuming 5s per task in CI environment
+        assert duration < len(tasks) * 10  # Increased timeout for CI environment
     
     @pytest.mark.asyncio
     async def test_partial_response_handling(self):

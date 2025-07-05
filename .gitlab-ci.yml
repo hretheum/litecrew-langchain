@@ -84,10 +84,10 @@ test:unit:
     reports:
       coverage_report:
         coverage_format: cobertura
-        path: coverage.xml
+        path: litecrew-langchain/coverage.xml
     paths:
-      - htmlcov/
-      - coverage.xml
+      - litecrew-langchain/htmlcov/
+      - litecrew-langchain/coverage.xml
     expire_in: 1 week
   only:
     - branches
