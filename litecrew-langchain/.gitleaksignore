@@ -1,0 +1,22 @@
+# GitLeaks ignore file
+
+# These are example/test keys, not real secrets
+4b693f71edc70b795c9e4016417668f6f22fc59a:litecrew-langchain/gitlab-ci-variables.md:generic-api-key:15
+4b693f71edc70b795c9e4016417668f6f22fc59a:litecrew-langchain/gitlab-ci-variables.md:generic-api-key:16
+4b693f71edc70b795c9e4016417668f6f22fc59a:litecrew-langchain/gitlab-ci-variables.md:generic-api-key:17
+
+# Example keys in documentation
+fa2affeffa399b3858bcce7b20dad7856d375885:litecrew-langchain/SECURITY.md:generic-api-key:10
+b63444e59823c960ba65fae09afde97fe4653e86:litecrew-langchain/SECURITY.md:generic-api-key:10
+18d7b1e45b32ecd2ad2a65f9c901f0a435e17ab3:SECURITY.md:generic-api-key:10
+
+# Test fixtures
+18d7b1e45b32ecd2ad2a65f9c901f0a435e17ab3:tests/test_security.py:generic-api-key:26
+18d7b1e45b32ecd2ad2a65f9c901f0a435e17ab3:app/tests/utilities/cassettes/test_crew_emits_end_task_event.yaml:jwt:621
+18d7b1e45b32ecd2ad2a65f9c901f0a435e17ab3:app/tests/utilities/cassettes/test_crew_emits_end_task_event.yaml:jwt:1498
+
+# Public client ID
+18d7b1e45b32ecd2ad2a65f9c901f0a435e17ab3:app/src/crewai/cli/authentication/constants.py:generic-api-key:3
+
+# Minified JS false positive
+18d7b1e45b32ecd2ad2a65f9c901f0a435e17ab3:lib/vis-9.1.2/vis-network.min.js:generic-api-key:26

@@ -120,6 +120,7 @@ class CacheWarmer:
                         except (ValueError, RuntimeError, AttributeError) as e:
                             # Log warming failure but continue
                             import logging
+
                             logging.warning(f"Cache warming task failed: {e}")
                 time.sleep(1)
 

@@ -1,11 +1,10 @@
 # Multi-stage build for optimized image
-FROM python:3.11-slim as builder
+FROM python:3.12-slim AS builder
 
 # Install build dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    gcc \
-    g++ \
+RUN apt-get update && apt-get install -y \
     build-essential \
+    git \
     && rm -rf /var/lib/apt/lists/*
 
 # Set working directory
@@ -18,34 +17,36 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir --user -r requirements.txt
 
 # Final stage
-FROM python:3.11-slim
+FROM python:3.12-slim
 
 # Install runtime dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN apt-get update && apt-get install -y \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
 # Create non-root user
-RUN useradd -m -u 1000 litecrew
+RUN useradd -m -u 1000 litecrewai && \
+    mkdir -p /app /data /logs /config && \
+    chown -R litecrewai:litecrewai /app /data /logs /config
+
+# Copy installed packages from builder
+COPY --from=builder /root/.local /home/litecrewai/.local
 
 # Set working directory
 WORKDIR /app
 
-# Copy installed packages from builder
-COPY --from=builder /root/.local /home/litecrew/.local
-
-# Copy application code
-COPY --chown=litecrew:litecrew . .
+# Copy entire application (src, setup.py, etc.)
+COPY --chown=litecrewai:litecrewai . /app/
 
 # Install the package in development mode
 RUN pip install --user -e .
 
-# Update PATH and PYTHONPATH
-ENV PATH=/home/litecrew/.local/bin:$PATH
-ENV PYTHONPATH=/app/src:$PYTHONPATH
+# Update PATH
+ENV PATH=/home/litecrewai/.local/bin:$PATH
+ENV PYTHONPATH=/app:$PYTHONPATH
 
 # Switch to non-root user
-USER litecrew
+USER litecrewai
 
 # Expose port
 EXPOSE 8000
