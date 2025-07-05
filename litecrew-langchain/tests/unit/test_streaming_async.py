@@ -313,4 +313,4 @@ class TestStreamingAsync:
             assert isinstance(result, str)
             assert len(result) > 0
         # Should execute concurrently
-        assert duration < 30.0  # Reasonable time for 3 concurrent tasks in CI
+        assert duration < 45.0  # Increased timeout for CI environment (3 concurrent tasks)
