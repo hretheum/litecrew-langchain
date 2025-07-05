@@ -38,7 +38,7 @@ USER litecrewai
 WORKDIR /app
 
 # Copy application code
-COPY --chown=litecrewai:litecrewai ./app /app
+COPY --chown=litecrewai:litecrewai ./litecrew-langchain /app
 
 # Expose port
 EXPOSE 8000
