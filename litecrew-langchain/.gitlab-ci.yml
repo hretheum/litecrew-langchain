@@ -45,13 +45,29 @@ deploy:
   image: alpine:latest
   before_script:
     - apk add --no-cache openssh-client
+    # Debug - check if variables are set
+    - echo "Checking environment variables..."
+    - if [ -z "$DROPLET_IP" ]; then echo "ERROR: DROPLET_IP is not set!"; exit 1; fi
+    - if [ -z "$SSH_PRIVATE_KEY" ]; then echo "ERROR: SSH_PRIVATE_KEY is not set!"; exit 1; fi
+    - echo "DROPLET_IP is set to: [REDACTED]"
+    # Setup SSH
+    - eval $(ssh-agent -s)
+    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
     - mkdir -p ~/.ssh
-    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' > ~/.ssh/id_rsa
-    - chmod 600 ~/.ssh/id_rsa
-    - ssh-keyscan -p 2222 -H $DROPLET_IP >> ~/.ssh/known_hosts
+    - chmod 700 ~/.ssh
+    # Add host to known_hosts with timeout and error handling
+    - echo "Scanning SSH host $DROPLET_IP on port 22..."
+    - ssh-keyscan -H -T 10 $DROPLET_IP >> ~/.ssh/known_hosts 2>&1 || {
+        echo "ERROR: Failed to scan SSH host. Please check:"
+        echo "1. DROPLET_IP is correct"
+        echo "2. SSH is running on port 22"
+        echo "3. Firewall allows connection on port 22"
+        echo "4. Server is accessible from GitLab runner"
+        exit 1;
+      }
   script:
     - |
-      ssh -p 2222 litecrewai@$DROPLET_IP << 'ENDSSH'
+      ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@$DROPLET_IP << 'ENDSSH'
       set -e
       
       # Create deployment directory if not exists
