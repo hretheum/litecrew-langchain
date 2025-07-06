@@ -2,7 +2,7 @@
 
 import time
 from collections import defaultdict
-from typing import Dict, Optional
+from typing import Dict
 
 from fastapi import HTTPException, Request, status
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -106,7 +106,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 def setup_slowapi_limiter():
     """Setup slowapi rate limiter (requires: pip install slowapi)."""
     try:
-        from slowapi import Limiter, _rate_limit_exceeded_handler
+        from slowapi import Limiter
         from slowapi.util import get_remote_address
 
         # Create limiter with custom key function
