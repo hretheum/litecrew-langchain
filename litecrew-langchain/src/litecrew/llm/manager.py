@@ -363,9 +363,9 @@ class LLMManager:
                 model = default_models.get(provider, "default")
                 config = LLMConfig(provider=provider, model=model)
                 return self.create_llm(config)
-            except Exception:
-                # Provider not available, try next one
-                pass
+            except (ImportError, RuntimeError, ValueError):
+                # Provider not available or misconfigured, try next one
+                continue
 
         raise RuntimeError("No LLM provider available")
 
