@@ -1,10 +1,10 @@
 #!/bin/bash
-# Lokalny pipeline testowy - identyczny z GitLab CI
+# Lokalny pipeline testowy - IDENTYCZNY z GitLab CI
 
 set -e
 
-echo "🚀 Uruchamianie pełnego pipeline lokalnie..."
-echo "============================================="
+echo "🚀 Uruchamianie pełnego pipeline lokalnie (identyczny z GitLab CI)..."
+echo "=================================================================="
 
 # Sprawdź czy jesteśmy w odpowiednim katalogu
 if [ ! -f "pyproject.toml" ]; then
@@ -12,17 +12,37 @@ if [ ! -f "pyproject.toml" ]; then
     exit 1
 fi
 
-# Utwórz czyste środowisko wirtualne
-echo "📦 Tworzenie czystego środowiska..."
-rm -rf pipeline_test_env
-python3 -m venv pipeline_test_env
-source pipeline_test_env/bin/activate
+# Sprawdź wersję Pythona (powinna być 3.12 jak w CI)
+python_version=$(python3 --version 2>&1 | cut -d' ' -f2 | cut -d'.' -f1,2)
+if [ "$python_version" != "3.12" ]; then
+    echo "⚠️ Ostrzeżenie: GitLab CI używa Python 3.12, a ty masz $python_version"
+    echo "   Mogą być różnice w zachowaniu!"
+    sleep 2
+fi
 
-# Zainstaluj dependencies jak w pipeline
-echo "📥 Instalowanie dependencies..."
+# Utwórz czyste środowisko wirtualne
+echo "📦 Tworzenie czystego środowiska wirtualnego..."
+rm -rf venv
+python3 -m venv venv
+source venv/bin/activate
+
+# Zainstaluj dependencies DOKŁADNIE jak w GitLab CI
+echo "📥 Instalowanie dependencies (jak w GitLab CI)..."
 pip install --upgrade pip wheel setuptools > /dev/null 2>&1
-pip install -e ".[dev]" > /dev/null 2>&1
-pip install 'bandit[toml]' safety pip-audit pytest-cov itsdangerous > /dev/null 2>&1
+
+# Sprawdź czy istnieje requirements.txt i zainstaluj z niego
+if [ -f "requirements.txt" ]; then
+    pip install -r requirements.txt > /dev/null 2>&1
+fi
+
+# Editable install
+pip install -e . > /dev/null 2>&1
+
+# Test dependencies
+pip install pytest pytest-asyncio pytest-cov > /dev/null 2>&1
+
+# Security tools  
+pip install 'bandit[toml]' safety pip-audit > /dev/null 2>&1
 
 echo ""
 echo "=== LINT STAGE ==="
@@ -64,9 +84,13 @@ echo ""
 echo "🧹 Czyszczenie..."
 rm -f bandit-report.json safety-report.json pip-audit-report.json
 deactivate
-rm -rf pipeline_test_env
+rm -rf venv
 
 echo ""
 echo "🎉 WSZYSTKIE ETAPY PRZESZŁY POMYŚLNIE!"
 echo "✅ Kod jest gotowy do commit i push"
-echo "============================================="
+echo ""
+echo "⚠️ UWAGA: Jeden test może być flaky w GitLab CI:"
+echo "   tests/test_api.py::TestAPIPerformance::test_concurrent_requests"
+echo "   (czasami przekracza 1.0s timeout na wolnych runnerach)"
+echo "=================================================================="
