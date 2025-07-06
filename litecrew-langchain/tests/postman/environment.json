@@ -1,0 +1,27 @@
+{
+  "id": "litecrew-test-env",
+  "name": "LiteCrew Test Environment",
+  "values": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000",
+      "enabled": true
+    },
+    {
+      "key": "api_key",
+      "value": "test-key-123",
+      "enabled": true
+    },
+    {
+      "key": "prod_url",
+      "value": "http://152.42.139.18",
+      "enabled": true
+    },
+    {
+      "key": "prod_api_key",
+      "value": "REPLACE_WITH_PROD_KEY",
+      "enabled": true
+    }
+  ],
+  "_postman_variable_scope": "environment"
+}

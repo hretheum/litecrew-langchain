@@ -1,0 +1,154 @@
+{
+  "info": {
+    "name": "LiteCrew API",
+    "description": "LiteCrew API Collection with Authentication",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "apikey",
+    "apikey": [
+      {
+        "key": "value",
+        "value": "{{api_key}}",
+        "type": "string"
+      },
+      {
+        "key": "key",
+        "value": "X-API-Key",
+        "type": "string"
+      },
+      {
+        "key": "in",
+        "value": "header",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "Health Check (No Auth)",
+      "request": {
+        "auth": {
+          "type": "noauth"
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/v1/health",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "health"]
+        }
+      }
+    },
+    {
+      "name": "List Crews",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/v1/crews",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "crews"]
+        }
+      }
+    },
+    {
+      "name": "Create Crew",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Research Crew\",\n  \"description\": \"A crew for research tasks\",\n  \"agents\": [\n    {\n      \"role\": \"researcher\",\n      \"goal\": \"Find accurate information\",\n      \"backstory\": \"Expert researcher with years of experience\"\n    }\n  ],\n  \"tasks\": [\n    {\n      \"description\": \"Research the topic\",\n      \"agent_role\": \"researcher\",\n      \"expected_output\": \"Comprehensive research report\"\n    }\n  ],\n  \"process\": \"sequential\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/v1/crews",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "crews"]
+        }
+      }
+    },
+    {
+      "name": "Get Crew",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/v1/crews/{{crew_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "crews", "{{crew_id}}"]
+        }
+      }
+    },
+    {
+      "name": "Execute Crew",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"inputs\": {\n    \"topic\": \"AI trends in 2024\"\n  },\n  \"async_execution\": false\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/v1/crews/{{crew_id}}/execute",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "crews", "{{crew_id}}", "execute"]
+        }
+      }
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// This is handled by the collection auth settings",
+          "// But you can add custom logic here if needed"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Log response time",
+          "console.log('Response time: ' + pm.response.responseTime + 'ms');",
+          "",
+          "// Check for rate limit headers",
+          "if (pm.response.headers.has('X-RateLimit-Remaining')) {",
+          "    console.log('Rate limit remaining: ' + pm.response.headers.get('X-RateLimit-Remaining'));",
+          "}"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000",
+      "type": "string"
+    },
+    {
+      "key": "api_key",
+      "value": "test-key-123",
+      "type": "string"
+    },
+    {
+      "key": "crew_id",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}
