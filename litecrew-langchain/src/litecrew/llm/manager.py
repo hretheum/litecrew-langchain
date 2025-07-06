@@ -337,7 +337,7 @@ class LLMManager:
         """Get default LLM with fallback chain."""
         # Check environment variable for default provider
         default_provider = os.environ.get("LITECREW_DEFAULT_PROVIDER", "").lower()
-        
+
         # Default models for each provider
         default_models = {
             LLMProvider.OPENAI: "gpt-3.5-turbo",
@@ -345,7 +345,7 @@ class LLMManager:
             LLMProvider.GROQ: "mixtral-8x7b-32768",
             LLMProvider.OLLAMA: "llama2",
         }
-        
+
         # Provider priority list
         if default_provider and default_provider in [p.value for p in LLMProvider]:
             providers = [LLMProvider(default_provider)]
@@ -356,7 +356,7 @@ class LLMManager:
                 LLMProvider.GROQ,
                 LLMProvider.OLLAMA,
             ]
-        
+
         # Try each provider in order
         for provider in providers:
             try:
@@ -365,7 +365,7 @@ class LLMManager:
                 return self.create_llm(config)
             except Exception:
                 continue
-        
+
         raise RuntimeError("No LLM provider available")
 
     def _get_install_instructions(self, provider: LLMProvider) -> str:

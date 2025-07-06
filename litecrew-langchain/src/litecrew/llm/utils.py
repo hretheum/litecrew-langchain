@@ -133,14 +133,14 @@ def get_model_context_length(provider: str, model: str) -> int:
     }
 
     provider_contexts = context_lengths.get(provider, {})
-    
+
     # Try exact match first
     if model in provider_contexts:
         return provider_contexts[model]
-    
+
     # Try partial match (for versioned models)
     for key, value in provider_contexts.items():
         if model.startswith(key) or key in model:
             return value
-    
+
     return 4096  # Default to 4k
