@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  test:
+    build: .
+    environment:
+      - LITECREW_API_KEYS=test-key-123,test-key-456
+      - ENVIRONMENT=test
+      - SESSION_SECRET=test-secret
+      - PYTHONPATH=/app/src
+    volumes:
+      - ./src:/app/src
+      - ./tests:/app/tests
+    command: pytest tests/test_api_security.py -v

@@ -1,0 +1,379 @@
+{
+  "info": {
+    "name": "LiteCrew API Tests",
+    "description": "Automated API tests for LiteCrew",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "apikey",
+    "apikey": [
+      {
+        "key": "value",
+        "value": "{{api_key}}",
+        "type": "string"
+      },
+      {
+        "key": "key",
+        "value": "X-API-Key",
+        "type": "string"
+      },
+      {
+        "key": "in",
+        "value": "header",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "Security Tests",
+      "item": [
+        {
+          "name": "Unauthorized Request Should Fail",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 401\", function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains error message\", function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.detail).to.eql(\"API key required\");",
+                  "});",
+                  "",
+                  "pm.test(\"WWW-Authenticate header present\", function () {",
+                  "    pm.response.to.have.header(\"WWW-Authenticate\", \"ApiKey\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/crews",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "crews"]
+            }
+          }
+        },
+        {
+          "name": "Invalid API Key Should Fail",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 403\", function () {",
+                  "    pm.response.to.have.status(403);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains error message\", function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.detail).to.eql(\"Invalid API key\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "apikey",
+              "apikey": [
+                {
+                  "key": "value",
+                  "value": "invalid-key-12345",
+                  "type": "string"
+                },
+                {
+                  "key": "key",
+                  "value": "X-API-Key",
+                  "type": "string"
+                },
+                {
+                  "key": "in",
+                  "value": "header",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/crews",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "crews"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Health Check",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Response time is less than 200ms\", function () {",
+              "    pm.expect(pm.response.responseTime).to.be.below(200);",
+              "});",
+              "",
+              "pm.test(\"Health check returns OK\", function () {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData.status).to.eql(\"ok\");",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "noauth"
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/v1/health",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "health"]
+        }
+      }
+    },
+    {
+      "name": "Crew Operations",
+      "item": [
+        {
+          "name": "List Crews",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has crews array\", function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property(\"crews\");",
+                  "    pm.expect(jsonData.crews).to.be.an(\"array\");",
+                  "});",
+                  "",
+                  "pm.test(\"Rate limit headers present\", function () {",
+                  "    pm.response.to.have.header(\"X-RateLimit-Limit\");",
+                  "    pm.response.to.have.header(\"X-RateLimit-Remaining\");",
+                  "});",
+                  "",
+                  "pm.test(\"Security headers present\", function () {",
+                  "    pm.response.to.have.header(\"X-Content-Type-Options\", \"nosniff\");",
+                  "    pm.response.to.have.header(\"X-Frame-Options\", \"DENY\");",
+                  "    pm.response.to.have.header(\"X-XSS-Protection\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/crews",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "crews"]
+            }
+          }
+        },
+        {
+          "name": "Create Test Crew",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test(\"Crew created with ID\", function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property(\"crew_id\");",
+                  "    pm.expect(jsonData.crew_id).to.be.a(\"string\");",
+                  "    ",
+                  "    // Save crew_id for later tests",
+                  "    pm.collectionVariables.set(\"test_crew_id\", jsonData.crew_id);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains crew details\", function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.name).to.eql(\"Test Research Crew\");",
+                  "    pm.expect(jsonData.agents).to.be.an(\"array\");",
+                  "    pm.expect(jsonData.tasks).to.be.an(\"array\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Test Research Crew\",\n  \"description\": \"Automated test crew\",\n  \"agents\": [\n    {\n      \"role\": \"test_researcher\",\n      \"goal\": \"Find test information\",\n      \"backstory\": \"Test researcher agent\"\n    }\n  ],\n  \"tasks\": [\n    {\n      \"description\": \"Test research task\",\n      \"agent_role\": \"test_researcher\",\n      \"expected_output\": \"Test output\"\n    }\n  ],\n  \"process\": \"sequential\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/crews",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "crews"]
+            }
+          }
+        },
+        {
+          "name": "Get Created Crew",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Returns correct crew\", function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.crew_id).to.eql(pm.collectionVariables.get(\"test_crew_id\"));",
+                  "    pm.expect(jsonData.name).to.eql(\"Test Research Crew\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/crews/{{test_crew_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "crews", "{{test_crew_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Delete Test Crew",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 204\", function () {",
+                  "    pm.response.to.have.status(204);",
+                  "});",
+                  "",
+                  "pm.test(\"Response body is empty\", function () {",
+                  "    pm.expect(pm.response.text()).to.be.empty;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/crews/{{test_crew_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "crews", "{{test_crew_id}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Rate Limiting Test",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Rate limit headers show correct limit\", function () {",
+              "    const limit = pm.response.headers.get(\"X-RateLimit-Limit\");",
+              "    pm.expect(parseInt(limit)).to.be.at.least(60);",
+              "});",
+              "",
+              "pm.test(\"Rate limit remaining is tracked\", function () {",
+              "    const remaining = pm.response.headers.get(\"X-RateLimit-Remaining\");",
+              "    pm.expect(parseInt(remaining)).to.be.at.least(0);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/v1/crews",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "crews"]
+        }
+      }
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [""]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [""]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000",
+      "type": "string"
+    },
+    {
+      "key": "api_key",
+      "value": "test-key-123",
+      "type": "string"
+    },
+    {
+      "key": "test_crew_id",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}

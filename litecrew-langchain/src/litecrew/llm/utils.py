@@ -114,6 +114,7 @@ def get_model_context_length(provider: str, model: str) -> int:
         },
         "anthropic": {
             "claude-3-opus": 200000,
+            "claude-3-opus-20240229": 200000,
             "claude-3-sonnet": 200000,
             "claude-3-haiku": 200000,
             "claude-2.1": 200000,
@@ -121,6 +122,7 @@ def get_model_context_length(provider: str, model: str) -> int:
         },
         "groq": {
             "mixtral-8x7b": 32768,
+            "mixtral-8x7b-32768": 32768,
             "llama2-70b": 4096,
         },
         "ollama": {
@@ -131,4 +133,14 @@ def get_model_context_length(provider: str, model: str) -> int:
     }
 
     provider_contexts = context_lengths.get(provider, {})
-    return provider_contexts.get(model, 4096)  # Default to 4k
+
+    # Try exact match first
+    if model in provider_contexts:
+        return provider_contexts[model]
+
+    # Try partial match (for versioned models)
+    for key, value in provider_contexts.items():
+        if model.startswith(key) or key in model:
+            return value
+
+    return 4096  # Default to 4k
