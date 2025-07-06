@@ -2,7 +2,7 @@
 
 import time
 from collections import defaultdict
-from typing import Dict
+from typing import Any, Callable, Dict, List, Optional
 
 from fastapi import HTTPException, Request, status
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -13,16 +13,16 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
     def __init__(
         self,
-        app,
+        app: Any,
         requests_per_minute: int = 60,
         burst_size: int = 10,
         authenticated_multiplier: int = 10,
-    ):
+    ) -> None:
         super().__init__(app)
         self.requests_per_minute = requests_per_minute
         self.burst_size = burst_size
         self.authenticated_multiplier = authenticated_multiplier
-        self.requests: Dict[str, list] = defaultdict(list)
+        self.requests: Dict[str, List[float]] = defaultdict(list)
 
     def _get_client_id(self, request: Request) -> str:
         """Get client identifier (API key or IP)."""
@@ -47,12 +47,12 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
             return self.requests_per_minute * self.authenticated_multiplier
         return self.requests_per_minute
 
-    def _clean_old_requests(self, request_times: list, current_time: float) -> list:
+    def _clean_old_requests(self, request_times: List[float], current_time: float) -> List[float]:
         """Remove requests older than 1 minute."""
         cutoff = current_time - 60
         return [t for t in request_times if t > cutoff]
 
-    async def dispatch(self, request: Request, call_next):
+    async def dispatch(self, request: Request, call_next: Callable) -> Any:
         """Check rate limit before processing request."""
         # Skip rate limiting for static files and docs
         if request.url.path.startswith(("/static", "/docs", "/openapi.json")):
@@ -103,7 +103,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
 
 # Alternative: Using slowapi (more feature-rich)
-def setup_slowapi_limiter():
+def setup_slowapi_limiter() -> Optional[Any]:
     """Setup slowapi rate limiter (requires: pip install slowapi)."""
     try:
         from slowapi import Limiter

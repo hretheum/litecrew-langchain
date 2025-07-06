@@ -22,12 +22,24 @@ def app():
 @pytest.fixture
 def client(app):
     """Create test client."""
+    import os
+    # Set test API keys for authentication
+    os.environ["LITECREW_API_KEYS"] = "test-key-123,test-key-456"
     return TestClient(app)
+
+
+@pytest.fixture
+def auth_headers():
+    """Authentication headers for tests."""
+    return {"X-API-Key": "test-key-123"}
 
 
 @pytest.fixture
 async def async_client(app):
     """Create async test client."""
+    import os
+    # Set test API keys for authentication
+    os.environ["LITECREW_API_KEYS"] = "test-key-123,test-key-456"
     from httpx import ASGITransport
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
         yield ac
@@ -36,7 +48,7 @@ async def async_client(app):
 class TestCrewManagementAPI:
     """Test crew management endpoints."""
     
-    def test_create_crew(self, client):
+    def test_create_crew(self, client, auth_headers):
         """Test creating a new crew."""
         crew_data = {
             "name": "Test Crew",
@@ -69,7 +81,7 @@ class TestCrewManagementAPI:
         }
         
         start_time = time.perf_counter()
-        response = client.post("/api/v1/crews", json=crew_data)
+        response = client.post("/api/v1/crews", json=crew_data, headers=auth_headers)
         duration = (time.perf_counter() - start_time) * 1000
         
         assert response.status_code == 201
@@ -81,7 +93,7 @@ class TestCrewManagementAPI:
         assert len(data["agents"]) == 2
         assert len(data["tasks"]) == 2
     
-    def test_get_crew(self, client):
+    def test_get_crew(self, client, auth_headers):
         """Test retrieving crew information."""
         # First create a crew
         crew_data = {
@@ -90,12 +102,12 @@ class TestCrewManagementAPI:
             "tasks": [{"description": "Test task", "agent_role": "Test"}]
         }
         
-        create_response = client.post("/api/v1/crews", json=crew_data)
+        create_response = client.post("/api/v1/crews", json=crew_data, headers=auth_headers)
         crew_id = create_response.json()["crew_id"]
         
         # Now get the crew
         start_time = time.perf_counter()
-        response = client.get(f"/api/v1/crews/{crew_id}")
+        response = client.get(f"/api/v1/crews/{crew_id}", headers=auth_headers)
         duration = (time.perf_counter() - start_time) * 1000
         
         assert response.status_code == 200
@@ -105,7 +117,7 @@ class TestCrewManagementAPI:
         assert data["crew_id"] == crew_id
         assert data["name"] == "Get Test Crew"
     
-    def test_list_crews(self, client):
+    def test_list_crews(self, client, auth_headers):
         """Test listing all crews."""
         # Create a few crews
         for i in range(3):
@@ -114,10 +126,10 @@ class TestCrewManagementAPI:
                 "agents": [{"role": "Test", "goal": "Test", "backstory": "Test"}],
                 "tasks": [{"description": "Test task", "agent_role": "Test"}]
             }
-            client.post("/api/v1/crews", json=crew_data)
+            client.post("/api/v1/crews", json=crew_data, headers=auth_headers)
         
         start_time = time.perf_counter()
-        response = client.get("/api/v1/crews")
+        response = client.get("/api/v1/crews", headers=auth_headers)
         duration = (time.perf_counter() - start_time) * 1000
         
         assert response.status_code == 200
@@ -127,7 +139,7 @@ class TestCrewManagementAPI:
         assert "crews" in data
         assert len(data["crews"]) >= 3
     
-    def test_update_crew(self, client):
+    def test_update_crew(self, client, auth_headers):
         """Test updating crew configuration."""
         # Create crew first
         crew_data = {
@@ -136,7 +148,7 @@ class TestCrewManagementAPI:
             "tasks": [{"description": "Test task", "agent_role": "Test"}]
         }
         
-        create_response = client.post("/api/v1/crews", json=crew_data)
+        create_response = client.post("/api/v1/crews", json=crew_data, headers=auth_headers)
         crew_id = create_response.json()["crew_id"]
         
         # Update crew
@@ -146,7 +158,7 @@ class TestCrewManagementAPI:
         }
         
         start_time = time.perf_counter()
-        response = client.patch(f"/api/v1/crews/{crew_id}", json=update_data)
+        response = client.patch(f"/api/v1/crews/{crew_id}", json=update_data, headers=auth_headers)
         duration = (time.perf_counter() - start_time) * 1000
         
         assert response.status_code == 200
@@ -156,7 +168,7 @@ class TestCrewManagementAPI:
         assert data["name"] == "Updated Test Crew"
         assert data["description"] == "Updated description"
     
-    def test_delete_crew(self, client):
+    def test_delete_crew(self, client, auth_headers):
         """Test deleting a crew."""
         # Create crew first
         crew_data = {
@@ -165,26 +177,26 @@ class TestCrewManagementAPI:
             "tasks": [{"description": "Test task", "agent_role": "Test"}]
         }
         
-        create_response = client.post("/api/v1/crews", json=crew_data)
+        create_response = client.post("/api/v1/crews", json=crew_data, headers=auth_headers)
         crew_id = create_response.json()["crew_id"]
         
         # Delete crew
         start_time = time.perf_counter()
-        response = client.delete(f"/api/v1/crews/{crew_id}")
+        response = client.delete(f"/api/v1/crews/{crew_id}", headers=auth_headers)
         duration = (time.perf_counter() - start_time) * 1000
         
         assert response.status_code == 204
         assert duration < 2000  # <2s API latency in CI (increased for slower CI environments)
         
         # Verify deletion
-        get_response = client.get(f"/api/v1/crews/{crew_id}")
+        get_response = client.get(f"/api/v1/crews/{crew_id}", headers=auth_headers)
         assert get_response.status_code == 404
 
 
 class TestTaskSubmissionAPI:
     """Test task submission and execution endpoints."""
     
-    def test_submit_task(self, client):
+    def test_submit_task(self, client, auth_headers):
         """Test submitting a task for execution."""
         # Create crew first
         crew_data = {
@@ -193,7 +205,7 @@ class TestTaskSubmissionAPI:
             "tasks": [{"description": "Work task", "agent_role": "Worker"}]
         }
         
-        create_response = client.post("/api/v1/crews", json=crew_data)
+        create_response = client.post("/api/v1/crews", json=crew_data, headers=auth_headers)
         crew_id = create_response.json()["crew_id"]
         
         # Submit task
@@ -204,7 +216,7 @@ class TestTaskSubmissionAPI:
         }
         
         start_time = time.perf_counter()
-        response = client.post(f"/api/v1/crews/{crew_id}/tasks", json=task_data)
+        response = client.post(f"/api/v1/crews/{crew_id}/tasks", json=task_data, headers=auth_headers)
         duration = (time.perf_counter() - start_time) * 1000
         
         assert response.status_code == 202  # Accepted
@@ -214,7 +226,7 @@ class TestTaskSubmissionAPI:
         assert "task_id" in data
         assert data["status"] == "accepted"
     
-    def test_get_task_status(self, client):
+    def test_get_task_status(self, client, auth_headers):
         """Test getting task execution status."""
         # Create crew and submit task
         crew_data = {
@@ -223,16 +235,16 @@ class TestTaskSubmissionAPI:
             "tasks": [{"description": "Work task", "agent_role": "Worker"}]
         }
         
-        create_response = client.post("/api/v1/crews", json=crew_data)
+        create_response = client.post("/api/v1/crews", json=crew_data, headers=auth_headers)
         crew_id = create_response.json()["crew_id"]
         
         task_data = {"description": "Test task", "expected_output": "Test output"}
-        task_response = client.post(f"/api/v1/crews/{crew_id}/tasks", json=task_data)
+        task_response = client.post(f"/api/v1/crews/{crew_id}/tasks", json=task_data, headers=auth_headers)
         task_id = task_response.json()["task_id"]
         
         # Get task status
         start_time = time.perf_counter()
-        response = client.get(f"/api/v1/tasks/{task_id}")
+        response = client.get(f"/api/v1/tasks/{task_id}", headers=auth_headers)
         duration = (time.perf_counter() - start_time) * 1000
         
         assert response.status_code == 200
@@ -243,7 +255,7 @@ class TestTaskSubmissionAPI:
         assert "status" in data
         assert "created_at" in data
     
-    def test_execute_crew(self, client):
+    def test_execute_crew(self, client, auth_headers):
         """Test executing a crew."""
         # Create crew
         crew_data = {
@@ -252,7 +264,7 @@ class TestTaskSubmissionAPI:
             "tasks": [{"description": "Work task", "agent_role": "Worker"}]
         }
         
-        create_response = client.post("/api/v1/crews", json=crew_data)
+        create_response = client.post("/api/v1/crews", json=crew_data, headers=auth_headers)
         crew_id = create_response.json()["crew_id"]
         
         # Execute crew
@@ -262,7 +274,7 @@ class TestTaskSubmissionAPI:
         }
         
         start_time = time.perf_counter()
-        response = client.post(f"/api/v1/crews/{crew_id}/execute", json=execution_data)
+        response = client.post(f"/api/v1/crews/{crew_id}/execute", json=execution_data, headers=auth_headers)
         duration = (time.perf_counter() - start_time) * 1000
         
         if response.status_code == 500:
@@ -279,7 +291,7 @@ class TestTaskSubmissionAPI:
 class TestResultRetrievalAPI:
     """Test result retrieval endpoints."""
     
-    def test_get_execution_result(self, client):
+    def test_get_execution_result(self, client, auth_headers):
         """Test retrieving execution results."""
         # Create and execute crew first
         crew_data = {
@@ -288,16 +300,16 @@ class TestResultRetrievalAPI:
             "tasks": [{"description": "Work task", "agent_role": "Worker"}]
         }
         
-        create_response = client.post("/api/v1/crews", json=crew_data)
+        create_response = client.post("/api/v1/crews", json=crew_data, headers=auth_headers)
         crew_id = create_response.json()["crew_id"]
         
         execution_data = {"inputs": {}, "async_execution": False}
-        execute_response = client.post(f"/api/v1/crews/{crew_id}/execute", json=execution_data)
+        execute_response = client.post(f"/api/v1/crews/{crew_id}/execute", json=execution_data, headers=auth_headers)
         execution_id = execute_response.json()["execution_id"]
         
         # Get result
         start_time = time.perf_counter()
-        response = client.get(f"/api/v1/executions/{execution_id}")
+        response = client.get(f"/api/v1/executions/{execution_id}", headers=auth_headers)
         duration = (time.perf_counter() - start_time) * 1000
         
         assert response.status_code == 200
@@ -309,7 +321,7 @@ class TestResultRetrievalAPI:
         assert "status" in data
         assert "duration" in data
     
-    def test_get_execution_history(self, client):
+    def test_get_execution_history(self, client, auth_headers):
         """Test getting execution history."""
         # Create crew
         crew_data = {
@@ -318,17 +330,17 @@ class TestResultRetrievalAPI:
             "tasks": [{"description": "Work task", "agent_role": "Worker"}]
         }
         
-        create_response = client.post("/api/v1/crews", json=crew_data)
+        create_response = client.post("/api/v1/crews", json=crew_data, headers=auth_headers)
         crew_id = create_response.json()["crew_id"]
         
         # Execute multiple times
         for i in range(3):
             execution_data = {"inputs": {"run": i}, "async_execution": False}
-            client.post(f"/api/v1/crews/{crew_id}/execute", json=execution_data)
+            client.post(f"/api/v1/crews/{crew_id}/execute", json=execution_data, headers=auth_headers)
         
         # Get history
         start_time = time.perf_counter()
-        response = client.get(f"/api/v1/crews/{crew_id}/executions")
+        response = client.get(f"/api/v1/crews/{crew_id}/executions", headers=auth_headers)
         duration = (time.perf_counter() - start_time) * 1000
         
         assert response.status_code == 200
@@ -352,7 +364,7 @@ class TestWebSocketAPI:
             data = websocket.receive_text()
             assert data == "pong"
     
-    def test_real_time_execution_updates(self, client):
+    def test_real_time_execution_updates(self, client, auth_headers):
         """Test real-time execution updates via WebSocket."""
         # Create crew first
         crew_data = {
@@ -361,7 +373,7 @@ class TestWebSocketAPI:
             "tasks": [{"description": "Work task", "agent_role": "Worker"}]
         }
         
-        create_response = client.post("/api/v1/crews", json=crew_data)
+        create_response = client.post("/api/v1/crews", json=crew_data, headers=auth_headers)
         crew_id = create_response.json()["crew_id"]
         
         with client.websocket_connect(f"/ws/crews/{crew_id}") as websocket:
@@ -369,7 +381,8 @@ class TestWebSocketAPI:
             execution_data = {"inputs": {}, "async_execution": True}
             execute_response = client.post(
                 f"/api/v1/crews/{crew_id}/execute", 
-                json=execution_data
+                json=execution_data,
+                headers=auth_headers
             )
             execution_id = execute_response.json()["execution_id"]
             
@@ -394,6 +407,8 @@ class TestAPIPerformance:
     
     async def test_concurrent_requests(self, async_client):
         """Test handling concurrent requests."""
+        auth_headers = {"X-API-Key": "test-key-123"}
+        
         async def make_request():
             crew_data = {
                 "name": "Concurrent Test Crew",
@@ -402,7 +417,7 @@ class TestAPIPerformance:
             }
             
             start = time.perf_counter()
-            response = await async_client.post("/api/v1/crews", json=crew_data)
+            response = await async_client.post("/api/v1/crews", json=crew_data, headers=auth_headers)
             duration = time.perf_counter() - start
             
             return response.status_code, duration
@@ -421,6 +436,8 @@ class TestAPIPerformance:
     
     async def test_api_latency_under_load(self, async_client):
         """Test API latency under load."""
+        auth_headers = {"X-API-Key": "test-key-123"}
+        
         # Create some crews first
         crew_ids = []
         for i in range(10):
@@ -429,7 +446,7 @@ class TestAPIPerformance:
                 "agents": [{"role": "Worker", "goal": "Work", "backstory": "Worker"}],
                 "tasks": [{"description": "Work task", "agent_role": "Worker"}]
             }
-            response = await async_client.post("/api/v1/crews", json=crew_data)
+            response = await async_client.post("/api/v1/crews", json=crew_data, headers=auth_headers)
             crew_ids.append(response.json()["crew_id"])
         
         # Make rapid requests to get crew info
@@ -438,7 +455,7 @@ class TestAPIPerformance:
             crew_id = crew_ids[_ % len(crew_ids)]
             
             start = time.perf_counter()
-            response = await async_client.get(f"/api/v1/crews/{crew_id}")
+            response = await async_client.get(f"/api/v1/crews/{crew_id}", headers=auth_headers)
             latency = (time.perf_counter() - start) * 1000
             
             assert response.status_code == 200

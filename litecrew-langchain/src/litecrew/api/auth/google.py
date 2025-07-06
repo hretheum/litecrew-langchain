@@ -3,7 +3,7 @@
 import os
 import secrets
 from datetime import datetime, timedelta
-from typing import Optional
+from typing import Any, Dict, Optional
 
 import jwt
 from fastapi import APIRouter, HTTPException, Request, status
@@ -37,7 +37,7 @@ class TokenData(BaseModel):
 
 
 @router.get("/google/login")
-async def google_login(request: Request):
+async def google_login(request: Request) -> RedirectResponse:
     """Redirect to Google OAuth login."""
     if not GOOGLE_CLIENT_ID:
         raise HTTPException(
@@ -67,7 +67,7 @@ async def google_login(request: Request):
 
 
 @router.get("/google/callback")
-async def google_callback(request: Request, code: str, state: str):
+async def google_callback(request: Request, code: str, state: str) -> RedirectResponse:
     """Handle Google OAuth callback."""
     # Verify state
     stored_state = request.session.get("oauth_state")
@@ -142,7 +142,7 @@ async def google_callback(request: Request, code: str, state: str):
 
 
 @router.get("/logout")
-async def logout():
+async def logout() -> RedirectResponse:
     """Logout user by clearing auth cookie."""
     response = RedirectResponse(url="/", status_code=status.HTTP_302_FOUND)
     response.delete_cookie("auth_token")
@@ -150,7 +150,7 @@ async def logout():
 
 
 @router.get("/me")
-async def get_current_user(request: Request):
+async def get_current_user(request: Request) -> Dict[str, Optional[str]]:
     """Get current authenticated user info."""
     token = request.cookies.get("auth_token")
     if not token:
@@ -193,7 +193,7 @@ def is_email_allowed(email: str) -> bool:
     return False
 
 
-async def verify_dashboard_auth(request: Request) -> Optional[dict]:
+async def verify_dashboard_auth(request: Request) -> Optional[Dict[str, Any]]:
     """Verify dashboard authentication via JWT cookie."""
     token = request.cookies.get("auth_token")
     if not token:

@@ -1,7 +1,7 @@
 """Authentication middleware for API key validation."""
 
 import os
-from typing import Optional
+from typing import Any, Callable, Optional, Set
 
 from fastapi import HTTPException, Request, status
 from fastapi.security import APIKeyHeader
@@ -11,7 +11,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 class APIKeyMiddleware(BaseHTTPMiddleware):
     """Middleware to validate API keys for protected endpoints."""
 
-    def __init__(self, app, excluded_paths: Optional[list] = None):
+    def __init__(self, app: Any, excluded_paths: Optional[list] = None) -> None:
         super().__init__(app)
         self.excluded_paths = excluded_paths or [
             "/docs",
@@ -30,7 +30,7 @@ class APIKeyMiddleware(BaseHTTPMiddleware):
             if key.strip()
         )
 
-    async def dispatch(self, request: Request, call_next):
+    async def dispatch(self, request: Request, call_next: Callable) -> Any:
         """Check API key for protected endpoints."""
         # Check if path is excluded
         path = request.url.path

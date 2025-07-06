@@ -18,12 +18,24 @@ def app():
 @pytest.fixture
 def client(app):
     """Create test client."""
+    import os
+    # Set test API keys for authentication
+    os.environ["LITECREW_API_KEYS"] = "test-key-123,test-key-456"
     return TestClient(app)
+
+
+@pytest.fixture
+def auth_headers():
+    """Authentication headers for tests."""
+    return {"X-API-Key": "test-key-123"}
 
 
 @pytest.fixture
 async def async_client(app):
     """Create async test client."""
+    import os
+    # Set test API keys for authentication
+    os.environ["LITECREW_API_KEYS"] = "test-key-123,test-key-456"
     from httpx import ASGITransport
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
         yield ac
@@ -77,7 +89,7 @@ class TestDashboardAccess:
 class TestDashboardMetrics:
     """Test dashboard metrics functionality."""
     
-    def test_metrics_integration(self, client):
+    def test_metrics_integration(self, client, auth_headers):
         """Test that dashboard can fetch metrics from API."""
         # Create a test crew first
         crew_data = {
@@ -86,14 +98,14 @@ class TestDashboardMetrics:
             "tasks": [{"description": "Test task", "agent_role": "Tester"}]
         }
         
-        create_response = client.post("/api/v1/crews", json=crew_data)
+        create_response = client.post("/api/v1/crews", json=crew_data, headers=auth_headers)
         assert create_response.status_code == 201
         
         # Test that API endpoints used by dashboard work
         health_response = client.get("/api/v1/health")
         assert health_response.status_code == 200
         
-        crews_response = client.get("/api/v1/crews")
+        crews_response = client.get("/api/v1/crews", headers=auth_headers)
         assert crews_response.status_code == 200
         
         crews_data = crews_response.json()
@@ -157,7 +169,7 @@ class TestDashboardRealTime:
 class TestDashboardVisualization:
     """Test dashboard visualization components."""
     
-    def test_crew_visualization(self, client):
+    def test_crew_visualization(self, client, auth_headers):
         """Test crew visualization functionality."""
         # Create test crews
         for i in range(3):
@@ -168,11 +180,11 @@ class TestDashboardVisualization:
                 "tasks": [{"description": "Work task", "agent_role": "Worker"}]
             }
             
-            response = client.post("/api/v1/crews", json=crew_data)
+            response = client.post("/api/v1/crews", json=crew_data, headers=auth_headers)
             assert response.status_code == 201
         
         # Test that crews endpoint returns data for visualization
-        response = client.get("/api/v1/crews")
+        response = client.get("/api/v1/crews", headers=auth_headers)
         assert response.status_code == 200
         
         data = response.json()
@@ -185,7 +197,7 @@ class TestDashboardVisualization:
             assert "tasks" in crew
             assert "created_at" in crew
     
-    def test_task_progress_tracking(self, client):
+    def test_task_progress_tracking(self, client, auth_headers):
         """Test task progress tracking."""
         # Create and execute a crew
         crew_data = {
@@ -194,16 +206,16 @@ class TestDashboardVisualization:
             "tasks": [{"description": "Work task", "agent_role": "Worker"}]
         }
         
-        create_response = client.post("/api/v1/crews", json=crew_data)
+        create_response = client.post("/api/v1/crews", json=crew_data, headers=auth_headers)
         crew_id = create_response.json()["crew_id"]
         
         # Execute the crew
         execution_data = {"inputs": {}, "async_execution": False}
-        execute_response = client.post(f"/api/v1/crews/{crew_id}/execute", json=execution_data)
+        execute_response = client.post(f"/api/v1/crews/{crew_id}/execute", json=execution_data, headers=auth_headers)
         assert execute_response.status_code == 200
         
         # Check executions endpoint
-        executions_response = client.get("/api/v1/executions")
+        executions_response = client.get("/api/v1/executions", headers=auth_headers)
         assert executions_response.status_code == 200
         
         executions_data = executions_response.json()
@@ -233,14 +245,14 @@ def test_dashboard_performance_requirements(client):
     assert health_data["memory_mb"] < 200  # Memory usage <200MB (test environment)
 
 
-def test_dashboard_error_handling(client):
+def test_dashboard_error_handling(client, auth_headers):
     """Test dashboard error handling."""
     # Test accessing non-existent crew
-    response = client.get("/api/v1/crews/non-existent-id")
+    response = client.get("/api/v1/crews/non-existent-id", headers=auth_headers)
     assert response.status_code == 404
     
     # Test invalid execution
-    invalid_execution = client.post("/api/v1/crews/invalid-id/execute", json={})
+    invalid_execution = client.post("/api/v1/crews/invalid-id/execute", json={}, headers=auth_headers)
     assert invalid_execution.status_code == 404
     
     # Dashboard should still load even if some API calls fail
