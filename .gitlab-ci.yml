@@ -327,6 +327,7 @@ build:docker:
     # Try to pull previous image for cache
     - docker pull $IMAGE_NAME:latest || true
     # Build with BuildKit for better caching
+    - cd litecrew-langchain  # Change to subdirectory for build
     - DOCKER_BUILDKIT=1 docker build 
       --cache-from $IMAGE_NAME:latest 
       --build-arg BUILDKIT_INLINE_CACHE=1 

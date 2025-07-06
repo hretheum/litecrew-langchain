@@ -42,7 +42,7 @@ RUN pip install --user -e .
 
 # Update PATH and PYTHONPATH
 ENV PATH=/home/litecrew/.local/bin:$PATH
-ENV PYTHONPATH=/app/src:$PYTHONPATH
+ENV PYTHONPATH=/app/src:/app:$PYTHONPATH
 
 # Switch to non-root user
 USER litecrew
@@ -54,5 +54,5 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD curl -f http://localhost:8000/api/v1/health || exit 1
 
-# Default command
-CMD ["python", "run_server.py"]
+# Default command - run uvicorn directly for production
+CMD ["uvicorn", "litecrew.api:app", "--host", "0.0.0.0", "--port", "8000"]
