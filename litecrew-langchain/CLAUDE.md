@@ -3,6 +3,18 @@
 ## 🎯 O projekcie
 Budujemy lightweight alternatywę dla CrewAI na bazie LangChain. Cel: <0.05s import, <30MB RAM, 100% API compatibility.
 
+## 🔥 WAŻNE: Pipeline Testing
+**ZAWSZE uruchom pełny pipeline lokalnie PRZED commit+push:**
+```bash
+./run_pipeline_locally.sh
+```
+Skrypt testuje dokładnie to samo co GitLab CI:
+- Lint stage (black, ruff, mypy)  
+- Security stage (bandit, safety, pip-audit)
+- Test stage (pytest z coverage >70%)
+
+❌ **NIE COMMITUJ** bez uruchomienia tego skryptu!
+
 ## 📁 Struktura dokumentacji
 ```
 CLAUDE.md (ten plik)         # Instrukcje i komendy
