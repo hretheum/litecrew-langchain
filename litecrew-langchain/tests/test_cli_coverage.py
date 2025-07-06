@@ -2,7 +2,7 @@
 
 import os
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import MagicMock, patch
 
 import yaml
 from click.testing import CliRunner
@@ -134,9 +134,9 @@ class TestCLICrew:
 
         with runner.isolated_filesystem(temp_dir=tmp_path):
             result = runner.invoke(
-                create, 
+                create,
                 [str(crew_file)],
-                obj={"api_url": "http://localhost:8000", "verbose": False}
+                obj={"api_url": "http://localhost:8000", "verbose": False},
             )
             if result.exit_code != 0:
                 print(f"Exit code: {result.exit_code}")
@@ -166,7 +166,7 @@ class TestCLICrew:
             result = runner.invoke(
                 create,
                 [str(crew_file), "--dry-run"],
-                obj={"api_url": "http://localhost:8000", "verbose": False}
+                obj={"api_url": "http://localhost:8000", "verbose": False},
             )
         assert result.exit_code == 0
         assert "Configuration is valid" in result.output
@@ -176,7 +176,7 @@ class TestCLICrew:
     def test_list_crews_with_filter(self, mock_client_class):
         """Test list crews with name filter."""
         runner = CliRunner()
-        
+
         # Mock the client instance and its get method
         mock_client = MagicMock()
         mock_response = MagicMock()
@@ -193,7 +193,7 @@ class TestCLICrew:
         result = runner.invoke(
             list_crews,
             ["--filter", "Test"],
-            obj={"api_url": "http://localhost:8000", "verbose": False}
+            obj={"api_url": "http://localhost:8000", "verbose": False},
         )
         assert result.exit_code == 0
         assert "Test Crew" in result.output
@@ -203,11 +203,11 @@ class TestCLICrew:
     def test_execute_crew_with_inputs(self, mock_client_class, tmp_path):
         """Test execute crew with JSON inputs."""
         runner = CliRunner()
-        
+
         # Create input file
         input_file = tmp_path / "inputs.json"
         input_file.write_text('{"key": "value"}')
-        
+
         # Mock the client instance and its post method
         mock_client = MagicMock()
         mock_response = MagicMock()
@@ -224,7 +224,7 @@ class TestCLICrew:
             result = runner.invoke(
                 execute,
                 ["crew-123", "--inputs", str(input_file)],
-                obj={"api_url": "http://localhost:8000", "verbose": False}
+                obj={"api_url": "http://localhost:8000", "verbose": False},
             )
         assert result.exit_code == 0
         assert "Execution completed" in result.output
@@ -233,7 +233,7 @@ class TestCLICrew:
     def test_execute_crew_async(self, mock_client_class):
         """Test execute crew async."""
         runner = CliRunner()
-        
+
         # Mock the client instance and its post method
         mock_client = MagicMock()
         mock_response = MagicMock()
@@ -248,7 +248,7 @@ class TestCLICrew:
         result = runner.invoke(
             execute,
             ["crew-123", "--async"],
-            obj={"api_url": "http://localhost:8000", "verbose": False}
+            obj={"api_url": "http://localhost:8000", "verbose": False},
         )
         assert result.exit_code == 0
         assert "Execution started" in result.output
@@ -261,7 +261,7 @@ class TestCLIDebug:
     def test_debug_connectivity_success(self, mock_client_class):
         """Test debug connectivity success."""
         runner = CliRunner()
-        
+
         # Mock the client instance and its get method
         mock_client = MagicMock()
         mock_response = MagicMock()
@@ -271,8 +271,7 @@ class TestCLIDebug:
         mock_client_class.return_value.__enter__.return_value = mock_client
 
         result = runner.invoke(
-            connectivity,
-            obj={"api_url": "http://localhost:8000", "verbose": False}
+            connectivity, obj={"api_url": "http://localhost:8000", "verbose": False}
         )
         assert result.exit_code == 0
         assert "API Server" in result.output
@@ -282,15 +281,14 @@ class TestCLIDebug:
     def test_debug_connectivity_failure(self, mock_client_class):
         """Test debug connectivity failure."""
         runner = CliRunner()
-        
+
         # Mock the client instance to raise an exception
         mock_client = MagicMock()
         mock_client.get.side_effect = Exception("Connection error")
         mock_client_class.return_value.__enter__.return_value = mock_client
 
         result = runner.invoke(
-            connectivity,
-            obj={"api_url": "http://localhost:8000", "verbose": False}
+            connectivity, obj={"api_url": "http://localhost:8000", "verbose": False}
         )
         assert result.exit_code == 0  # The command continues and shows summary
         assert "API Server" in result.output
@@ -302,7 +300,11 @@ class TestCLIDebug:
         log_file = tmp_path / "litecrew.log"
         log_file.write_text("Log line 1\nLog line 2\nLog line 3")
 
-        result = runner.invoke(logs, ["--tail", "2"], obj={"api_url": "http://localhost:8000", "verbose": False})
+        result = runner.invoke(
+            logs,
+            ["--tail", "2"],
+            obj={"api_url": "http://localhost:8000", "verbose": False},
+        )
         assert result.exit_code == 0
         assert "System Logs" in result.output
         assert "showing last 2 entries" in result.output
@@ -319,7 +321,11 @@ class TestCLIDebug:
                 with patch("litecrew.cli.commands.debug.time.sleep") as mock_sleep:
                     # Make it only iterate once
                     mock_sleep.side_effect = KeyboardInterrupt
-                    result = runner.invoke(logs, ["--follow"], obj={"api_url": "http://localhost:8000", "verbose": False})
+                    result = runner.invoke(
+                        logs,
+                        ["--follow"],
+                        obj={"api_url": "http://localhost:8000", "verbose": False},
+                    )
                     assert result.exit_code == 0
 
     @patch("litecrew.cli.commands.debug.httpx.Client")
@@ -339,7 +345,9 @@ class TestCLIDebug:
         mock_client.get.return_value = mock_response
         mock_client_class.return_value.__enter__.return_value = mock_client
 
-        result = runner.invoke(performance, obj={"api_url": "http://localhost:8000", "verbose": False})
+        result = runner.invoke(
+            performance, obj={"api_url": "http://localhost:8000", "verbose": False}
+        )
         assert result.exit_code == 0
         assert "LiteCrew Performance Analysis" in result.output
         assert "Performance Metrics" in result.output
@@ -352,7 +360,7 @@ class TestCLITask:
     def test_run_task_with_crew(self, mock_client_class):
         """Test run task with specific crew."""
         runner = CliRunner()
-        
+
         # Mock the client instance and its post method
         mock_client = MagicMock()
         mock_response = MagicMock()
@@ -374,7 +382,7 @@ class TestCLITask:
                 "--expected-output",
                 "Result",
             ],
-            obj={"api_url": "http://localhost:8000", "verbose": False}
+            obj={"api_url": "http://localhost:8000", "verbose": False},
         )
         assert result.exit_code == 0
         assert "Task submitted successfully" in result.output
@@ -382,17 +390,25 @@ class TestCLITask:
     def test_run_task_no_crew(self):
         """Test run task without specific crew."""
         runner = CliRunner()
-        
-        result = runner.invoke(run, ["Do something"], obj={"api_url": "http://localhost:8000", "verbose": False})
+
+        result = runner.invoke(
+            run,
+            ["Do something"],
+            obj={"api_url": "http://localhost:8000", "verbose": False},
+        )
         assert result.exit_code == 1
         assert "No crew ID specified" in result.output
 
     def test_run_task_no_crews_available(self):
         """Test run task when no crews available."""
         runner = CliRunner()
-        
+
         # Task always requires a crew ID
-        result = runner.invoke(run, ["Do something"], obj={"api_url": "http://localhost:8000", "verbose": False})
+        result = runner.invoke(
+            run,
+            ["Do something"],
+            obj={"api_url": "http://localhost:8000", "verbose": False},
+        )
         assert result.exit_code == 1
         assert "No crew ID specified" in result.output
 

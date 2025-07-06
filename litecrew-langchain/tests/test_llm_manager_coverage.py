@@ -24,7 +24,7 @@ class TestLLMManagerCoverage:
 
         # The manager will use Mock for ChatAnthropic due to ImportError
         result = manager._create_anthropic(config)
-        
+
         # Since it falls back to Mock, just verify it returns something
         assert result is not None
 
@@ -50,7 +50,7 @@ class TestLLMManagerCoverage:
 
         # The manager will use Mock for ChatGroq due to ImportError
         result = manager._create_groq(config)
-        
+
         # Since it falls back to Mock, just verify it returns something
         assert result is not None
 
@@ -76,7 +76,7 @@ class TestLLMManagerCoverage:
 
         # The manager will use Mock for Ollama due to ImportError
         result = manager._create_ollama(config)
-        
+
         # Since it falls back to Mock, just verify it returns something
         assert result is not None
 
@@ -155,8 +155,12 @@ class TestLLMManagerCoverage:
 
         # Create multiple LLMs
         configs = [
-            LLMConfig(provider=LLMProvider.OPENAI, model="gpt-3.5-turbo", api_key="key1"),
-            LLMConfig(provider=LLMProvider.ANTHROPIC, model="claude-3-haiku", api_key="key2"),
+            LLMConfig(
+                provider=LLMProvider.OPENAI, model="gpt-3.5-turbo", api_key="key1"
+            ),
+            LLMConfig(
+                provider=LLMProvider.ANTHROPIC, model="claude-3-haiku", api_key="key2"
+            ),
             LLMConfig(provider=LLMProvider.GROQ, model="mixtral-8x7b", api_key="key3"),
         ]
 

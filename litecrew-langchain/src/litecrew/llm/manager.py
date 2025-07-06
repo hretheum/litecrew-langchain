@@ -4,7 +4,7 @@ LLM Manager for creating and managing different LLM providers.
 
 import os
 import time
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, cast
+from typing import TYPE_CHECKING, Any, Dict, List, cast
 
 from litecrew.llm.config import LLMConfig, LLMProvider
 
@@ -85,7 +85,7 @@ class LLMManager:
                 f"{install_instructions}\n"
                 f"Original error: {str(e)}"
             ) from e
-        except Exception as e:
+        except Exception:
             # Track errors
             provider_name = config.provider.value
             if provider_name not in self._metrics["errors"]:
