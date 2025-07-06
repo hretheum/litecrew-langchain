@@ -18,15 +18,7 @@ class TestUnifyResponse:
 
     def test_openai_dict_response(self):
         """Test OpenAI dictionary response format."""
-        response = {
-            "choices": [
-                {
-                    "message": {
-                        "content": "OpenAI response"
-                    }
-                }
-            ]
-        }
+        response = {"choices": [{"message": {"content": "OpenAI response"}}]}
         result = unify_response(response, "openai")
         assert result == "OpenAI response"
 
@@ -39,13 +31,7 @@ class TestUnifyResponse:
 
     def test_anthropic_dict_response(self):
         """Test Anthropic dictionary response format."""
-        response = {
-            "content": [
-                {
-                    "text": "Anthropic response"
-                }
-            ]
-        }
+        response = {"content": [{"text": "Anthropic response"}]}
         result = unify_response(response, "anthropic")
         assert result == "Anthropic response"
 
@@ -58,15 +44,7 @@ class TestUnifyResponse:
 
     def test_groq_response(self):
         """Test Groq response format (similar to OpenAI)."""
-        response = {
-            "choices": [
-                {
-                    "message": {
-                        "content": "Groq response"
-                    }
-                }
-            ]
-        }
+        response = {"choices": [{"message": {"content": "Groq response"}}]}
         result = unify_response(response, "groq")
         assert result == "Groq response"
 
@@ -191,10 +169,11 @@ class TestModelContextLength:
 
     def test_complex_objects_fallback(self):
         """Test complex objects fall back to string conversion."""
+
         class ComplexObject:
             def __str__(self):
                 return "complex_object_string"
-        
+
         obj = ComplexObject()
         result = unify_response(obj, "unknown_provider")
         assert result == "complex_object_string"
@@ -205,7 +184,7 @@ class TestModelContextLength:
         text_with_special = "Hello! @#$%^&*()_+ 你好"
         tokens = estimate_tokens(text_with_special, method="simple")
         assert tokens >= 0
-        
+
         # Test with very short text
         short_text = "Hi"
         tokens = estimate_tokens(short_text, method="simple")
@@ -214,11 +193,11 @@ class TestModelContextLength:
     def test_provider_case_sensitivity(self):
         """Test that provider matching is case sensitive."""
         response = {"choices": [{"message": {"content": "test"}}]}
-        
+
         # Should work with exact case
         result = unify_response(response, "openai")
         assert result == "test"
-        
+
         # Should fall back to string with wrong case
         result = unify_response(response, "OpenAI")
         assert "choices" in result
@@ -229,7 +208,7 @@ class TestModelContextLength:
         incomplete_openai = {"choices": [{"message": {}}]}
         result = unify_response(incomplete_openai, "openai")
         assert "choices" in result  # Falls back to string
-        
+
         # Anthropic response missing text
         incomplete_anthropic = {"content": [{}]}
         result = unify_response(incomplete_anthropic, "anthropic")

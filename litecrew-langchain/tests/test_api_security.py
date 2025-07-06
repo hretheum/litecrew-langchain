@@ -3,9 +3,10 @@ Tests for API security features
 """
 
 import os
+from unittest.mock import patch
+
 import pytest
 from fastapi.testclient import TestClient
-from unittest.mock import patch
 
 # Set test environment
 os.environ["LITECREW_API_KEYS"] = "test-key-123,test-key-456"
@@ -46,10 +47,7 @@ class TestAPIAuthentication:
 
     def test_invalid_api_key_rejected(self, client):
         """Invalid API key should be rejected."""
-        response = client.get(
-            "/api/v1/crews",
-            headers={"X-API-Key": "invalid-key"}
-        )
+        response = client.get("/api/v1/crews", headers={"X-API-Key": "invalid-key"})
         assert response.status_code == 403
         assert response.json()["detail"] == "Invalid API key"
 
@@ -64,20 +62,10 @@ class TestAPIAuthentication:
         crew_data = {
             "name": "Test Crew",
             "description": "Test",
-            "agents": [
-                {
-                    "role": "test",
-                    "goal": "test",
-                    "backstory": "test"
-                }
-            ],
+            "agents": [{"role": "test", "goal": "test", "backstory": "test"}],
             "tasks": [
-                {
-                    "description": "test",
-                    "agent_role": "test",
-                    "expected_output": "test"
-                }
-            ]
+                {"description": "test", "agent_role": "test", "expected_output": "test"}
+            ],
         }
         response = client.post("/api/v1/crews", json=crew_data)
         assert response.status_code == 401
@@ -87,26 +75,12 @@ class TestAPIAuthentication:
         crew_data = {
             "name": "Test Crew",
             "description": "Test",
-            "agents": [
-                {
-                    "role": "test",
-                    "goal": "test",
-                    "backstory": "test"
-                }
-            ],
+            "agents": [{"role": "test", "goal": "test", "backstory": "test"}],
             "tasks": [
-                {
-                    "description": "test",
-                    "agent_role": "test",
-                    "expected_output": "test"
-                }
-            ]
+                {"description": "test", "agent_role": "test", "expected_output": "test"}
+            ],
         }
-        response = client.post(
-            "/api/v1/crews",
-            json=crew_data,
-            headers=auth_headers
-        )
+        response = client.post("/api/v1/crews", json=crew_data, headers=auth_headers)
         assert response.status_code == 201
         assert "crew_id" in response.json()
 
@@ -137,7 +111,9 @@ class TestSecurityHeaders:
         assert response.headers.get("X-Content-Type-Options") == "nosniff"
         assert response.headers.get("X-Frame-Options") == "DENY"
         assert response.headers.get("X-XSS-Protection") == "1; mode=block"
-        assert response.headers.get("Referrer-Policy") == "strict-origin-when-cross-origin"
+        assert (
+            response.headers.get("Referrer-Policy") == "strict-origin-when-cross-origin"
+        )
 
     def test_process_time_header(self, client):
         """Process time header should be present."""

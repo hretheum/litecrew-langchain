@@ -1,7 +1,7 @@
 """Authentication middleware for API key validation."""
 
 import os
-from typing import Any, Callable, Optional, Set
+from typing import Any, Callable, Optional
 
 from fastapi import HTTPException, Request, status
 from fastapi.security import APIKeyHeader

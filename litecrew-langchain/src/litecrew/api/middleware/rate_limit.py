@@ -47,7 +47,9 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
             return self.requests_per_minute * self.authenticated_multiplier
         return self.requests_per_minute
 
-    def _clean_old_requests(self, request_times: List[float], current_time: float) -> List[float]:
+    def _clean_old_requests(
+        self, request_times: List[float], current_time: float
+    ) -> List[float]:
         """Remove requests older than 1 minute."""
         cutoff = current_time - 60
         return [t for t in request_times if t > cutoff]
