@@ -24,7 +24,7 @@ JWT_EXPIRATION_HOURS = 24
 ALLOWED_DOMAINS = os.getenv("ALLOWED_EMAIL_DOMAINS", "").split(",")
 ALLOWED_EMAILS = os.getenv("ALLOWED_EMAILS", "").split(",")
 
-router = APIRouter(prefix="/auth", tags=["auth"])
+router = APIRouter(tags=["auth"])
 
 
 class TokenData(BaseModel):

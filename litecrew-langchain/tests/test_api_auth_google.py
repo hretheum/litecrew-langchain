@@ -2,14 +2,17 @@
 
 import os
 from datetime import datetime, timedelta
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 try:
     import jwt
 except ImportError:
     # If PyJWT is not installed, skip this test file
     import pytest
-    pytest.skip("PyJWT not installed, skipping Google OAuth tests", allow_module_level=True)
+
+    pytest.skip(
+        "PyJWT not installed, skipping Google OAuth tests", allow_module_level=True
+    )
 import pytest
 from fastapi import Request
 from fastapi.testclient import TestClient
@@ -34,9 +37,11 @@ from litecrew.api.auth.google import (
 def client():
     """Create test client with Google OAuth router."""
     from fastapi import FastAPI
+    from starlette.middleware.sessions import SessionMiddleware
 
     app = FastAPI()
-    app.include_router(router)
+    app.add_middleware(SessionMiddleware, secret_key="test-secret")
+    app.include_router(router, prefix="/auth")
     return TestClient(app)
 
 
@@ -59,7 +64,9 @@ class TestGoogleOAuth:
         """Test email allowed when no restrictions."""
         # When no restrictions are set, environment variables still have default values
         # from the initial import, so we need to reload the module
-        assert is_email_allowed("any@email.com") is False  # Default behavior with pre-set domains
+        assert (
+            is_email_allowed("any@email.com") is False
+        )  # Default behavior with pre-set domains
 
     def test_is_email_allowed_specific_email(self):
         """Test specific allowed email."""
@@ -79,23 +86,23 @@ class TestGoogleOAuth:
         # Mock session
         with patch("litecrew.api.auth.google.secrets.token_urlsafe") as mock_token:
             mock_token.return_value = "test-state"
-            response = client.get("/auth/google/login")
+            response = client.get("/auth/google/login", follow_redirects=False)
 
-        assert response.status_code == 200
-        assert "accounts.google.com" in response.text
+        assert response.status_code == 307  # Temporary redirect
+        assert "accounts.google.com" in response.headers["location"]
 
     def test_google_login_no_client_id(self, client):
         """Test Google login without client ID."""
-        with patch.dict(os.environ, {"GOOGLE_CLIENT_ID": ""}):
+        with patch("litecrew.api.auth.google.GOOGLE_CLIENT_ID", ""):
             response = client.get("/auth/google/login")
         assert response.status_code == 500
         assert "Google OAuth not configured" in response.json()["detail"]
 
-    @patch("litecrew.api.auth.google.httpx.AsyncClient")
+    @patch("httpx.AsyncClient")
     async def test_google_callback_success(self, mock_httpx, client):
         """Test successful Google callback."""
         # Mock httpx responses
-        mock_client = MagicMock()
+        mock_client = AsyncMock()
         mock_httpx.return_value.__aenter__.return_value = mock_client
 
         # Mock token response
@@ -112,8 +119,9 @@ class TestGoogleOAuth:
         }
         user_response.raise_for_status = MagicMock()
 
-        mock_client.post.return_value = token_response
-        mock_client.get.return_value = user_response
+        # Configure async mock responses
+        mock_client.post = AsyncMock(return_value=token_response)
+        mock_client.get = AsyncMock(return_value=user_response)
 
         # Mock request with session
         request = MagicMock(spec=Request)
@@ -129,13 +137,12 @@ class TestGoogleOAuth:
 
     def test_logout(self, client):
         """Test logout endpoint."""
-        response = client.get("/auth/logout")
+        response = client.get("/auth/logout", follow_redirects=False)
         assert response.status_code == 302  # Redirect
         # Check cookie deletion in headers
-        assert any(
-            "auth_token" in h and "Max-Age=0" in h
-            for h in response.headers.getlist("set-cookie")
-        )
+        set_cookie_headers = response.headers.get("set-cookie", "")
+        assert "auth_token" in set_cookie_headers
+        assert "Max-Age=0" in set_cookie_headers or "max-age=0" in set_cookie_headers
 
     def test_get_current_user_authenticated(self, client):
         """Test getting current user when authenticated."""
@@ -231,8 +238,8 @@ class TestGoogleOAuth:
     async def test_google_callback_email_not_allowed(self):
         """Test Google callback with non-allowed email."""
         # Mock httpx responses
-        with patch("litecrew.api.auth.google.httpx.AsyncClient") as mock_httpx:
-            mock_client = MagicMock()
+        with patch("httpx.AsyncClient") as mock_httpx:
+            mock_client = AsyncMock()
             mock_httpx.return_value.__aenter__.return_value = mock_client
 
             # Mock responses
@@ -244,8 +251,8 @@ class TestGoogleOAuth:
             user_response.json.return_value = {"email": "user@notallowed.com"}
             user_response.raise_for_status = MagicMock()
 
-            mock_client.post.return_value = token_response
-            mock_client.get.return_value = user_response
+            mock_client.post = AsyncMock(return_value=token_response)
+            mock_client.get = AsyncMock(return_value=user_response)
 
             request = MagicMock(spec=Request)
             request.session = {"oauth_state": "test-state"}
@@ -260,7 +267,7 @@ class TestGoogleOAuth:
     @pytest.mark.asyncio
     async def test_google_callback_auth_error(self):
         """Test Google callback with auth error."""
-        with patch("litecrew.api.auth.google.httpx.AsyncClient") as mock_httpx:
+        with patch("httpx.AsyncClient") as mock_httpx:
             # Make httpx raise an error
             mock_httpx.return_value.__aenter__.side_effect = Exception("Network error")
 

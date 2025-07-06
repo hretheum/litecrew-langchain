@@ -2,8 +2,9 @@
 LLM Manager for creating and managing different LLM providers.
 """
 
+import os
 import time
-from typing import TYPE_CHECKING, Any, Dict, List, cast
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, cast
 
 from litecrew.llm.config import LLMConfig, LLMProvider
 
@@ -20,7 +21,10 @@ class LLMManager:
         self._metrics: Dict[str, Any] = {
             "provider_switches": 0,
             "total_creations": 0,
+            "total_llms_created": 0,
             "creation_times": {},
+            "active_providers": set(),
+            "errors": {},
         }
 
     def get_available_providers(self) -> List[str]:
@@ -66,6 +70,8 @@ class LLMManager:
             # Track metrics
             creation_time = time.perf_counter() - start_time
             self._metrics["total_creations"] += 1
+            self._metrics["total_llms_created"] += 1
+            self._metrics["active_providers"].add(config.provider.value)
             if config.provider.value not in self._metrics["creation_times"]:
                 self._metrics["creation_times"][config.provider.value] = []
             self._metrics["creation_times"][config.provider.value].append(creation_time)
@@ -79,6 +85,13 @@ class LLMManager:
                 f"{install_instructions}\n"
                 f"Original error: {str(e)}"
             ) from e
+        except Exception as e:
+            # Track errors
+            provider_name = config.provider.value
+            if provider_name not in self._metrics["errors"]:
+                self._metrics["errors"][provider_name] = 0
+            self._metrics["errors"][provider_name] += 1
+            raise
 
     def _create_openai(self, config: LLMConfig) -> Any:
         """Create OpenAI LLM."""
@@ -319,6 +332,41 @@ class LLMManager:
     def get_metrics(self) -> Dict[str, Any]:
         """Get LLM manager metrics."""
         return cast(Dict[str, Any], self._metrics.copy())
+
+    def get_default_llm(self) -> "BaseChatModel":
+        """Get default LLM with fallback chain."""
+        # Check environment variable for default provider
+        default_provider = os.environ.get("LITECREW_DEFAULT_PROVIDER", "").lower()
+        
+        # Default models for each provider
+        default_models = {
+            LLMProvider.OPENAI: "gpt-3.5-turbo",
+            LLMProvider.ANTHROPIC: "claude-3-haiku-20240307",
+            LLMProvider.GROQ: "mixtral-8x7b-32768",
+            LLMProvider.OLLAMA: "llama2",
+        }
+        
+        # Provider priority list
+        if default_provider and default_provider in [p.value for p in LLMProvider]:
+            providers = [LLMProvider(default_provider)]
+        else:
+            providers = [
+                LLMProvider.OPENAI,
+                LLMProvider.ANTHROPIC,
+                LLMProvider.GROQ,
+                LLMProvider.OLLAMA,
+            ]
+        
+        # Try each provider in order
+        for provider in providers:
+            try:
+                model = default_models.get(provider, "default")
+                config = LLMConfig(provider=provider, model=model)
+                return self.create_llm(config)
+            except Exception:
+                continue
+        
+        raise RuntimeError("No LLM provider available")
 
     def _get_install_instructions(self, provider: LLMProvider) -> str:
         """Get installation instructions for a provider."""

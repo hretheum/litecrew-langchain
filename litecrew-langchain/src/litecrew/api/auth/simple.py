@@ -4,7 +4,7 @@ from typing import Optional
 
 from fastapi import APIRouter, Request
 
-router = APIRouter(prefix="/auth", tags=["auth"])
+router = APIRouter(tags=["auth"])
 
 
 @router.get("/google/login")

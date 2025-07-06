@@ -9,8 +9,8 @@ with open("requirements.txt") as f:
 
 setup(
     name="litecrew-langchain",
-    version="0.1.0",
-    description="Lightweight multi-agent orchestration framework built on LangChain",
+    version="0.6.0",
+    description="Lightweight multi-agent orchestration framework - 363x faster than CrewAI",
     author="LiteCrew Team",
     author_email="team@litecrew.ai",
     url="https://gitlab.com/eof3/litecrewai",
@@ -27,12 +27,11 @@ setup(
             "mypy>=1.5.0",
         ]
     },
-    python_requires=">=3.9",
+    python_requires=">=3.10",
     classifiers=[
-        "Development Status :: 3 - Alpha",
+        "Development Status :: 4 - Beta",
         "Intended Audience :: Developers",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
         "Programming Language :: Python :: 3.12",

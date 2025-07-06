@@ -1,4 +1,5 @@
 stages:
+  - lint
   - test
   - build
   - deploy
@@ -8,20 +9,49 @@ variables:
   DOCKER_TLS_CERTDIR: ""
   IMAGE_TAG: $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
   IMAGE_LATEST: $CI_REGISTRY_IMAGE:latest
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+
+# Lint stage
+lint:
+  stage: lint
+  image: python:3.11-slim
+  cache:
+    paths:
+      - .cache/pip
+  before_script:
+    - pip install -e ".[dev]"
+  script:
+    - black --check src/ tests/
+    - ruff check src/ tests/
+    - mypy src/
+  only:
+    - merge_requests
+    - main
+    - develop
+    - master
 
 # Test stage
 test:
   stage: test
   image: python:3.11-slim
+  cache:
+    paths:
+      - .cache/pip
   before_script:
-    - pip install -e .
-    - pip install pytest pytest-asyncio pytest-cov beautifulsoup4
+    - pip install -e ".[dev]"
   script:
-    - pytest tests/ -v --cov=src/litecrew --cov-report=term-missing
+    - pytest tests/ -v --cov=src/litecrew --cov-report=term-missing --cov-fail-under=70
+  coverage: '/(?i)total.*? (100(?:\.0+)?\%|[1-9]?\d(?:\.\d+)?\%)$/'
+  artifacts:
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage.xml
   only:
     - merge_requests
     - main
     - develop
+    - master
 
 # Build Docker image
 build:
@@ -179,3 +209,21 @@ deploy_staging:
   when: on_success
   variables:
     DEPLOY_PORT: 8001
+
+# Manual deploy without tests (for CI/CD changes only)
+deploy_manual:
+  extends: deploy
+  environment:
+    name: production
+    url: http://$DROPLET_IP
+  only:
+    - master
+  when: manual
+  except:
+    changes:
+      - "src/**/*"
+      - "tests/**/*"
+      - "requirements.txt"
+      - "setup.py"
+      - "pyproject.toml"
+      - "Dockerfile"

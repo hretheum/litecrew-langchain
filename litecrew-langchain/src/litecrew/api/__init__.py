@@ -2,7 +2,7 @@
 
 import os
 import time
-from typing import Any, Callable
+from typing import Any, Callable, cast
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -76,7 +76,9 @@ def create_app() -> FastAPI:
 
     # Security headers middleware
     @app.middleware("http")
-    async def add_security_headers(request: Request, call_next: Callable) -> Response:
+    async def add_security_headers(
+        request: Request, call_next: Callable[..., Any]
+    ) -> Response:
         response = await call_next(request)
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["X-Frame-Options"] = "DENY"
@@ -88,7 +90,7 @@ def create_app() -> FastAPI:
                 "max-age=31536000; includeSubDomains"
             )
 
-        return response
+        return cast(Response, response)
 
     # Include routers
     app.include_router(auth_router, prefix="/auth", tags=["auth"])
