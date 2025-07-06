@@ -11,13 +11,8 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 
-# Import auth based on configuration
-if os.getenv("GOOGLE_CLIENT_ID"):
-    from .auth.google import router as auth_router
-    from .auth.google import verify_dashboard_auth
-else:
-    from .auth.simple import router as auth_router
-    from .auth.simple import verify_dashboard_auth
+from .auth.google import router as auth_router
+from .auth.google import verify_dashboard_auth
 from .middleware.auth import APIKeyMiddleware
 from .middleware.rate_limit import RateLimitMiddleware
 from .routers import crews, executions, tasks
@@ -35,7 +30,31 @@ def create_app() -> FastAPI:
         openapi_url="/openapi.json",
     )
     
-    # CORS middleware with restrictions (add first, execute last)
+    # Session middleware (required for OAuth)
+    app.add_middleware(
+        SessionMiddleware,
+        secret_key=os.getenv("SESSION_SECRET", os.urandom(32).hex()),
+        same_site="lax",
+        https_only=os.getenv("ENVIRONMENT") == "production"
+    )
+    
+    # API Key authentication middleware
+    app.add_middleware(APIKeyMiddleware)
+    
+    # Rate limiting middleware
+    app.add_middleware(
+        RateLimitMiddleware,
+        requests_per_minute=60,
+        burst_size=10,
+        authenticated_multiplier=10
+    )
+    
+    # Trusted host middleware (prevent host header attacks)
+    if os.getenv("ENVIRONMENT") == "production":
+        allowed_hosts = os.getenv("ALLOWED_HOSTS", "152.42.139.18").split(",")
+        app.add_middleware(TrustedHostMiddleware, allowed_hosts=allowed_hosts)
+    
+    # CORS middleware with restrictions
     allowed_origins = os.getenv(
         "CORS_ORIGINS", 
         "http://localhost:3000,http://localhost:8000"
@@ -48,30 +67,6 @@ def create_app() -> FastAPI:
         allow_methods=["GET", "POST", "PUT", "DELETE"],
         allow_headers=["*"],
     )
-    
-    # Session middleware (required for OAuth)
-    app.add_middleware(
-        SessionMiddleware,
-        secret_key=os.getenv("SESSION_SECRET", os.urandom(32).hex()),
-        same_site="lax",
-        https_only=os.getenv("ENVIRONMENT") == "production"
-    )
-    
-    # Rate limiting middleware
-    app.add_middleware(
-        RateLimitMiddleware,
-        requests_per_minute=60,
-        burst_size=10,
-        authenticated_multiplier=10
-    )
-    
-    # API Key authentication middleware (add last, execute first)
-    app.add_middleware(APIKeyMiddleware)
-    
-    # Trusted host middleware (prevent host header attacks)
-    if os.getenv("ENVIRONMENT") == "production":
-        allowed_hosts = os.getenv("ALLOWED_HOSTS", "152.42.139.18").split(",")
-        app.add_middleware(TrustedHostMiddleware, allowed_hosts=allowed_hosts)
     
     # Security headers middleware
     @app.middleware("http")

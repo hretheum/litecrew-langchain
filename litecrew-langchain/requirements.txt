@@ -24,6 +24,12 @@ click>=8.1.7
 beautifulsoup4>=4.12.0
 psutil>=5.9.0
 
+# Security dependencies
+pyjwt>=2.8.0
+slowapi>=0.1.9
+python-multipart>=0.0.6  # Required for OAuth
+itsdangerous>=2.1.0  # Required for sessions
+
 # Additional LLM providers (optional)
 # langchain-anthropic>=0.1.0
 # langchain-google-genai>=0.0.11

@@ -44,7 +44,7 @@ Required CI/CD Variables:
 CI_REGISTRY_USER        # GitLab username
 CI_REGISTRY_PASSWORD    # GitLab token
 SSH_PRIVATE_KEY        # SSH key for Droplet access
-DROPLET_IP            # 46.101.181.183
+DROPLET_IP            # 152.42.139.18
 OPENAI_API_KEY        # Your OpenAI key
 ANTHROPIC_API_KEY     # Your Anthropic key (optional)
 GROQ_API_KEY         # Your Groq key (optional)
@@ -57,7 +57,7 @@ DB_PASSWORD          # PostgreSQL password
 
 ```bash
 # SSH to Droplet
-ssh -p 2222 litecrewai@46.101.181.183
+ssh -p 2222 litecrewai@152.42.139.18
 
 # Create deployment directory
 sudo mkdir -p /opt/litecrewai/litecrew-langchain
@@ -117,7 +117,7 @@ Only use when CI/CD is unavailable:
 ### Check deployment status:
 ```bash
 # SSH to Droplet
-ssh -p 2222 litecrewai@46.101.181.183
+ssh -p 2222 litecrewai@152.42.139.18
 
 # Check containers
 docker-compose -f docker-compose.prod.yml ps
