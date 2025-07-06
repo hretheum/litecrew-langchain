@@ -382,8 +382,19 @@ deploy:production:
       # Pull latest image
       sudo docker pull $4
       
-      # Stop and start containers
-      sudo docker compose down || true
+      # Stop ALL containers using port 8000
+      echo "🛑 Stopping containers on port 8000..."
+      sudo docker ps -q --filter "publish=8000" | xargs -r sudo docker stop || true
+      sudo docker ps -aq --filter "publish=8000" | xargs -r sudo docker rm || true
+      
+      # Also stop any litecrew containers by name
+      sudo docker ps -q --filter "name=litecrew" | xargs -r sudo docker stop || true
+      sudo docker ps -aq --filter "name=litecrew" | xargs -r sudo docker rm || true
+      
+      # Stop and remove via docker-compose
+      sudo docker compose down --remove-orphans || true
+      
+      # Start new container
       sudo docker compose up -d
       
       # Health check 
@@ -481,8 +492,19 @@ deploy:quick:
       # Pull latest image
       sudo docker pull $4
       
-      # Stop and start containers
-      sudo docker compose down || true
+      # Stop ALL containers using port 8000
+      echo "🛑 Stopping containers on port 8000..."
+      sudo docker ps -q --filter "publish=8000" | xargs -r sudo docker stop || true
+      sudo docker ps -aq --filter "publish=8000" | xargs -r sudo docker rm || true
+      
+      # Also stop any litecrew containers by name
+      sudo docker ps -q --filter "name=litecrew" | xargs -r sudo docker stop || true
+      sudo docker ps -aq --filter "name=litecrew" | xargs -r sudo docker rm || true
+      
+      # Stop and remove via docker-compose
+      sudo docker compose down --remove-orphans || true
+      
+      # Start new container
       sudo docker compose up -d
       
       # Health check 
