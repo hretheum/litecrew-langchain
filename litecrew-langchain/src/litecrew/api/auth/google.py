@@ -201,6 +201,6 @@ async def verify_dashboard_auth(request: Request) -> Optional[Dict[str, Any]]:
 
     try:
         payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
-        return payload
+        return dict(payload)  # Explicitly convert to dict
     except (jwt.ExpiredSignatureError, jwt.InvalidTokenError):
         return None

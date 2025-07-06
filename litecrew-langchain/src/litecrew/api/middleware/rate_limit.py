@@ -115,9 +115,9 @@ def setup_slowapi_limiter() -> Optional[Any]:
         def get_rate_limit_key(request: Request) -> str:
             # Use API key if available
             if hasattr(request.state, "api_key"):
-                return request.state.api_key
+                return str(request.state.api_key)
             # Otherwise use IP
-            return get_remote_address(request)
+            return str(get_remote_address(request))
 
         limiter = Limiter(key_func=get_rate_limit_key)
 
