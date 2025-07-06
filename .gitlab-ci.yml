@@ -4,6 +4,20 @@ stages:
   - build
   - deploy
 
+# Workflow rules
+workflow:
+  rules:
+    # Skip everything except deploy:quick when only CI files change
+    - if: '$CI_COMMIT_BRANCH == "master" || $CI_COMMIT_BRANCH == "main"'
+      changes:
+        - ".gitlab-ci.yml"
+        - ".gitlab-ci*.yml"
+        - "**/.gitlab-ci*.yml"
+      variables:
+        SKIP_TESTS: "true"
+    # Normal flow for everything else
+    - when: always
+
 variables:
   DOCKER_DRIVER: overlay2
   DOCKER_TLS_CERTDIR: ""
@@ -95,6 +109,8 @@ test:unit:
       - litecrew-langchain/coverage.xml
     expire_in: 1 week
   rules:
+    - if: '$SKIP_TESTS == "true"'
+      when: never
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
     - if: '$CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS'
       when: never
@@ -137,6 +153,8 @@ lint:
         echo "No source directory found, skipping lint"
       fi
   rules:
+    - if: '$SKIP_TESTS == "true"'
+      when: never
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
     - if: '$CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS'
       when: never
@@ -193,6 +211,8 @@ security:bandit:
     when: always
   allow_failure: false  # Block pipeline on security issues
   rules:
+    - if: '$SKIP_TESTS == "true"'
+      when: never
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
     - if: '$CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS'
       when: never
@@ -240,6 +260,8 @@ security:bandit:
     when: always
   allow_failure: true  # Don't block pipeline on secret detection - too many false positives
   rules:
+    - if: '$SKIP_TESTS == "true"'
+      when: never
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
     - if: '$CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS'
       when: never
@@ -280,6 +302,8 @@ security:container:
     when: always
   allow_failure: true  # Don't block on container issues initially
   rules:
+    - if: '$SKIP_TESTS == "true"'
+      when: never
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
     - if: '$CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS'
       when: never
@@ -310,9 +334,10 @@ build:docker:
       -t $IMAGE_NAME:latest .
     - docker push $IMAGE_NAME:$IMAGE_TAG
     - docker push $IMAGE_NAME:latest
-  only:
-    - main
-    - master
+  rules:
+    - if: '$SKIP_TESTS == "true"'
+      when: never
+    - if: '$CI_COMMIT_BRANCH == "master" || $CI_COMMIT_BRANCH == "main"'
 
 # Deploy stage
 deploy:production:
@@ -333,11 +358,12 @@ deploy:production:
       echo "🚀 Starting deployment..."
       
       # Create directories if needed
-      mkdir -p /opt/litecrewai/litecrew-langchain
+      sudo mkdir -p /opt/litecrewai/litecrew-langchain
+      sudo chown -R litecrewai:litecrewai /opt/litecrewai
       cd /opt/litecrewai/litecrew-langchain
       
       # Login to GitLab registry
-      echo "$1" | docker login -u "$2" --password-stdin "$3"
+      echo "$1" | sudo docker login -u "$2" --password-stdin "$3"
       
       # Create docker-compose.yml for deployment
       cat > docker-compose.yml << EOF
@@ -354,15 +380,15 @@ deploy:production:
       EOF
       
       # Pull latest image
-      docker pull $4
+      sudo docker pull $4
       
       # Stop and start containers
-      docker compose down || true
-      docker compose up -d
+      sudo docker compose down || true
+      sudo docker compose up -d
       
       # Health check 
       sleep 10
-      docker ps
+      sudo docker ps
       
       echo "✅ Deployment completed!"
       DEPLOY_SCRIPT
@@ -398,8 +424,8 @@ rollback:production:
         cd /opt/litecrewai/litecrew-langchain
         
         # Just restart with previous image tag
-        docker compose down
-        docker compose up -d
+        sudo docker compose down
+        sudo docker compose up -d
         
         echo "✅ Rollback completed!"
       EOF
@@ -407,4 +433,81 @@ rollback:production:
   only:
     - main
     - master
+
+# Quick deploy - skip all tests and use existing image
+deploy:quick:
+  stage: deploy
+  image: alpine:latest
+  before_script:
+    - apk add --no-cache openssh-client
+    - eval $(ssh-agent -s)
+    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    - ssh-keyscan -H $DROPLET_IP >> ~/.ssh/known_hosts
+  script:
+    - |
+      # Use latest image instead of building new one
+      QUICK_IMAGE="$IMAGE_NAME:latest"
+      echo "🚀 Quick deployment using image: $QUICK_IMAGE"
+      
+      cat > /tmp/deploy.sh << 'DEPLOY_SCRIPT'
+      #!/bin/bash
+      set -e
+      echo "🚀 Starting quick deployment..."
+      
+      # Create directories if needed
+      sudo mkdir -p /opt/litecrewai/litecrew-langchain
+      sudo chown -R litecrewai:litecrewai /opt/litecrewai
+      cd /opt/litecrewai/litecrew-langchain
+      
+      # Login to GitLab registry
+      echo "$1" | sudo docker login -u "$2" --password-stdin "$3"
+      
+      # Create docker-compose.yml for deployment
+      cat > docker-compose.yml << EOF
+      version: '3.8'
+      services:
+        litecrew:
+          image: $4
+          container_name: litecrew_app
+          ports:
+            - "8000:8000"
+          environment:
+            - ENVIRONMENT=production
+          restart: unless-stopped
+      EOF
+      
+      # Pull latest image
+      sudo docker pull $4
+      
+      # Stop and start containers
+      sudo docker compose down || true
+      sudo docker compose up -d
+      
+      # Health check 
+      sleep 10
+      sudo docker ps
+      
+      echo "✅ Quick deployment completed!"
+      DEPLOY_SCRIPT
+    - chmod +x /tmp/deploy.sh
+    - scp /tmp/deploy.sh litecrewai@$DROPLET_IP:/tmp/
+    - ssh litecrewai@$DROPLET_IP "/tmp/deploy.sh '$CI_REGISTRY_PASSWORD' '$CI_REGISTRY_USER' '$CI_REGISTRY' '$QUICK_IMAGE'"
+    - ssh litecrewai@$DROPLET_IP "rm /tmp/deploy.sh"
+  environment:
+    name: production
+    url: http://$DROPLET_IP
+  when: manual
+  rules:
+    # Run only when CI files change
+    - if: '$CI_COMMIT_BRANCH == "master" || $CI_COMMIT_BRANCH == "main"'
+      changes:
+        - ".gitlab-ci.yml"
+        - ".gitlab-ci*.yml"
+        - "**/.gitlab-ci*.yml"
+      when: manual
+    # Or when manually triggered
+    - if: '$CI_PIPELINE_SOURCE == "web"'
+      when: manual
 
