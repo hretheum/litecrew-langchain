@@ -2,12 +2,12 @@
 
 import os
 import time
-from typing import Any
+from typing import Any, Callable
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 
@@ -76,7 +76,7 @@ def create_app() -> FastAPI:
 
     # Security headers middleware
     @app.middleware("http")
-    async def add_security_headers(request: Request, call_next):
+    async def add_security_headers(request: Request, call_next: Callable) -> Response:
         response = await call_next(request)
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["X-Frame-Options"] = "DENY"
@@ -141,7 +141,7 @@ def create_app() -> FastAPI:
         return response
 
     @app.on_event("startup")
-    async def startup_event():
+    async def startup_event() -> None:
         """Log security configuration on startup."""
         print("🔒 Security Configuration:")
         print(

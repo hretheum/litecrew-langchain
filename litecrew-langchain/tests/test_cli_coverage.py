@@ -109,7 +109,7 @@ class TestCLIConfig:
 class TestCLICrew:
     """Test CLI crew commands with more coverage."""
 
-    @patch("litecrew.cli.commands.crew.requests.post")
+    @patch("litecrew.cli.commands.crew.httpx.post")
     def test_create_crew_from_file(self, mock_post, tmp_path):
         """Test create crew from file."""
         runner = CliRunner()
@@ -129,7 +129,7 @@ class TestCLICrew:
             assert result.exit_code == 0
             assert "Created crew" in result.output
 
-    @patch("litecrew.cli.commands.crew.requests.post")
+    @patch("litecrew.cli.commands.crew.httpx.post")
     def test_create_crew_dry_run(self, mock_post):
         """Test create crew dry run."""
         runner = CliRunner()
@@ -152,7 +152,7 @@ class TestCLICrew:
         assert "Would create crew" in result.output
         mock_post.assert_not_called()
 
-    @patch("litecrew.cli.commands.crew.requests.get")
+    @patch("litecrew.cli.commands.crew.httpx.get")
     def test_list_crews_with_filter(self, mock_get):
         """Test list crews with name filter."""
         runner = CliRunner()
@@ -169,7 +169,7 @@ class TestCLICrew:
         assert "Test Crew" in result.output
         assert "Another" not in result.output
 
-    @patch("litecrew.cli.commands.crew.requests.post")
+    @patch("litecrew.cli.commands.crew.httpx.post")
     def test_execute_crew_with_inputs(self, mock_post):
         """Test execute crew with JSON inputs."""
         runner = CliRunner()
@@ -184,7 +184,7 @@ class TestCLICrew:
         assert result.exit_code == 0
         assert "Execution completed" in result.output
 
-    @patch("litecrew.cli.commands.crew.requests.post")
+    @patch("litecrew.cli.commands.crew.httpx.post")
     def test_execute_crew_async(self, mock_post):
         """Test execute crew async."""
         runner = CliRunner()
@@ -202,7 +202,7 @@ class TestCLICrew:
 class TestCLIDebug:
     """Test CLI debug commands with more coverage."""
 
-    @patch("litecrew.cli.commands.debug.requests.get")
+    @patch("litecrew.cli.commands.debug.httpx.get")
     def test_debug_connectivity_success(self, mock_get):
         """Test debug connectivity success."""
         runner = CliRunner()
@@ -213,7 +213,7 @@ class TestCLIDebug:
         assert result.exit_code == 0
         assert "API server is reachable" in result.output
 
-    @patch("litecrew.cli.commands.debug.requests.get")
+    @patch("litecrew.cli.commands.debug.httpx.get")
     def test_debug_connectivity_failure(self, mock_get):
         """Test debug connectivity failure."""
         runner = CliRunner()
@@ -229,7 +229,7 @@ class TestCLIDebug:
         log_file = tmp_path / "litecrew.log"
         log_file.write_text("Log line 1\nLog line 2\nLog line 3")
 
-        with patch("litecrew.cli.commands.debug.Path.home") as mock_home:
+        with patch("pathlib.Path.home") as mock_home:
             mock_home.return_value = tmp_path.parent
             with patch.object(Path, "exists", return_value=True):
                 result = runner.invoke(logs, ["--lines", "2"])
@@ -243,7 +243,7 @@ class TestCLIDebug:
         log_file = tmp_path / "litecrew.log"
         log_file.write_text("Initial log")
 
-        with patch("litecrew.cli.commands.debug.Path.home") as mock_home:
+        with patch("pathlib.Path.home") as mock_home:
             mock_home.return_value = tmp_path.parent
             with patch.object(Path, "exists", return_value=True):
                 with patch("litecrew.cli.commands.debug.time.sleep") as mock_sleep:
@@ -253,7 +253,7 @@ class TestCLIDebug:
                     assert result.exit_code == 0
 
     @patch("litecrew.cli.commands.debug.psutil.Process")
-    @patch("litecrew.cli.commands.debug.requests.get")
+    @patch("litecrew.cli.commands.debug.httpx.get")
     def test_debug_performance(self, mock_get, mock_process):
         """Test debug performance command."""
         runner = CliRunner()
@@ -281,7 +281,7 @@ class TestCLIDebug:
 class TestCLITask:
     """Test CLI task commands with more coverage."""
 
-    @patch("litecrew.cli.commands.task.requests.post")
+    @patch("litecrew.cli.commands.task.httpx.post")
     def test_run_task_with_crew(self, mock_post):
         """Test run task with specific crew."""
         runner = CliRunner()
@@ -307,8 +307,8 @@ class TestCLITask:
         assert result.exit_code == 0
         assert "Task completed" in result.output
 
-    @patch("litecrew.cli.commands.task.requests.post")
-    @patch("litecrew.cli.commands.task.requests.get")
+    @patch("litecrew.cli.commands.task.httpx.post")
+    @patch("litecrew.cli.commands.task.httpx.get")
     def test_run_task_no_crew(self, mock_get, mock_post):
         """Test run task without specific crew."""
         runner = CliRunner()
@@ -329,7 +329,7 @@ class TestCLITask:
         result = runner.invoke(run, ["Do something"])
         assert result.exit_code == 0
 
-    @patch("litecrew.cli.commands.task.requests.get")
+    @patch("litecrew.cli.commands.task.httpx.get")
     def test_run_task_no_crews_available(self, mock_get):
         """Test run task when no crews available."""
         runner = CliRunner()

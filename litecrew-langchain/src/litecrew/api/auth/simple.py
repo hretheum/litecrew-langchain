@@ -8,7 +8,7 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 
 
 @router.get("/google/login")
-async def google_login_placeholder():
+async def google_login_placeholder() -> dict:
     """Placeholder for Google OAuth login."""
     return {
         "message": "Google OAuth not configured",
@@ -17,19 +17,19 @@ async def google_login_placeholder():
 
 
 @router.get("/google/callback")
-async def google_callback_placeholder():
+async def google_callback_placeholder() -> dict:
     """Placeholder for Google OAuth callback."""
     return {"message": "Google OAuth not configured"}
 
 
 @router.get("/logout")
-async def logout_placeholder():
+async def logout_placeholder() -> dict:
     """Placeholder for logout."""
     return {"message": "Logout endpoint"}
 
 
 @router.get("/me")
-async def get_current_user_placeholder():
+async def get_current_user_placeholder() -> dict:
     """Placeholder for current user info."""
     return {"message": "Authentication not configured"}
 
