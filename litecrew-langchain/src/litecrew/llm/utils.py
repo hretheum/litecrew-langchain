@@ -115,8 +115,11 @@ def get_model_context_length(provider: str, model: str) -> int:
         "anthropic": {
             "claude-3-opus": 200000,
             "claude-3-opus-20240229": 200000,
+            "claude-opus-4-20250514": 200000,
             "claude-3-sonnet": 200000,
+            "claude-3-sonnet-20240229": 200000,
             "claude-3-haiku": 200000,
+            "claude-3-haiku-20240307": 200000,
             "claude-2.1": 200000,
             "claude-2": 100000,
         },

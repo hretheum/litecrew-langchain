@@ -37,6 +37,7 @@ This project provides CrewAI's multi-agent features on LangChain's efficient fou
 
 ### ✅ LLM Integration (Phase 3)
 - **Multi-LLM Support** - 10+ providers with fallback chains
+- **Claude Opus 4** - Full support for latest Anthropic models
 - **Async Operations** - Full async/await support
 - **Conversation Memory** - Short-term memory with summarization
 
