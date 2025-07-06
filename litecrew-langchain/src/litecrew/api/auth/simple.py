@@ -12,7 +12,7 @@ async def google_login_placeholder():
     """Placeholder for Google OAuth login."""
     return {
         "message": "Google OAuth not configured",
-        "info": "Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET to enable"
+        "info": "Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET to enable",
     }
 
 
