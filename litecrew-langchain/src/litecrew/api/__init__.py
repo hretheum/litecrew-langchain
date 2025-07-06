@@ -71,3 +71,9 @@ def create_app() -> FastAPI:
         return response
 
     return app
+
+
+# Create app instance for uvicorn
+app = create_app()
+
+__all__ = ["create_app", "app"]

@@ -37,17 +37,29 @@ def main():
     log_level = "debug" if Config.DEBUG else "info"
     
     # Run server
-    uvicorn.run(
-        app,
-        host=host,
-        port=port,
-        reload=reload,
-        log_level=log_level,
-        access_log=True,
-        # SSL options for production
-        # ssl_keyfile="/path/to/key.pem",
-        # ssl_certfile="/path/to/cert.pem",
-    )
+    if reload:
+        # For development with reload, use import string
+        uvicorn.run(
+            "litecrew.api:app",
+            host=host,
+            port=port,
+            reload=True,
+            log_level=log_level,
+            access_log=True,
+        )
+    else:
+        # For production without reload, use app instance
+        uvicorn.run(
+            app,
+            host=host,
+            port=port,
+            reload=False,
+            log_level=log_level,
+            access_log=True,
+            # SSL options for production
+            # ssl_keyfile="/path/to/key.pem",
+            # ssl_certfile="/path/to/cert.pem",
+        )
 
 
 if __name__ == "__main__":
