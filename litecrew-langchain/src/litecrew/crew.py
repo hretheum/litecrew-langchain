@@ -238,7 +238,7 @@ class LiteCrew:
             if not self._process_executor:
                 # Add verbose and callbacks to config
                 # Handle both dict and ProcessConfig instances
-                if hasattr(self.process_config, '__dict__'):
+                if hasattr(self.process_config, "__dict__"):
                     # It's a ProcessConfig instance, convert to dict
                     config = vars(self.process_config).copy()
                 else:

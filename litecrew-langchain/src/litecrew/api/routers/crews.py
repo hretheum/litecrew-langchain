@@ -216,8 +216,17 @@ async def execute_crew(crew_id: str, execution_data: Dict[str, Any]) -> Dict[str
             )
             result = {"status": "running", "message": "Execution started"}
         else:
-            # Sync execution
-            result = await crew.kickoff_async(execution_data.get("inputs", {}))
+            # Sync execution - run in thread pool to avoid blocking
+            import asyncio
+            from concurrent.futures import ThreadPoolExecutor
+            
+            loop = asyncio.get_event_loop()
+            with ThreadPoolExecutor(max_workers=1) as executor:
+                result = await loop.run_in_executor(
+                    executor, 
+                    crew.kickoff, 
+                    execution_data.get("inputs", {})
+                )
 
         # Store execution
         execution_info = {
