@@ -97,6 +97,9 @@ class Agent(LiteAgent):
         track_tokens: bool = True,
         budget_limit: Optional[float] = None,
         global_rate_limiter: Optional["RateLimiter"] = None,
+        # Agent type system
+        type: Optional[str] = None,
+        type_config: Optional[Dict[str, Any]] = None,
         # Structured outputs
         output_dataclass: Optional[Type] = None,
         output_schema: Optional[Dict[str, Any]] = None,
@@ -123,6 +126,32 @@ class Agent(LiteAgent):
         self.async_execution = async_execution
         self.on_partial_response = None
 
+        # Agent type system
+        self.type = type
+        self.type_config = type_config or {}
+        self._agent_type = None
+        self._behavior_modifier = None
+        
+        # Initialize agent type if specified
+        if self.type:
+            from litecrew.agent_types import AgentTypeFactory, BehaviorModifier
+            
+            # Validate type name
+            if not self._validate_agent_type(self.type):
+                raise ValueError(f"Invalid agent type: {self.type}. Available types: {AgentTypeFactory.list_types()}")
+            
+            self._agent_type = AgentTypeFactory.create(self.type, self.type_config)
+            self._behavior_modifier = BehaviorModifier()
+            
+            # Add type-specific behaviors
+            self._setup_type_behaviors()
+            
+            # Update system message with type-specific prompt
+            if self._agent_type:
+                self.system_message = self._agent_type.get_system_prompt(
+                    self.role, self.goal, self.backstory
+                )
+        
         # Performance metrics
         self._creation_time = time.perf_counter()
         self._execution_count = 0
@@ -519,6 +548,16 @@ Question: {{input}}
         if context:
             full_prompt += f"Context from previous tasks:\n{context}\n\n"
         full_prompt += f"Current task: {task_description}"
+        
+        # Apply type-specific prompt enhancements
+        if self._agent_type:
+            type_context = {
+                "task": task_description,
+                "context": context,
+                "turn_count": self._execution_count,
+                "has_memory": bool(self._conversation_memory)
+            }
+            full_prompt = self._apply_type_to_prompt(full_prompt, type_context)
 
         # Add to memory
         if self._conversation_memory:
@@ -567,6 +606,15 @@ Question: {{input}}
                 self._response_cache.add(
                     full_prompt, response, provider=self.llm.__class__.__name__
                 )
+
+            # Apply type-specific response processing
+            if self._agent_type and response:
+                type_context = {
+                    "task": task_description,
+                    "original_response": response,
+                    "turn_count": self._execution_count
+                }
+                response = self._apply_type_to_response(response, type_context)
 
             # Add to memory
             if self._conversation_memory and response:
@@ -991,3 +1039,135 @@ Question: {{input}}
             if self.verbose:
                 print(f"LLM call failed: {e}")
             raise
+    
+    def _validate_agent_type(self, type_name: str) -> bool:
+        """Validate if agent type is valid."""
+        from litecrew.agent_types import AgentTypeFactory
+        
+        return type_name.lower() in AgentTypeFactory.list_types()
+    
+    def _setup_type_behaviors(self) -> None:
+        """Setup behaviors based on agent type."""
+        if not self._agent_type or not self._behavior_modifier:
+            return
+        
+        from litecrew.agent_types.behaviors import (
+            CriticalThinkingBehavior,
+            VerboseThinkingBehavior,
+            ModerationBehavior,
+            ConversationalBehavior
+        )
+        
+        # Add behaviors based on type
+        if self.type == "critic":
+            criticism_level = self.type_config.get("criticism_level", "moderate")
+            self._behavior_modifier.add_behavior(
+                CriticalThinkingBehavior(level=criticism_level)
+            )
+        
+        elif self.type == "thinking":
+            verbosity = self.type_config.get("thinking_verbosity", 5)
+            self._behavior_modifier.add_behavior(
+                VerboseThinkingBehavior(verbosity=verbosity)
+            )
+        
+        elif self.type == "moderator":
+            moderation_style = self.type_config.get("moderation_style", "balanced")
+            self._behavior_modifier.add_behavior(
+                ModerationBehavior(style=moderation_style)
+            )
+        
+        elif self.type == "conversational":
+            conversation_style = self.type_config.get("conversation_style", "friendly")
+            self._behavior_modifier.add_behavior(
+                ConversationalBehavior(style=conversation_style)
+            )
+    
+    def _apply_type_to_prompt(self, prompt: str, context: Dict[str, Any]) -> str:
+        """Apply agent type modifications to prompt."""
+        if not self._agent_type:
+            return prompt
+        
+        # Get type-enhanced prompt
+        enhanced_prompt = self._agent_type.enhance_prompt(prompt, context)
+        
+        # Apply behavior modifications
+        if self._behavior_modifier:
+            enhanced_prompt = self._behavior_modifier.apply_to_prompt(enhanced_prompt, context)
+        
+        return enhanced_prompt
+    
+    def _apply_type_to_response(self, response: str, context: Dict[str, Any]) -> str:
+        """Apply agent type modifications to response."""
+        if not self._agent_type:
+            return response
+        
+        # Process response through type
+        processed_response = self._agent_type.process_response(response, context)
+        
+        # Apply behavior modifications
+        if self._behavior_modifier:
+            processed_response = self._behavior_modifier.apply_to_response(processed_response, context)
+        
+        # Validate response
+        if not self._agent_type.validate_response(processed_response):
+            # Response doesn't meet type requirements, enhance it
+            if self._agent_type.config.require_reasoning and "because" not in processed_response.lower():
+                processed_response += "\n\nThis conclusion is reached because of the analysis provided above."
+            
+            if self._agent_type.config.min_response_length and len(processed_response) < self._agent_type.config.min_response_length:
+                processed_response += "\n\nTo elaborate further on this point..."
+        
+        return processed_response
+    
+    def get_type_info(self) -> Dict[str, Any]:
+        """Get information about the agent's type."""
+        if not self.type:
+            return {"type": None, "description": "Standard agent without specialized type"}
+        
+        from litecrew.agent_types import AgentTypeFactory
+        
+        type_info = AgentTypeFactory.get_type_info(self.type)
+        type_info["current_config"] = self.type_config
+        
+        if self._agent_type:
+            type_info["personality"] = {
+                "traits": [t.value for t in self._agent_type.personality.primary_traits],
+                "communication_style": self._agent_type.personality.communication_style,
+                "verbosity_level": self._agent_type.personality.verbosity_level,
+                "thinking_style": self._agent_type.personality.thinking_style,
+                "response_tendency": self._agent_type.personality.response_tendency
+            }
+        
+        return type_info
+    
+    def validate_type_config(self) -> bool:
+        """Validate the agent's type configuration."""
+        if not self.type:
+            return True  # No type is valid
+        
+        if not self._agent_type:
+            return False
+        
+        # Check if all required config options are present
+        config = self._agent_type.config
+        
+        # Basic validation
+        if not config.name or not config.description:
+            return False
+        
+        # Type-specific validation
+        if self.type == "critic" and config.criticism_level not in ["mild", "moderate", "harsh", None]:
+            return False
+        
+        if self.type == "thinking" and config.thinking_verbosity is not None:
+            if not (1 <= config.thinking_verbosity <= 10):
+                return False
+        
+        if self.type == "moderator" and config.moderation_style not in ["strict", "balanced", "permissive", None]:
+            return False
+        
+        if self.type == "conversational" and config.conversation_style not in ["formal", "friendly", "casual", "adaptive", None]:
+            return False
+        
+        return True

@@ -20,7 +20,7 @@ else:
     from .auth.simple import verify_dashboard_auth
 from .middleware.auth import APIKeyMiddleware
 from .middleware.rate_limit import RateLimitMiddleware
-from .routers import crews, executions, tasks
+from .routers import agents, crews, executions, tasks, processes
 from .routers import health_simple as health
 from .websocket import websocket_router
 
@@ -94,9 +94,11 @@ def create_app() -> FastAPI:
 
     # Include routers
     app.include_router(auth_router, prefix="/auth", tags=["auth"])
+    app.include_router(agents.router, prefix="/api/v1", tags=["agents"])
     app.include_router(crews.router, prefix="/api/v1", tags=["crews"])
     app.include_router(tasks.router, prefix="/api/v1", tags=["tasks"])
     app.include_router(executions.router, prefix="/api/v1", tags=["executions"])
+    app.include_router(processes.router, prefix="/api/v1", tags=["processes"])
     app.include_router(health.router, prefix="/api/v1", tags=["health"])
     app.include_router(websocket_router, tags=["websockets"])
 

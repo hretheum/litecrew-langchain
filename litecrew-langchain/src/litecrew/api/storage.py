@@ -12,6 +12,7 @@ class APIStorage:
         self._crews: Dict[str, Dict[str, Any]] = {}
         self._tasks: Dict[str, Dict[str, Any]] = {}
         self._executions: Dict[str, Dict[str, Any]] = {}
+        self._agents: Dict[str, Dict[str, Any]] = {}
         self._lock = asyncio.Lock()
 
     async def store_crew(self, crew_id: str, crew_info: Dict[str, Any]) -> None:
@@ -131,6 +132,50 @@ class APIStorage:
                     self._executions[execution_id][
                         "completed_at"
                     ] = datetime.utcnow().isoformat()
+    
+    async def store_agent(self, agent_id: str, agent_info: Dict[str, Any]) -> None:
+        """Store agent information."""
+        async with self._lock:
+            self._agents[agent_id] = agent_info
+    
+    async def get_agent(self, agent_id: str) -> Optional[Dict[str, Any]]:
+        """Get agent information."""
+        async with self._lock:
+            return self._agents.get(agent_id)
+    
+    async def list_agents(
+        self, limit: int = 50, offset: int = 0
+    ) -> List[Dict[str, Any]]:
+        """List all agents with pagination."""
+        async with self._lock:
+            agents = list(self._agents.values())
+            # Sort by created_at in descending order
+            agents.sort(key=lambda x: x.get("created_at", ""), reverse=True)
+            return agents[offset : offset + limit]
+    
+    async def delete_agent(self, agent_id: str) -> None:
+        """Delete agent."""
+        async with self._lock:
+            self._agents.pop(agent_id, None)
+    
+    def store_agent_sync(self, agent_id: str, agent_info: Dict[str, Any]) -> None:
+        """Store agent information (sync version for compatibility)."""
+        # Direct sync access without lock for simplicity
+        self._agents[agent_id] = agent_info
+    
+    def get_agent_sync(self, agent_id: str) -> Optional[Dict[str, Any]]:
+        """Get agent information (sync version for compatibility)."""
+        return self._agents.get(agent_id)
+    
+    def list_agents_sync(self, limit: int = 50, offset: int = 0) -> List[Dict[str, Any]]:
+        """List all agents (sync version for compatibility)."""
+        agents = list(self._agents.values())
+        agents.sort(key=lambda x: x.get("created_at", ""), reverse=True)
+        return agents[offset : offset + limit]
+    
+    def delete_agent_sync(self, agent_id: str) -> None:
+        """Delete agent (sync version for compatibility)."""
+        self._agents.pop(agent_id, None)
 
 
 # Global storage instance

@@ -11,6 +11,7 @@ from litecrew import LiteAgent, LiteCrew, LiteTask
 
 from ..models import CrewCreate, CrewResponse, CrewUpdate, TaskSubmission
 from ..storage import get_storage
+from ..process_callbacks import create_process_config_with_websocket
 
 router = APIRouter()
 
@@ -23,11 +24,19 @@ async def create_crew(crew_data: CrewCreate) -> CrewResponse:
     # Create agents
     agents = []
     for agent_data in crew_data.agents:
-        agent = LiteAgent(
-            role=agent_data["role"],
-            goal=agent_data["goal"],
-            backstory=agent_data["backstory"],
-        )
+        agent_kwargs = {
+            "role": agent_data["role"],
+            "goal": agent_data["goal"],
+            "backstory": agent_data["backstory"],
+        }
+        
+        # Add type fields if specified
+        if "type" in agent_data:
+            agent_kwargs["type"] = agent_data["type"]
+            if "type_config" in agent_data:
+                agent_kwargs["type_config"] = agent_data["type_config"]
+        
+        agent = LiteAgent(**agent_kwargs)
         agents.append(agent)
 
     # Create tasks
@@ -45,9 +54,17 @@ async def create_crew(crew_data: CrewCreate) -> CrewResponse:
         )
         tasks.append(task)
 
-    # Create crew
+    # Create crew with WebSocket callbacks
+    process_config = create_process_config_with_websocket(
+        crew_id, 
+        crew_data.process_config
+    )
+    
     crew = LiteCrew(
-        agents=agents, tasks=tasks, process=crew_data.process or "sequential"
+        agents=agents, 
+        tasks=tasks, 
+        process=crew_data.process or "sequential",
+        process_config=process_config
     )
 
     # Store crew
@@ -58,6 +75,7 @@ async def create_crew(crew_data: CrewCreate) -> CrewResponse:
         "agents": crew_data.agents,
         "tasks": crew_data.tasks,
         "process": crew_data.process or "sequential",
+        "process_config": crew_data.process_config,
         "created_at": datetime.utcnow().isoformat(),
         "crew_instance": crew,
     }
@@ -72,6 +90,7 @@ async def create_crew(crew_data: CrewCreate) -> CrewResponse:
         agents=crew_data.agents,
         tasks=crew_data.tasks,
         process=crew_data.process or "sequential",
+        process_config=crew_data.process_config,
         created_at=str(crew_info["created_at"]),
     )
 

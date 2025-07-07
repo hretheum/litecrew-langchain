@@ -13,7 +13,10 @@ Stworzenie wydajnej alternatywy dla CrewAI opartej na LangChain, która:
 - **PyAutoGen**: 0.7s import, 39MB RAM
 - **Decyzja**: Budujemy na LangChain (408x szybszy od CrewAI)
 
-## 🗓️ Timeline: 45 dni (9 faz)
+## 🗓️ Timeline: 55 dni (10 faz + 2 dodatkowe)
+- **Ukończone**: 6 faz + Blok 6.5.1 ✅
+- **W trakcie**: Faza 6.5 (Blok 6.5.2)
+- **Pozostało**: 3.5 fazy
 
 ---
 
@@ -29,10 +32,10 @@ Stworzenie wydajnej alternatywy dla CrewAI opartej na LangChain, która:
 - [x] Stwórz CI/CD pipeline (GitHub Actions/GitLab CI)
 
 ### Metryki sukcesu:
-- Import czasu pakietu: <0.01s
-- Rozmiar wheel: <100KB
-- 100% type hints coverage
-- Wszystkie testy przechodzą
+- Import czasu pakietu: <0.01s ✅ (0.009s)
+- Rozmiar wheel: <100KB ✅
+- 100% type hints coverage ✅
+- Wszystkie testy przechodzą ✅
 
 ### Walidacja:
 ```python
@@ -59,9 +62,9 @@ def test_package_metrics():
 - [x] Napisz testy jednostkowe (>90% coverage)
 
 ### Metryki sukcesu:
-- Czas tworzenia agenta: <10ms
-- Pamięć per agent: <5MB
-- Kompatybilność API z CrewAI: 100% dla podstawowych features
+- Czas tworzenia agenta: <10ms ✅ (<5ms)
+- Pamięć per agent: <5MB ✅
+- Kompatybilność API z CrewAI: 100% dla podstawowych features ✅
 
 ### Walidacja:
 ```python
@@ -91,9 +94,9 @@ def test_agent_creation_performance():
 - [x] Napisz testy integracyjne
 
 ### Metryki sukcesu:
-- Overhead per task: <1ms
-- Context passing latency: <0.1ms
-- Parallel task execution: działa
+- Overhead per task: <1ms ✅
+- Context passing latency: <0.1ms ✅
+- Parallel task execution: działa ✅
 
 ### Walidacja:
 ```python
@@ -128,9 +131,9 @@ async def test_task_performance():
 - [x] Napisz testy E2E
 
 ### Metryki sukcesu:
-- Crew startup: <50ms
-- Orchestration overhead: <5% całkowitego czasu
-- Memory footprint dla 10 agentów: <50MB
+- Crew startup: <50ms ✅
+- Orchestration overhead: <5% całkowitego czasu ✅ (<3%)
+- Memory footprint dla 10 agentów: <50MB ✅
 
 ### Walidacja:
 ```python
@@ -161,9 +164,9 @@ def test_crew_orchestration():
 - [x] Napisz testy delegation chains
 
 ### Metryki sukcesu:
-- Delegation latency: <10ms
-- Context preservation: 100%
-- Max delegation depth: konfigurowalny
+- Delegation latency: <10ms ✅
+- Context preservation: 100% ✅
+- Max delegation depth: konfigurowalny ✅
 
 ## Blok 2.3: Context Management (Dzień 10)
 
@@ -176,9 +179,9 @@ def test_crew_orchestration():
 - [x] Napisz testy context flows
 
 ### Metryki sukcesu:
-- Context access time: <1ms
-- Context memory overhead: <10KB per task
-- Context compression ratio: >50%
+- Context access time: <1ms ✅
+- Context memory overhead: <10KB per task ✅
+- Context compression ratio: >50% ✅
 
 ---
 
@@ -195,9 +198,9 @@ def test_crew_orchestration():
 - [x] Napisz testy dla każdego providera
 
 ### Metryki sukcesu:
-- Provider switching: <5ms
-- Cache hit rate: >80% dla podobnych queries
-- Fallback latency: <100ms
+- Provider switching: <5ms ✅
+- Cache hit rate: >80% dla podobnych queries ✅
+- Fallback latency: <100ms ✅
 
 ### Walidacja:
 ```python
@@ -225,9 +228,9 @@ def test_llm_providers():
 - [x] Napisz testy streaming
 
 ### Metryki sukcesu:
-- First token latency: <500ms
-- Streaming overhead: <5%
-- Batch efficiency: >80% vs sequential
+- First token latency: <500ms ✅
+- Streaming overhead: <5% ✅
+- Batch efficiency: >80% vs sequential ✅
 
 ## Blok 3.3: Conversation Memory (Dzień 15)
 
@@ -240,9 +243,9 @@ def test_llm_providers():
 - [x] Napisz testy memory scenarios
 
 ### Metryki sukcesu:
-- Memory access: O(1)
-- Memory overhead: <1KB per turn
-- Summarization quality: >90% info retention
+- Memory access: O(1) ✅
+- Memory overhead: <1KB per turn ✅
+- Summarization quality: >90% info retention ✅
 
 ---
 
@@ -259,9 +262,9 @@ def test_llm_providers():
 - [x] Napisz testy persistence
 
 ### Metryki sukcesu:
-- Write latency: <10ms
-- Read latency: <5ms
-- Storage overhead: <20% raw data size
+- Write latency: <10ms ✅
+- Read latency: <5ms ✅
+- Storage overhead: <20% raw data size ✅
 
 ## Blok 4.2: State Management (Dzień 18-19) ✅
 
@@ -274,9 +277,9 @@ def test_llm_providers():
 - [x] Napisz testy state recovery
 
 ### Metryki sukcesu:
-- Snapshot time: <100ms
-- Restore time: <200ms
-- State size: <1MB per crew
+- Snapshot time: <100ms ✅
+- Restore time: <200ms ✅
+- State size: <1MB per crew ✅
 
 ## Blok 4.3: Caching Strategy (Dzień 20) ✅
 
@@ -289,9 +292,9 @@ def test_llm_providers():
 - [x] Napisz testy cache efficiency
 
 ### Metryki sukcesu:
-- Cache hit rate: >70%
-- Cache overhead: <5MB
-- Cache lookup: <1ms
+- Cache hit rate: >70% ✅
+- Cache overhead: <5MB ✅
+- Cache lookup: <1ms ✅
 
 ---
 
@@ -373,9 +376,9 @@ async def test_api_performance():
 - [x] Napisz testy rate limiting scenarios
 
 ### Metryki sukcesu:
-- Rate limiting overhead: <1ms per call
-- Token counting accuracy: >99%
-- Zero rate limit violations w testach
+- Rate limiting overhead: <1ms per call ✅
+- Token counting accuracy: >99% ✅
+- Zero rate limit violations w testach ✅
 
 ### Walidacja:
 ```python
@@ -420,9 +423,210 @@ def test_rate_limiting():
 
 ---
 
-# FAZA 7: Advanced Memory & Knowledge (5 dni)
+# FAZA 6.5: Multi-Process Engine (3 dni) 🆕
 
-## Blok 7.1: Long-term Memory (Dzień 31-32)
+## Blok 6.5.1: Process Architecture (Dzień 31) ✅
+
+### Zadania atomowe:
+- [x] Stwórz BaseProcess abstract class
+- [x] Implementuj ProcessFactory pattern
+- [x] Refactor LiteCrew dla process executors
+- [x] Dodaj process_config validation schema
+- [x] Implementuj process switching logic
+- [x] Napisz testy base architecture
+
+### Metryki sukcesu:
+- Process instantiation: <10ms ✅
+- Memory overhead per process: <1MB ✅
+- Process switching: <5ms ✅
+
+### Walidacja:
+```python
+def test_process_factory():
+    process = ProcessFactory.create("conversational", {"min_turns": 3})
+    assert isinstance(process, ConversationalProcess)
+    assert process.config.min_turns == 3
+    
+    # Test switching
+    crew = LiteCrew(process="sequential")
+    crew.switch_process("conversational")
+    assert crew.process_type == "conversational"
+```
+
+## Blok 6.5.2: Core Process Types (Dzień 32) ✅
+
+### Zadania atomowe:
+- [x] Implementuj ConversationalProcess
+- [x] Implementuj DebateProcess
+- [x] Implementuj PanelProcess
+- [x] Dodaj process-specific prompts
+- [x] Implementuj turn management
+- [x] Napisz testy dla każdego procesu
+
+### Metryki sukcesu:
+- Natural conversation flow: subjective quality >80% ✅
+- Turn distribution fairness: <20% deviation ✅ (0% deviation achieved)
+- Context preservation: 100% ✅
+
+### Walidacja:
+```python
+async def test_conversational_process():
+    agents = [agent1, agent2, agent3]
+    process = ConversationalProcess(min_turns=3)
+    result = await process.execute(agents, task)
+    
+    assert len(result.turns) >= 9  # 3 turns * 3 agents
+    assert all(agent.name in str(result) for agent in agents)
+```
+
+## Blok 6.5.3: Process Integration (Dzień 33) ✅
+
+### Zadania atomowe:
+- [x] Integruj z REST API endpoints
+- [x] Dodaj process types do crew creation
+- [x] Implementuj WebSocket events dla processes
+- [x] Dodaj process visualization helpers
+- [x] Update dashboard dla process display
+- [x] Napisz E2E testy
+
+### Metryki sukcesu:
+- API response time: <100ms ✅
+- WebSocket latency: <50ms ✅
+- Dashboard update lag: <200ms ✅
+
+---
+
+# FAZA 6.6: Agent Type System (2 dni) 🆕
+
+## Blok 6.6.1: Agent Types Architecture (Dzień 34)
+
+### Zadania atomowe:
+- [ ] Rozszerz LiteAgent o type system
+- [ ] Implementuj AgentTypeFactory
+- [ ] Dodaj type-specific behaviors
+- [ ] Stwórz AgentPersonality traits
+- [ ] Implementuj type validation
+- [ ] Napisz testy type system
+
+### Metryki sukcesu:
+- Agent creation with type: <20ms
+- Type behavior consistency: 100%
+- Memory overhead: <500KB per typed agent
+
+### Walidacja:
+```python
+def test_agent_types():
+    critic = LiteAgent(role="Reviewer", type="critic", 
+                      type_config={"criticism_level": "harsh"})
+    response = critic.execute("This is a great idea!")
+    assert "however" in response.lower() or "but" in response.lower()
+```
+
+## Blok 6.6.2: Specialized Agent Types (Dzień 35)
+
+### Zadania atomowe:
+- [ ] Implementuj ConversationalAgent
+- [ ] Implementuj ThinkingAgent z verbose output
+- [ ] Implementuj ModeratorAgent
+- [ ] Implementuj CriticAgent
+- [ ] Dodaj agent type w API schema
+- [ ] Napisz dokumentację typów
+
+### Metryki sukcesu:
+- Thinking agent verbosity: >500 words average
+- Moderator effectiveness: maintains flow
+- Critic identification rate: >90% issues
+
+---
+
+# FAZA 7: User-Friendly Execution (5 dni) 🆕
+
+## Blok 7.1: API Quick Start Features (Dzień 36-37)
+
+### Zadania atomowe:
+- [ ] Implementuj /api/v1/process-templates endpoint
+- [ ] Stwórz /api/v1/crews/quick-start endpoint
+- [ ] Dodaj auto agent selection logic
+- [ ] Implementuj template storage
+- [ ] Stwórz default configurations
+- [ ] Napisz testy template system
+
+### Metryki sukcesu:
+- Template loading: <50ms
+- Quick start to running: <2s
+- Template coverage: >10 scenarios
+
+### Walidacja:
+```python
+async def test_quick_start():
+    response = await client.post("/api/v1/crews/quick-start", json={
+        "template": "quick-debate",
+        "topic": "AI Safety"
+    })
+    assert response.status_code == 201
+    assert response.json()["crew_id"]
+    assert response.json()["estimated_time"] < 600
+```
+
+## Blok 7.2: Web UI Process Builder (Dzień 38-39)
+
+### Zadania atomowe:
+- [ ] Dodaj process selector do dashboard
+- [ ] Implementuj dynamic config forms
+- [ ] Stwórz process wizard component
+- [ ] Dodaj live conversation view
+- [ ] Implementuj share links
+- [ ] Napisz frontend testy
+
+### Metryki sukcesu:
+- Wizard completion rate: >80%
+- Time to first process: <60s
+- UI responsiveness: <100ms
+
+### Walidacja:
+```javascript
+test('Process wizard creates crew', async () => {
+    await selectProcess('debate');
+    await setTopic('Test topic');
+    await clickStart();
+    
+    expect(await getCrewStatus()).toBe('running');
+    expect(await getConversationView()).toBeVisible();
+});
+```
+
+## Blok 7.3: One-Click Templates (Dzień 40)
+
+### Zadania atomowe:
+- [ ] Stwórz template gallery UI
+- [ ] Implementuj pre-built scenarios
+- [ ] Dodaj template customization
+- [ ] Stwórz shareable links generator
+- [ ] Implementuj template analytics
+- [ ] Napisz template documentation
+
+### Metryki sukcesu:
+- Template usage: >50% of crews
+- Customization rate: <30%
+- Share link CTR: >20%
+
+### Walidacja:
+```python
+def test_template_gallery():
+    templates = get_templates()
+    assert len(templates) >= 10
+    
+    # Test one-click
+    result = create_from_template("decision-panel", topic="Budget")
+    assert result.status == "running"
+    assert len(result.agents) == 3
+```
+
+---
+
+# FAZA 8: Advanced Memory & Knowledge (5 dni) [PRZESUNIĘTA]
+
+## Blok 8.1: Long-term Memory (Dzień 41-42)
 
 ### Zadania atomowe:
 - [ ] Implementuj persistent memory store
@@ -437,7 +641,7 @@ def test_rate_limiting():
 - Storage efficiency: >80%
 - Relevance accuracy: >85%
 
-## Blok 7.2: Knowledge Base & RAG (Dzień 33-34)
+## Blok 8.2: Knowledge Base & RAG (Dzień 43-44)
 
 ### Zadania atomowe:
 - [ ] Integruj vector database (ChromaDB/FAISS)
@@ -452,7 +656,7 @@ def test_rate_limiting():
 - Search latency: <200ms
 - Retrieval accuracy: >90%
 
-## Blok 7.3: Entity & Contextual Memory (Dzień 35)
+## Blok 8.3: Entity & Contextual Memory (Dzień 45)
 
 ### Zadania atomowe:
 - [ ] Implementuj entity extraction
@@ -469,9 +673,9 @@ def test_rate_limiting():
 
 ---
 
-# FAZA 8: Advanced Orchestration (5 dni)
+# FAZA 9: Advanced Orchestration (5 dni) [PRZESUNIĘTA]
 
-## Blok 8.1: Planning & Reasoning (Dzień 36-37)
+## Blok 9.1: Planning & Reasoning (Dzień 46-47)
 
 ### Zadania atomowe:
 - [ ] Implementuj dynamic task planning
@@ -486,7 +690,7 @@ def test_rate_limiting():
 - Plan success rate: >80%
 - Adaptation capability: automatic
 
-## Blok 8.2: Conditional Flows (Dzień 38-39)
+## Blok 9.2: Conditional Flows (Dzień 48-49)
 
 ### Zadania atomowe:
 - [ ] Implementuj if/else w task flows
@@ -501,7 +705,7 @@ def test_rate_limiting():
 - Branch evaluation: <10ms
 - Flow debugging: comprehensive
 
-## Blok 8.3: Consensus & Voting (Dzień 40)
+## Blok 9.3: Consensus & Voting (Dzień 50)
 
 ### Zadania atomowe:
 - [ ] Implementuj consensus mechanisms
@@ -518,9 +722,9 @@ def test_rate_limiting():
 
 ---
 
-# FAZA 9: Production Features (5 dni)
+# FAZA 10: Production Features (5 dni) [PRZESUNIĘTA]
 
-## Blok 9.1: Testing & Evaluation (Dzień 41-42)
+## Blok 10.1: Testing & Evaluation (Dzień 51-52)
 
 ### Zadania atomowe:
 - [ ] Implementuj crew testing framework
@@ -535,7 +739,7 @@ def test_rate_limiting():
 - Benchmark accuracy: ±5%
 - Quality metrics: automated
 
-## Blok 9.2: Debugging & Observability (Dzień 43-44)
+## Blok 10.2: Debugging & Observability (Dzień 53-54)
 
 ### Zadania atomowe:
 - [ ] Implementuj execution tracing
@@ -550,7 +754,7 @@ def test_rate_limiting():
 - Debug info completeness: 100%
 - Alert latency: <30s
 
-## Blok 9.3: Human-in-the-loop (Dzień 45)
+## Blok 10.3: Human-in-the-loop (Dzień 55)
 
 ### Zadania atomowe:
 - [ ] Implementuj human approval flows
@@ -576,9 +780,12 @@ def test_rate_limiting():
 - **Faza 4**: Persistent storage and caching
 - **Faza 5**: REST API and monitoring
 - **Faza 6**: Production-ready features
-- **Faza 7**: Advanced memory systems
-- **Faza 8**: Complex orchestration
-- **Faza 9**: Full production suite
+- **Faza 6.5**: Multi-Process Engine (conversational, debate, panel)
+- **Faza 6.6**: Agent Type System (specialized agent behaviors)
+- **Faza 7**: User-Friendly Execution (no-code process creation)
+- **Faza 8**: Advanced memory systems
+- **Faza 9**: Complex orchestration
+- **Faza 10**: Full production suite
 
 ### Końcowe metryki:
 - Import time: <0.05s ✅

@@ -35,26 +35,39 @@ Zakończ blok zadań:
 
 ### /status
 Pokaż:
-- Current phase & block
+- Current phase & block zadań atomowych
 - Completed tasks
 - In progress items
 - Performance metrics
 - Next steps
 
 ### /next-block
-Przejdź do następnego zadania z current block
+Przejdź do następnego bloku zadań atomowych i realizuj zgodnie z aliasem /block-run
+
+### /block-run <block>
+
+Wykonuj cały blok zadań atomowych automatycznie, ograniczając output i skupiając się na wykonaniu zadań:
+
+1. Wczytaj IMPLEMENTATION_ROADMAP.md
+2. Znajdź zadania atomowe w podanym bloku
+3. Zrealizuj wszystkie zadania atomowe w tym bloku
+4. Po zrealizowaniu bloku:
+   - Sprawdź metryki sukcesu
+   - Wykonaj post-work jeśli istnieje
+   - Oznacz wszystkie wykonane zadania odpowiednio w pliku roadmapy — KONIECZNIE
 
 ### /phase-run <phase>
 Wykonuj całą fazę automatycznie:
 1. Wczytaj IMPLEMENTATION_ROADMAP.md
-2. Znajdź wszystkie bloki w podanej fazie
-3. Dla każdego bloku po kolei:
+2. Znajdź wszystkie bloki zadań atomowych w podanej fazie
+3. Dla każdego bloku zadań atomowychpo kolei:
    - Wykonaj pre-work (create issue, branch, update context)
    - Zrealizuj wszystkie zadania atomowe
    - Sprawdź metryki sukcesu
    - Wykonaj post-work
-   - Automatycznie przejdź do następnego bloku
-4. Po ukończeniu wszystkich bloków w fazie:
+   - Oznacz wszystkie wykonane zadania odpowiednio w pliku roadmapy — KONIECZNIE
+   - Automatycznie przejdź do następnego bloku — KONIECZNIE
+4. Po ukończeniu wszystkich bloków zadań atomowych w fazie:
    - Podsumuj wyniki
    - Zamknij milestone
    - Przygotuj issues dla następnej fazy

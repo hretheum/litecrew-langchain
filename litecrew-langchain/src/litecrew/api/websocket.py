@@ -45,6 +45,18 @@ class ConnectionManager:
                     if connection in self.crew_connections[crew_id]:
                         self.crew_connections[crew_id].remove(connection)
 
+    async def send_process_event(
+        self, crew_id: str, event_type: str, data: Dict
+    ) -> None:
+        """Send process-specific events to crew subscribers."""
+        message = json.dumps({
+            "type": "process_event",
+            "event": event_type,
+            "crew_id": crew_id,
+            "data": data
+        })
+        await self.send_crew_message(message, crew_id)
+
     async def broadcast(self, message: str) -> None:
         for connection in self.active_connections:
             try:

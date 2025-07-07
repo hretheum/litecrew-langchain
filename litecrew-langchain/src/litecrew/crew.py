@@ -15,6 +15,7 @@ from litecrew.events import EventEmitter, EventType, LifecycleCallbacks
 from litecrew.memory import ConversationMemory
 from litecrew.state import CrewState, StateManager
 from litecrew.task import LiteTask, TaskOutput
+from litecrew.processes import ProcessFactory, ProcessConfig, ProcessResult
 
 
 class CrewOutput(BaseModel):
@@ -40,6 +41,7 @@ class LiteCrew:
         agents: List[LiteAgent],
         tasks: List[LiteTask],
         process: str = "sequential",
+        process_config: Optional[Dict[str, Any]] = None,
         manager_agent: Optional[LiteAgent] = None,
         verbose: bool = False,
         max_rpm: Optional[int] = None,
@@ -58,7 +60,8 @@ class LiteCrew:
         Args:
             agents: List of agents in the crew
             tasks: List of tasks to execute
-            process: Execution process - "sequential" or "hierarchical"
+            process: Execution process - "sequential", "hierarchical", or custom types
+            process_config: Configuration for the process executor
             manager_agent: Manager agent for hierarchical process
             verbose: Enable verbose output
             max_rpm: Maximum requests per minute limit
@@ -72,6 +75,7 @@ class LiteCrew:
         self.agents = agents
         self.tasks = tasks
         self.process = process
+        self.process_config = process_config or {}
         self.manager_agent = manager_agent
         self.verbose = verbose
         self.max_rpm = max_rpm
@@ -80,6 +84,9 @@ class LiteCrew:
         self.function_calling_llm = function_calling_llm
         self.step_callback = step_callback
         self.async_execution = async_execution
+        
+        # Create process executor
+        self._process_executor = None
 
         # Generate unique crew ID
         self.id = f"crew_{uuid.uuid4().hex[:8]}"
@@ -170,6 +177,18 @@ class LiteCrew:
         if hasattr(self, "_shared_memory"):
             return str(self._shared_memory.build_context())
         return ""
+    
+    def switch_process(self, process_type: str, process_config: Optional[Dict[str, Any]] = None) -> None:
+        """
+        Switch to a different process type.
+        
+        Args:
+            process_type: New process type to use
+            process_config: Optional configuration for the new process
+        """
+        self.process = process_type
+        self.process_config = process_config or {}
+        self._process_executor = None  # Will be recreated on next kickoff
 
     def kickoff(self, inputs: Optional[Dict[str, Any]] = None) -> CrewOutput:
         """
@@ -211,14 +230,37 @@ class LiteCrew:
             self._state.update_status("running")
             self._save_state()
 
-        # Execute based on process type
+        # Execute using process executor
         try:
-            if self.process == "sequential":
-                result = self._execute_sequential(inputs)
-            elif self.process == "hierarchical":
-                result = self._execute_hierarchical(inputs)
+            # Create process executor if not already created
+            if not self._process_executor:
+                # Add verbose and callbacks to config
+                config = self.process_config.copy()
+                config['verbose'] = self.verbose
+                config['callbacks'] = []
+                if self.event_emitter:
+                    config['callbacks'].append(self.event_emitter)
+                if self.step_callback:
+                    config['callbacks'].append(self.step_callback)
+                    
+                self._process_executor = ProcessFactory.create(self.process, config)
+            
+            # Execute process
+            if self.async_execution or asyncio.iscoroutinefunction(self._process_executor.execute):
+                # Run async
+                loop = asyncio.get_event_loop()
+                process_result = loop.run_until_complete(
+                    self._process_executor.execute(self.agents, self.tasks, inputs)
+                )
             else:
-                raise ValueError(f"Unknown process type: {self.process}")
+                # Run sync
+                process_result = self._process_executor.execute(self.agents, self.tasks, inputs)
+            
+            # Convert ProcessResult to CrewOutput
+            result = CrewOutput(
+                raw=process_result.raw,
+                tasks_output=process_result.tasks_output
+            )
 
             # Update final state
             if self._state:
