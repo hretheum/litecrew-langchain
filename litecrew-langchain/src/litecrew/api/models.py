@@ -115,3 +115,41 @@ class AgentResponse(BaseModel):
     type_info: Optional[AgentTypeInfo] = None
     created_at: str
     metrics: Optional[Dict[str, Any]] = None
+
+
+class QuickStartRequest(BaseModel):
+    """Model for quick start request."""
+
+    template: str
+    topic: Optional[str] = None
+    decision: Optional[str] = None
+    options: Optional[List[str]] = None
+    rounds: Optional[int] = None
+    require_consensus: Optional[bool] = None
+    min_turns: Optional[int] = None
+    max_turns: Optional[int] = None
+    language: Optional[str] = None
+    code: Optional[str] = None
+    aspects: Optional[List[str]] = None
+    auto_execute: bool = False
+    # Additional fields for auto template
+    task: Optional[str] = None
+    num_agents: Optional[int] = None
+    required_roles: Optional[List[str]] = None
+    expected_output: Optional[str] = None
+    priority: Optional[str] = None
+    # Configuration presets
+    llm_preset: Optional[str] = "balanced"
+    process_preset: Optional[str] = "standard"
+    agent_preset: Optional[str] = "verbose"
+
+
+class TemplateInfo(BaseModel):
+    """Information about a process template."""
+
+    name: str
+    description: str
+    process_type: str
+    estimated_time: int
+    configurable_options: Dict[str, str] = {}
+    default_inputs: Dict[str, Any] = {}
