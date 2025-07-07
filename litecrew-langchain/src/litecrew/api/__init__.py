@@ -127,7 +127,7 @@ def create_app() -> FastAPI:
         # Try enhanced dashboard first, fall back to basic
         enhanced_path = os.path.join(static_dir, "enhanced-dashboard.html")
         basic_path = os.path.join(static_dir, "index.html")
-        
+
         if os.path.exists(enhanced_path):
             return FileResponse(enhanced_path)
         elif os.path.exists(basic_path):

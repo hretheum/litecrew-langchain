@@ -134,7 +134,7 @@ class DecisionPanelTemplate(ProcessTemplate):
         return [
             {
                 "description": f"Evaluate and decide on {decision} between: {', '.join(options)}",
-                "expected_output": f"A well-reasoned decision with rationale",
+                "expected_output": "A well-reasoned decision with rationale",
                 "priority": "high",
                 "agent_role": "Technical Expert",  # Tech expert leads the evaluation
             }
@@ -313,7 +313,7 @@ class ResearchTeamTemplate(ProcessTemplate):
     def generate_tasks(self, **kwargs: Any) -> List[Dict[str, Any]]:
         topic = kwargs.get("topic", "climate change")
         aspects = kwargs.get("aspects", ["causes", "effects", "solutions"])
-        
+
         tasks = [
             {
                 "description": f"Plan the research approach for {topic}",
@@ -321,22 +321,26 @@ class ResearchTeamTemplate(ProcessTemplate):
                 "agent_role": "Lead Researcher",
             }
         ]
-        
+
         for i, aspect in enumerate(aspects):
             # Rotate between the three research agents
             agent_roles = ["Data Analyst", "Literature Reviewer", "Synthesis Expert"]
-            tasks.append({
-                "description": f"Research {aspect} of {topic}",
-                "expected_output": f"Detailed findings on {aspect}",
-                "agent_role": agent_roles[i % 3],
-            })
-        
-        tasks.append({
-            "description": "Synthesize all findings into a comprehensive report",
-            "expected_output": "Complete research report with key insights",
-            "agent_role": "Synthesis Expert",
-        })
-        
+            tasks.append(
+                {
+                    "description": f"Research {aspect} of {topic}",
+                    "expected_output": f"Detailed findings on {aspect}",
+                    "agent_role": agent_roles[i % 3],
+                }
+            )
+
+        tasks.append(
+            {
+                "description": "Synthesize all findings into a comprehensive report",
+                "expected_output": "Complete research report with key insights",
+                "agent_role": "Synthesis Expert",
+            }
+        )
+
         return tasks
 
     def estimated_time(self) -> int:
@@ -359,22 +363,24 @@ class AutoTemplate(ProcessTemplate):
         except ImportError:
             # If relative import fails, use absolute
             from litecrew.api.agent_selector import AgentSelector
-        
+
         task = kwargs.get("task", "Complete the assigned task")
         num_agents = kwargs.get("num_agents", 3)
         required_roles = kwargs.get("required_roles")
-        
+
         return AgentSelector.select_agents(task, num_agents, required_roles)
 
     def generate_tasks(self, **kwargs: Any) -> List[Dict[str, Any]]:
         task = kwargs.get("task", "Complete the assigned task")
         agents = self.generate_agents(**kwargs)
-        
+
         # Create main task assigned to the first agent
         return [
             {
                 "description": task,
-                "expected_output": kwargs.get("expected_output", "Task completed successfully"),
+                "expected_output": kwargs.get(
+                    "expected_output", "Task completed successfully"
+                ),
                 "priority": kwargs.get("priority", "medium"),
                 "agent_role": agents[0]["role"] if agents else "Data Analyst",
             }
@@ -386,13 +392,13 @@ class AutoTemplate(ProcessTemplate):
         except ImportError:
             # If relative import fails, use absolute
             from litecrew.api.agent_selector import AgentSelector
-        
+
         task = kwargs.get("task", "Complete the assigned task")
         num_agents = kwargs.get("num_agents", 3)
-        
+
         # Update process type based on task
         self.process_type = AgentSelector.suggest_process_type(task, num_agents)
-        
+
         # Return appropriate config based on process type
         if self.process_type == "conversational":
             return {"min_turns": 3, "max_turns": 10}

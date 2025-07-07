@@ -61,14 +61,14 @@ class AgentTypeFactory:
                         setattr(type_config, key, value)
         else:
             # Create config from provided dict or use class default
-            if hasattr(agent_type_class, 'get_default_config'):
+            if hasattr(agent_type_class, "get_default_config"):
                 type_config = agent_type_class.get_default_config()
             else:
                 # Fallback to minimal config
                 type_config = AgentTypeConfig(
                     name=type_name,
                     description=f"Default {type_name} agent",
-                    system_prompt_template="You are {role}. {goal}. {backstory}. {personality}"
+                    system_prompt_template="You are {role}. {goal}. {backstory}. {personality}",
                 )
             if config:
                 for key, value in config.items():
@@ -91,14 +91,14 @@ class AgentTypeFactory:
             raise ValueError(f"Unknown agent type: {type_name}")
 
         agent_type_class = cls._registry[type_name]
-        
-        if hasattr(agent_type_class, 'get_default_config'):
+
+        if hasattr(agent_type_class, "get_default_config"):
             default_config = agent_type_class.get_default_config()
         else:
             default_config = AgentTypeConfig(
                 name=type_name,
                 description=f"Default {type_name} agent",
-                system_prompt_template="You are {role}. {goal}. {backstory}. {personality}"
+                system_prompt_template="You are {role}. {goal}. {backstory}. {personality}",
             )
 
         return {

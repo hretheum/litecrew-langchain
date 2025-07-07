@@ -4,11 +4,10 @@ from typing import Any, Dict, List
 
 from fastapi import APIRouter, HTTPException
 
-from ..models import CrewCreate, CrewResponse, QuickStartRequest, TemplateInfo
-from ..storage import get_storage
-from ..templates import get_template, list_templates
+from ..models import CrewCreate, QuickStartRequest, TemplateInfo
 from ..share_links import get_share_manager
 from ..template_analytics import get_analytics
+from ..templates import get_template, list_templates
 
 router = APIRouter()
 
@@ -54,15 +53,15 @@ async def quick_start_crew(request: QuickStartRequest) -> Dict[str, Any]:
     try:
         # Get the template
         process_template = get_template(request.template)
-        
+
         # Build kwargs from request
         kwargs = request.dict(exclude={"template", "auto_execute"}, exclude_none=True)
-        
+
         # Generate configuration from template
         agents = process_template.generate_agents(**kwargs)
         tasks = process_template.generate_tasks(**kwargs)
         process_config = process_template.get_process_config(**kwargs)
-        
+
         # Create crew data
         crew_data = CrewCreate(
             name=f"{process_template.name} - {kwargs.get('topic', kwargs.get('decision', 'Session'))}",
@@ -72,21 +71,22 @@ async def quick_start_crew(request: QuickStartRequest) -> Dict[str, Any]:
             process=process_template.process_type,
             process_config=process_config,
         )
-        
+
         # Create the crew using the same logic as crews router
         from .crews import create_crew as create_crew_endpoint
-        
+
         crew_response = await create_crew_endpoint(crew_data)
-        
+
         # Auto-execute if requested
         execution_info = {}
         execution_success = True
         execution_time = None
-        
+
         if request.auto_execute:
             import time
+
             from .crews import execute_crew
-            
+
             start_time = time.time()
             try:
                 execution_data = {"inputs": {}, "async_execution": True}
@@ -100,7 +100,7 @@ async def quick_start_crew(request: QuickStartRequest) -> Dict[str, Any]:
                 execution_success = False
                 execution_time = time.time() - start_time
                 raise e
-        
+
         # Track usage analytics
         analytics = get_analytics()
         analytics.track_template_usage(
@@ -110,10 +110,10 @@ async def quick_start_crew(request: QuickStartRequest) -> Dict[str, Any]:
             metadata={
                 "auto_execute": request.auto_execute,
                 "crew_id": crew_response.crew_id,
-                **kwargs
-            }
+                **kwargs,
+            },
         )
-        
+
         # Return response with additional info
         return {
             "crew_id": crew_response.crew_id,
@@ -125,7 +125,7 @@ async def quick_start_crew(request: QuickStartRequest) -> Dict[str, Any]:
             "execute_url": f"/api/v1/crews/{crew_response.crew_id}/execute",
             **execution_info,
         }
-        
+
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
@@ -145,31 +145,28 @@ async def quick_start_specific_template(
 async def create_share_link(config: Dict[str, Any]) -> Dict[str, str]:
     """Create a shareable link for a process configuration."""
     share_manager = get_share_manager()
-    
+
     # For now, use embedded links (no server storage required)
     share_url = share_manager.create_embedded_link(config, base_url="")
-    
-    return {
-        "share_url": share_url,
-        "message": "Share link created successfully"
-    }
+
+    return {"share_url": share_url, "message": "Share link created successfully"}
 
 
 @router.get("/process-templates/shared/{link_id}")
 async def get_shared_config(link_id: str) -> Dict[str, Any]:
     """Get process configuration from a share link."""
     share_manager = get_share_manager()
-    
+
     # Try to get from stored links first
     config = share_manager.get_config_from_link(link_id)
-    
+
     if config is None:
         # Try to decode as embedded config
         config = share_manager.get_config_from_embedded(link_id)
-    
+
     if config is None:
         raise HTTPException(status_code=404, detail="Shared configuration not found")
-    
+
     return config
 
 
