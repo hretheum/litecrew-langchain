@@ -22,7 +22,7 @@ class TestProcessTemplates:
         """Test listing available templates."""
         templates = list_templates()
         assert len(templates) >= 5
-        
+
         template_names = [t["name"] for t in templates]
         assert "quick-debate" in template_names
         assert "decision-panel" in template_names
@@ -45,7 +45,7 @@ class TestProcessTemplates:
     def test_quick_debate_template(self):
         """Test quick debate template generation."""
         template = QuickDebateTemplate()
-        
+
         # Test agent generation
         agents = template.generate_agents(topic="AI Ethics")
         assert len(agents) == 3
@@ -53,13 +53,13 @@ class TestProcessTemplates:
         assert agents[1]["role"] == "Critic"
         assert agents[2]["role"] == "Moderator"
         assert "AI Ethics" in agents[0]["goal"]
-        
+
         # Test task generation
         tasks = template.generate_tasks(topic="AI Ethics")
         assert len(tasks) == 1
         assert "AI Ethics" in tasks[0]["description"]
         assert tasks[0]["agent_role"] == "Moderator"
-        
+
         # Test process config
         config = template.get_process_config(rounds=5)
         assert config["rounds"] == 5
@@ -68,15 +68,14 @@ class TestProcessTemplates:
     def test_decision_panel_template(self):
         """Test decision panel template generation."""
         template = DecisionPanelTemplate()
-        
+
         # Test with custom inputs
         agents = template.generate_agents(decision="database selection")
         assert len(agents) == 3
         assert "database selection" in agents[0]["goal"]
-        
+
         tasks = template.generate_tasks(
-            decision="database selection",
-            options=["PostgreSQL", "MongoDB", "DynamoDB"]
+            decision="database selection", options=["PostgreSQL", "MongoDB", "DynamoDB"]
         )
         assert len(tasks) == 1
         assert "PostgreSQL" in tasks[0]["description"]
@@ -85,12 +84,12 @@ class TestProcessTemplates:
     def test_brainstorming_template(self):
         """Test brainstorming template generation."""
         template = BrainstormingTemplate()
-        
+
         agents = template.generate_agents(topic="marketing strategies")
         assert len(agents) == 3
         assert agents[0]["type"] == "conversational"
         assert agents[1]["type"] == "thinking"
-        
+
         config = template.get_process_config(min_turns=5, max_turns=15)
         assert config["min_turns"] == 5
         assert config["max_turns"] == 15
@@ -98,12 +97,12 @@ class TestProcessTemplates:
     def test_code_review_template(self):
         """Test code review template generation."""
         template = CodeReviewTemplate()
-        
+
         agents = template.generate_agents(language="JavaScript")
         assert len(agents) == 3
         assert "JavaScript" in agents[0]["goal"]
         assert agents[0]["type"] == "critic"
-        
+
         code = "function add(a, b) { return a + b; }"
         tasks = template.generate_tasks(code=code, language="JavaScript")
         assert len(tasks) == 3
@@ -115,21 +114,20 @@ class TestProcessTemplates:
     def test_research_team_template(self):
         """Test research team template generation."""
         template = ResearchTeamTemplate()
-        
+
         agents = template.generate_agents(topic="renewable energy")
         assert len(agents) == 4
         assert agents[0]["type"] == "moderator"
         assert agents[0]["allow_delegation"] is True
-        
+
         tasks = template.generate_tasks(
-            topic="renewable energy",
-            aspects=["solar", "wind", "hydro", "geothermal"]
+            topic="renewable energy", aspects=["solar", "wind", "hydro", "geothermal"]
         )
         # Should have: 1 planning + 4 research + 1 synthesis = 6 tasks
         assert len(tasks) == 6
         assert tasks[0]["agent_role"] == "Lead Researcher"
         assert tasks[-1]["agent_role"] == "Synthesis Expert"
-        
+
         # Check task distribution
         research_tasks = tasks[1:5]
         agent_roles = [t["agent_role"] for t in research_tasks]
@@ -146,7 +144,7 @@ class TestProcessTemplates:
             "code-review": 360,  # 6 minutes
             "research-team": 600,  # 10 minutes
         }
-        
+
         for name, expected_time in templates.items():
             template = get_template(name)
             assert template.estimated_time() == expected_time
@@ -160,16 +158,13 @@ class TestTemplateAPI:
         """Test QuickStartRequest model validation."""
         # Valid request
         request = QuickStartRequest(
-            template="quick-debate",
-            topic="Climate Change",
-            rounds=3,
-            auto_execute=True
+            template="quick-debate", topic="Climate Change", rounds=3, auto_execute=True
         )
         assert request.template == "quick-debate"
         assert request.topic == "Climate Change"
         assert request.rounds == 3
         assert request.auto_execute is True
-        
+
         # Request with minimal fields
         minimal = QuickStartRequest(template="brainstorming")
         assert minimal.template == "brainstorming"
