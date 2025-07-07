@@ -12,6 +12,9 @@ from litecrew.processes import (
 )
 from litecrew.task import LiteTask
 
+# Ensure process is registered
+from litecrew.processes.panel import PanelProcess as _PanelProcess
+
 
 class TestPanelProcess:
     """Test PanelProcess functionality"""

@@ -254,18 +254,21 @@ class LiteCrew:
                 self._process_executor = ProcessFactory.create(self.process, config)
 
             # Execute process
-            if self.async_execution or asyncio.iscoroutinefunction(
-                self._process_executor.execute
-            ):
-                # Run async
-                loop = asyncio.get_event_loop()
-                process_result = loop.run_until_complete(
+            # Handle async execution
+            import asyncio
+            
+            # Create new event loop if needed
+            try:
+                loop = asyncio.get_running_loop()
+                # We're in an async context, use async directly
+                process_result = asyncio.run_coroutine_threadsafe(
+                    self._process_executor.execute(self.agents, self.tasks, inputs),
+                    loop
+                ).result()
+            except RuntimeError:
+                # No event loop, create one
+                process_result = asyncio.run(
                     self._process_executor.execute(self.agents, self.tasks, inputs)
-                )
-            else:
-                # Run sync
-                process_result = self._process_executor.execute(
-                    self.agents, self.tasks, inputs
                 )
 
             # Convert ProcessResult to CrewOutput

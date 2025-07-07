@@ -115,6 +115,7 @@ def get_model_context_length(provider: str, model: str) -> int:
         "anthropic": {
             "claude-3-opus": 200000,
             "claude-3-opus-20240229": 200000,
+            "claude-opus-4": 200000,  # Support partial match
             "claude-opus-4-20250514": 200000,
             "claude-3-sonnet": 200000,
             "claude-3-sonnet-20240229": 200000,

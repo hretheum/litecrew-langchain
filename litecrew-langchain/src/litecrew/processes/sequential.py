@@ -56,9 +56,18 @@ class SequentialProcess(BaseProcess):
                 # Set context from previous tasks
                 if hasattr(task, "context") and task.context:
                     context_outputs = []
-                    for ctx_idx in task.context:
-                        if 0 <= ctx_idx < len(tasks_output):
-                            context_outputs.append(tasks_output[ctx_idx])
+                    for ctx_item in task.context:
+                        # Handle both Task objects and indices
+                        if isinstance(ctx_item, int):
+                            # It's an index
+                            if 0 <= ctx_item < len(tasks_output):
+                                context_outputs.append(tasks_output[ctx_item])
+                        else:
+                            # It's a Task object - find its output
+                            for j, prev_task in enumerate(tasks[:i]):
+                                if prev_task == ctx_item and j < len(tasks_output):
+                                    context_outputs.append(tasks_output[j])
+                                    break
                     # Pass context to task execution
                     if context_outputs:
                         task._context_outputs = context_outputs

@@ -12,6 +12,9 @@ from litecrew.processes import (
 )
 from litecrew.task import LiteTask
 
+# Ensure process is registered
+from litecrew.processes.debate import DebateProcess as _DebateProcess
+
 
 class TestDebateProcess:
     """Test DebateProcess functionality"""

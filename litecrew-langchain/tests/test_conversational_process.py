@@ -13,6 +13,9 @@ from litecrew.processes import (
 )
 from litecrew.task import LiteTask
 
+# Ensure process is registered
+from litecrew.processes.conversational import ConversationalProcess as _ConvProcess
+
 
 class TestConversationalProcess:
     """Test ConversationalProcess functionality"""

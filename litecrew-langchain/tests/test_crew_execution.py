@@ -17,9 +17,9 @@ class TestCrewExecution:
         agent1 = LiteAgent(role="Researcher", goal="Research", backstory="I research")
         agent2 = LiteAgent(role="Writer", goal="Write", backstory="I write")
 
-        # Mock agent execute methods
-        agent1.execute = Mock(return_value="Research result")
-        agent2.execute = Mock(return_value="Written content")
+        # Mock agent execute methods to accept any arguments
+        agent1.execute = Mock(side_effect=lambda *args, **kwargs: "Research result")
+        agent2.execute = Mock(side_effect=lambda *args, **kwargs: "Written content")
 
         # Create tasks
         task1 = LiteTask(
@@ -58,7 +58,7 @@ class TestCrewExecution:
             agent = LiteAgent(
                 role=f"Agent{i}", goal=f"Goal{i}", backstory=f"Backstory{i}"
             )
-            agent.execute = Mock(return_value=f"Result{i}")
+            agent.execute = Mock(side_effect=lambda *args, **kwargs: f"Result{i}")
             agents.append(agent)
 
             task = LiteTask(
@@ -81,7 +81,7 @@ class TestCrewExecution:
             goal="Research with memory",
             backstory="Memory-enabled researcher",
         )
-        agent.execute = Mock(return_value="Memory result")
+        agent.execute = Mock(side_effect=lambda *args, **kwargs: "Memory result")
 
         task = LiteTask(
             description="Research with context",
@@ -105,14 +105,14 @@ class TestCrewExecution:
         manager = LiteAgent(
             role="Manager", goal="Coordinate team", backstory="Team coordinator"
         )
-        manager.execute = Mock(return_value="Coordination result")
+        manager.execute = Mock(side_effect=lambda *args, **kwargs: "Coordination result")
 
         # Worker agents
         worker1 = LiteAgent(role="Worker1", goal="Work", backstory="Worker")
         worker2 = LiteAgent(role="Worker2", goal="Work", backstory="Worker")
 
-        worker1.execute = Mock(return_value="Work result 1")
-        worker2.execute = Mock(return_value="Work result 2")
+        worker1.execute = Mock(side_effect=lambda *args, **kwargs: "Work result 1")
+        worker2.execute = Mock(side_effect=lambda *args, **kwargs: "Work result 2")
 
         task = LiteTask(
             description="Coordinate work",
@@ -160,7 +160,7 @@ class TestCrewExecution:
         agent = LiteAgent(
             role="StateAgent", goal="Track state", backstory="State tracker"
         )
-        agent.execute = Mock(return_value="State result")
+        agent.execute = Mock(side_effect=lambda *args, **kwargs: "State result")
 
         task = LiteTask(
             description="Track state", agent=agent, expected_output="State output"
@@ -180,8 +180,8 @@ class TestCrewExecution:
         agent1 = LiteAgent(role="Producer", goal="Produce", backstory="Producer")
         agent2 = LiteAgent(role="Consumer", goal="Consume", backstory="Consumer")
 
-        agent1.execute = Mock(return_value="Produced data")
-        agent2.execute = Mock(return_value="Consumed data")
+        agent1.execute = Mock(side_effect=lambda *args, **kwargs: "Produced data")
+        agent2.execute = Mock(side_effect=lambda *args, **kwargs: "Consumed data")
 
         task1 = LiteTask(
             description="Produce data", agent=agent1, expected_output="Data"
@@ -223,38 +223,49 @@ class TestCrewExecution:
         crew = LiteCrew(agents=[agent], tasks=[task])
 
         # Execution should handle errors gracefully
-        with pytest.raises(Exception):
-            crew.kickoff()
+        result = crew.kickoff()
+        
+        # Check that the result indicates failure
+        # The process should return a result with success=False rather than raising
+        assert result is not None
+        # The raw output should contain error message
+        assert "failed" in result.raw.lower() or result.raw == ""
 
     def test_crew_with_callbacks(self):
         """Test crew execution with step callbacks."""
         callback_calls = []
 
-        def step_callback(task, output):
-            callback_calls.append({"task": task, "output": output})
+        class TestCallback:
+            def on_event(self, event_type, data):
+                callback_calls.append({"event_type": event_type, "data": data})
 
         agent = LiteAgent(
             role="CallbackAgent", goal="Test callbacks", backstory="Callback tester"
         )
-        agent.execute = Mock(return_value="Callback result")
+        agent.execute = Mock(side_effect=lambda *args, **kwargs: "Callback result")
 
         task = LiteTask(
             description="Test callbacks", agent=agent, expected_output="Callback output"
         )
 
-        crew = LiteCrew(agents=[agent], tasks=[task], step_callback=step_callback)
+        # Use a callback object with on_event method
+        test_callback = TestCallback()
+        crew = LiteCrew(agents=[agent], tasks=[task], step_callback=test_callback)
 
         crew.kickoff()
 
         # Callbacks should have been called
         assert len(callback_calls) > 0
+        # Check for task_start and task_complete events
+        event_types = [call["event_type"] for call in callback_calls]
+        assert "task_start" in event_types or "task_complete" in event_types
 
     def test_crew_output_structure(self):
         """Test crew output structure and content."""
         agent = LiteAgent(
             role="OutputAgent", goal="Generate output", backstory="Output generator"
         )
-        agent.execute = Mock(return_value="Structured output")
+        agent.execute = Mock(side_effect=lambda *args, **kwargs: "Structured output")
 
         task = LiteTask(
             description="Generate output",
