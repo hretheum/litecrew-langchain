@@ -1,18 +1,13 @@
 """Agent type system for LiteCrew."""
 
-from .base import AgentType, AgentPersonality, AgentTypeConfig, PersonalityTrait
-from .factory import AgentTypeFactory
+from .base import AgentPersonality, AgentType, AgentTypeConfig, PersonalityTrait
 from .behaviors import AgentBehavior, BehaviorModifier
-from .types import (
-    ConversationalAgent,
-    ThinkingAgent,
-    ModeratorAgent,
-    CriticAgent
-)
+from .factory import AgentTypeFactory
+from .types import ConversationalAgent, CriticAgent, ModeratorAgent, ThinkingAgent
 
 __all__ = [
     "AgentType",
-    "AgentPersonality", 
+    "AgentPersonality",
     "AgentTypeConfig",
     "PersonalityTrait",
     "AgentTypeFactory",
@@ -21,5 +16,5 @@ __all__ = [
     "ConversationalAgent",
     "ThinkingAgent",
     "ModeratorAgent",
-    "CriticAgent"
+    "CriticAgent",
 ]

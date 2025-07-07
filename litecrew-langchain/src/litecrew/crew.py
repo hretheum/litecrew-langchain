@@ -13,9 +13,9 @@ from pydantic import BaseModel, Field
 from litecrew.agent import Agent as LiteAgent
 from litecrew.events import EventEmitter, EventType, LifecycleCallbacks
 from litecrew.memory import ConversationMemory
+from litecrew.processes import ProcessFactory
 from litecrew.state import CrewState, StateManager
 from litecrew.task import LiteTask, TaskOutput
-from litecrew.processes import ProcessFactory, ProcessConfig, ProcessResult
 
 
 class CrewOutput(BaseModel):
@@ -84,7 +84,7 @@ class LiteCrew:
         self.function_calling_llm = function_calling_llm
         self.step_callback = step_callback
         self.async_execution = async_execution
-        
+
         # Create process executor
         self._process_executor = None
 
@@ -177,11 +177,13 @@ class LiteCrew:
         if hasattr(self, "_shared_memory"):
             return str(self._shared_memory.build_context())
         return ""
-    
-    def switch_process(self, process_type: str, process_config: Optional[Dict[str, Any]] = None) -> None:
+
+    def switch_process(
+        self, process_type: str, process_config: Optional[Dict[str, Any]] = None
+    ) -> None:
         """
         Switch to a different process type.
-        
+
         Args:
             process_type: New process type to use
             process_config: Optional configuration for the new process
@@ -236,17 +238,19 @@ class LiteCrew:
             if not self._process_executor:
                 # Add verbose and callbacks to config
                 config = self.process_config.copy()
-                config['verbose'] = self.verbose
-                config['callbacks'] = []
+                config["verbose"] = self.verbose
+                config["callbacks"] = []
                 if self.event_emitter:
-                    config['callbacks'].append(self.event_emitter)
+                    config["callbacks"].append(self.event_emitter)
                 if self.step_callback:
-                    config['callbacks'].append(self.step_callback)
-                    
+                    config["callbacks"].append(self.step_callback)
+
                 self._process_executor = ProcessFactory.create(self.process, config)
-            
+
             # Execute process
-            if self.async_execution or asyncio.iscoroutinefunction(self._process_executor.execute):
+            if self.async_execution or asyncio.iscoroutinefunction(
+                self._process_executor.execute
+            ):
                 # Run async
                 loop = asyncio.get_event_loop()
                 process_result = loop.run_until_complete(
@@ -254,12 +258,13 @@ class LiteCrew:
                 )
             else:
                 # Run sync
-                process_result = self._process_executor.execute(self.agents, self.tasks, inputs)
-            
+                process_result = self._process_executor.execute(
+                    self.agents, self.tasks, inputs
+                )
+
             # Convert ProcessResult to CrewOutput
             result = CrewOutput(
-                raw=process_result.raw,
-                tasks_output=process_result.tasks_output
+                raw=process_result.raw, tasks_output=process_result.tasks_output
             )
 
             # Update final state

@@ -49,12 +49,14 @@ class ConnectionManager:
         self, crew_id: str, event_type: str, data: Dict
     ) -> None:
         """Send process-specific events to crew subscribers."""
-        message = json.dumps({
-            "type": "process_event",
-            "event": event_type,
-            "crew_id": crew_id,
-            "data": data
-        })
+        message = json.dumps(
+            {
+                "type": "process_event",
+                "event": event_type,
+                "crew_id": crew_id,
+                "data": data,
+            }
+        )
         await self.send_crew_message(message, crew_id)
 
     async def broadcast(self, message: str) -> None:

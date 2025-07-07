@@ -59,7 +59,7 @@ Wykonuj cały blok zadań atomowych automatycznie, ograniczając output i skupia
 ### /phase-run <phase>
 Wykonuj całą fazę automatycznie:
 1. Wczytaj IMPLEMENTATION_ROADMAP.md
-2. Znajdź wszystkie bloki zadań atomowych w podanej fazie
+2. Znajdź wszystkie podzadania w podanej fazie, a następnie bloki zadań atomowych w pozadaniach
 3. Dla każdego bloku zadań atomowychpo kolei:
    - Wykonaj pre-work (create issue, branch, update context)
    - Zrealizuj wszystkie zadania atomowe
@@ -67,7 +67,8 @@ Wykonuj całą fazę automatycznie:
    - Wykonaj post-work
    - Oznacz wszystkie wykonane zadania odpowiednio w pliku roadmapy — KONIECZNIE
    - Automatycznie przejdź do następnego bloku — KONIECZNIE
-4. Po ukończeniu wszystkich bloków zadań atomowych w fazie:
+   - po zakończeniu numerowanego podzadania w danej fazie, zwaliduj metryki sukcesu, upewnij się że przechodzą WSZYSTKIE testy, wykonaj commit i push, a następnie automatycznie przejdź do kolejnego numerowanego podzadania w podanej fazie
+4. Po ukończeniu wszystkich numerowanych podzadań i wszystkich bloków zadań atomowych w fazie:
    - Podsumuj wyniki
    - Zamknij milestone
    - Przygotuj issues dla następnej fazy

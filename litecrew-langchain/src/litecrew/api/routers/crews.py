@@ -10,8 +10,8 @@ from fastapi import APIRouter, HTTPException, status
 from litecrew import LiteAgent, LiteCrew, LiteTask
 
 from ..models import CrewCreate, CrewResponse, CrewUpdate, TaskSubmission
-from ..storage import get_storage
 from ..process_callbacks import create_process_config_with_websocket
+from ..storage import get_storage
 
 router = APIRouter()
 
@@ -29,13 +29,13 @@ async def create_crew(crew_data: CrewCreate) -> CrewResponse:
             "goal": agent_data["goal"],
             "backstory": agent_data["backstory"],
         }
-        
+
         # Add type fields if specified
         if "type" in agent_data:
             agent_kwargs["type"] = agent_data["type"]
             if "type_config" in agent_data:
                 agent_kwargs["type_config"] = agent_data["type_config"]
-        
+
         agent = LiteAgent(**agent_kwargs)
         agents.append(agent)
 
@@ -56,15 +56,14 @@ async def create_crew(crew_data: CrewCreate) -> CrewResponse:
 
     # Create crew with WebSocket callbacks
     process_config = create_process_config_with_websocket(
-        crew_id, 
-        crew_data.process_config
+        crew_id, crew_data.process_config
     )
-    
+
     crew = LiteCrew(
-        agents=agents, 
-        tasks=tasks, 
+        agents=agents,
+        tasks=tasks,
         process=crew_data.process or "sequential",
-        process_config=process_config
+        process_config=process_config,
     )
 
     # Store crew

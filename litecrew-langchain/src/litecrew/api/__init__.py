@@ -20,7 +20,7 @@ else:
     from .auth.simple import verify_dashboard_auth
 from .middleware.auth import APIKeyMiddleware
 from .middleware.rate_limit import RateLimitMiddleware
-from .routers import agents, crews, executions, tasks, processes
+from .routers import agents, crews, executions, processes, tasks
 from .routers import health_simple as health
 from .websocket import websocket_router
 

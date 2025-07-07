@@ -54,7 +54,7 @@ class ExecutionRequest(BaseModel):
 
 class ProcessType(BaseModel):
     """Information about a process type."""
-    
+
     name: str
     description: str
     supports_moderator: bool = False
@@ -64,14 +64,14 @@ class ProcessType(BaseModel):
 
 class ProcessSwitch(BaseModel):
     """Model for switching process type."""
-    
+
     process_type: str
     process_config: Optional[Dict[str, Any]] = None
 
 
 class AgentTypeInfo(BaseModel):
     """Information about an agent type."""
-    
+
     name: str
     description: str
     configurable_options: List[str]
@@ -81,7 +81,7 @@ class AgentTypeInfo(BaseModel):
 
 class AgentCreate(BaseModel):
     """Model for creating an agent."""
-    
+
     role: str
     goal: str
     backstory: str
@@ -101,7 +101,7 @@ class AgentCreate(BaseModel):
 
 class AgentResponse(BaseModel):
     """Model for agent response."""
-    
+
     agent_id: str
     role: str
     goal: str

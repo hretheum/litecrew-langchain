@@ -24,8 +24,10 @@ class TestOpus4Support:
         assert length == 200000
 
     @pytest.mark.skipif(
-        not pytest.importorskip("langchain_anthropic", reason="langchain-anthropic not installed"),
-        reason="Requires langchain-anthropic"
+        not pytest.importorskip(
+            "langchain_anthropic", reason="langchain-anthropic not installed"
+        ),
+        reason="Requires langchain-anthropic",
     )
     def test_create_opus4_llm(self):
         """Test creating Opus 4 LLM instance."""
@@ -35,11 +37,11 @@ class TestOpus4Support:
             model="claude-opus-4-20250514",
             temperature=0.7,
         )
-        
+
         # Should not raise exception
         llm = manager.create_llm(config)
         assert llm is not None
-        
+
         # Check if model name is set correctly
         if hasattr(llm, "model_name"):
             assert llm.model_name == "claude-opus-4-20250514"
@@ -52,7 +54,7 @@ class TestOpus4Support:
             "claude-3-sonnet-20240229",
             "claude-3-haiku-20240307",
         ]
-        
+
         for model in models:
             length = get_model_context_length("anthropic", model)
             assert length > 0, f"Model {model} should be supported"
