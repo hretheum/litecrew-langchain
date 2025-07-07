@@ -1,0 +1,112 @@
+{
+  "info": {
+    "name": "LiteCrew API Examples",
+    "description": "Przykłady użycia LiteCrew API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "apikey",
+    "apikey": [
+      {
+        "key": "key",
+        "value": "X-API-Key",
+        "type": "string"
+      },
+      {
+        "key": "value",
+        "value": "{{api_key}}",
+        "type": "string"
+      },
+      {
+        "key": "in",
+        "value": "header",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "1. Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/health",
+          "host": ["{{base_url}}"],
+          "path": ["health"]
+        }
+      }
+    },
+    {
+      "name": "2. Create Research Crew",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Research Assistant Crew\",\n  \"description\": \"Crew do research i analizy\",\n  \"agents\": [\n    {\n      \"role\": \"Research Specialist\",\n      \"goal\": \"Przeprowadź dogłębny research na zadany temat\",\n      \"backstory\": \"Jestem ekspertem w znajdowaniu i analizowaniu informacji z wielu źródeł\"\n    },\n    {\n      \"role\": \"Data Analyst\",\n      \"goal\": \"Przeanalizuj dane i znajdź kluczowe wnioski\",\n      \"backstory\": \"Specjalizuję się w analizie danych i wykrywaniu trendów\"\n    },\n    {\n      \"role\": \"Report Writer\",\n      \"goal\": \"Stwórz czytelny i wartościowy raport\",\n      \"backstory\": \"Mam talent do przedstawiania skomplikowanych informacji w prosty sposób\"\n    }\n  ],\n  \"tasks\": [\n    {\n      \"description\": \"Zbadaj temat: {topic}\",\n      \"agent_role\": \"Research Specialist\",\n      \"expected_output\": \"Kompletne zestawienie źródeł i kluczowych informacji\"\n    },\n    {\n      \"description\": \"Przeanalizuj zebrane dane i znajdź najważniejsze wnioski\",\n      \"agent_role\": \"Data Analyst\",\n      \"expected_output\": \"Lista wniosków z danymi wspierającymi\",\n      \"context\": [0]\n    },\n    {\n      \"description\": \"Napisz raport podsumowujący research i analizę\",\n      \"agent_role\": \"Report Writer\",\n      \"expected_output\": \"Profesjonalny raport 2-3 strony\",\n      \"context\": [0, 1]\n    }\n  ],\n  \"process\": \"sequential\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/crews",
+          "host": ["{{base_url}}"],
+          "path": ["crews"]
+        }
+      }
+    },
+    {
+      "name": "3. Execute Crew",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"inputs\": {\n    \"topic\": \"Wpływ AI na rynek pracy w Polsce w 2025\"\n  },\n  \"async_execution\": false\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/crews/{{crew_id}}/execute",
+          "host": ["{{base_url}}"],
+          "path": ["crews", "{{crew_id}}", "execute"]
+        }
+      }
+    },
+    {
+      "name": "4. Get Crew Status",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/crews/{{crew_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["crews", "{{crew_id}}"]
+        }
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "https://api.litecrew.app/api/v1",
+      "type": "string"
+    },
+    {
+      "key": "api_key",
+      "value": "your-api-key-here",
+      "type": "string"
+    },
+    {
+      "key": "crew_id",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}

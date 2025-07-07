@@ -37,7 +37,7 @@ docker stop litecrew_api && docker rm litecrew_api
 docker run -d \
   --name litecrew_api \
   -p 80:8000 \
-  -e LITECREW_API_KEYS="prod-44c8a3026e05e84f44cd1f4cdda7b6ecaba64ccfb2dedd508a80a20405a54509,prod-92b8fba576057868543d3eb7302e6087dc202ea643720f516406cb9e1122497c" \
+  -e LITECREW_API_KEYS="${LITECREW_API_KEYS}" \
   registry.gitlab.com/eof3/litecrewai/litecrewai:5d8c83d0
 EOF
 echo ""

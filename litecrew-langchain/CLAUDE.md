@@ -30,12 +30,9 @@ Skrypt testuje dokładnie to samo co GitLab CI:
 - ✅ **Local testing tooling** ready (`./run_pipeline_locally.sh`)
 - ✅ **API Keys configured**: Production keys active
 
-## 🔑 Production API Keys
-```
-prod-44c8a3026e05e84f44cd1f4cdda7b6ecaba64ccfb2dedd508a80a20405a54509
-prod-92b8fba576057868543d3eb7302e6087dc202ea643720f516406cb9e1122497c
-```
-Use in header: `X-API-Key: [key]`
+## 🔑 API Key Configuration
+Use environment variable `LITECREW_API_KEYS` to configure API keys.
+In API requests, use header: `X-API-Key: [your-key]`
 
 ## 📁 Struktura dokumentacji
 ```

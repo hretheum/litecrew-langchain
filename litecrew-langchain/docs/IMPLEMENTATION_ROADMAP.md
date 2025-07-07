@@ -420,7 +420,208 @@ def test_rate_limiting():
 
 ---
 
-# FAZA 7: Advanced Memory & Knowledge (5 dni)
+# FAZA 6.5: Multi-Process Engine (3 dni) 🆕
+
+## Blok 6.5.1: Process Architecture (Dzień 31)
+
+### Zadania atomowe:
+- [ ] Stwórz BaseProcess abstract class
+- [ ] Implementuj ProcessFactory pattern
+- [ ] Refactor LiteCrew dla process executors
+- [ ] Dodaj process_config validation schema
+- [ ] Implementuj process switching logic
+- [ ] Napisz testy base architecture
+
+### Metryki sukcesu:
+- Process instantiation: <10ms
+- Memory overhead per process: <1MB
+- Process switching: <5ms
+
+### Walidacja:
+```python
+def test_process_factory():
+    process = ProcessFactory.create("conversational", {"min_turns": 3})
+    assert isinstance(process, ConversationalProcess)
+    assert process.config.min_turns == 3
+    
+    # Test switching
+    crew = LiteCrew(process="sequential")
+    crew.switch_process("conversational")
+    assert crew.process_type == "conversational"
+```
+
+## Blok 6.5.2: Core Process Types (Dzień 32)
+
+### Zadania atomowe:
+- [ ] Implementuj ConversationalProcess
+- [ ] Implementuj DebateProcess
+- [ ] Implementuj PanelProcess
+- [ ] Dodaj process-specific prompts
+- [ ] Implementuj turn management
+- [ ] Napisz testy dla każdego procesu
+
+### Metryki sukcesu:
+- Natural conversation flow: subjective quality >80%
+- Turn distribution fairness: <20% deviation
+- Context preservation: 100%
+
+### Walidacja:
+```python
+async def test_conversational_process():
+    agents = [agent1, agent2, agent3]
+    process = ConversationalProcess(min_turns=3)
+    result = await process.execute(agents, task)
+    
+    assert len(result.turns) >= 9  # 3 turns * 3 agents
+    assert all(agent.name in str(result) for agent in agents)
+```
+
+## Blok 6.5.3: Process Integration (Dzień 33)
+
+### Zadania atomowe:
+- [ ] Integruj z REST API endpoints
+- [ ] Dodaj process types do crew creation
+- [ ] Implementuj WebSocket events dla processes
+- [ ] Dodaj process visualization helpers
+- [ ] Update dashboard dla process display
+- [ ] Napisz E2E testy
+
+### Metryki sukcesu:
+- API response time: <100ms
+- WebSocket latency: <50ms
+- Dashboard update lag: <200ms
+
+---
+
+# FAZA 6.6: Agent Type System (2 dni) 🆕
+
+## Blok 6.6.1: Agent Types Architecture (Dzień 34)
+
+### Zadania atomowe:
+- [ ] Rozszerz LiteAgent o type system
+- [ ] Implementuj AgentTypeFactory
+- [ ] Dodaj type-specific behaviors
+- [ ] Stwórz AgentPersonality traits
+- [ ] Implementuj type validation
+- [ ] Napisz testy type system
+
+### Metryki sukcesu:
+- Agent creation with type: <20ms
+- Type behavior consistency: 100%
+- Memory overhead: <500KB per typed agent
+
+### Walidacja:
+```python
+def test_agent_types():
+    critic = LiteAgent(role="Reviewer", type="critic", 
+                      type_config={"criticism_level": "harsh"})
+    response = critic.execute("This is a great idea!")
+    assert "however" in response.lower() or "but" in response.lower()
+```
+
+## Blok 6.6.2: Specialized Agent Types (Dzień 35)
+
+### Zadania atomowe:
+- [ ] Implementuj ConversationalAgent
+- [ ] Implementuj ThinkingAgent z verbose output
+- [ ] Implementuj ModeratorAgent
+- [ ] Implementuj CriticAgent
+- [ ] Dodaj agent type w API schema
+- [ ] Napisz dokumentację typów
+
+### Metryki sukcesu:
+- Thinking agent verbosity: >500 words average
+- Moderator effectiveness: maintains flow
+- Critic identification rate: >90% issues
+
+---
+
+# FAZA 7: User-Friendly Execution (5 dni) 🆕
+
+## Blok 7.1: API Quick Start Features (Dzień 36-37)
+
+### Zadania atomowe:
+- [ ] Implementuj /api/v1/process-templates endpoint
+- [ ] Stwórz /api/v1/crews/quick-start endpoint
+- [ ] Dodaj auto agent selection logic
+- [ ] Implementuj template storage
+- [ ] Stwórz default configurations
+- [ ] Napisz testy template system
+
+### Metryki sukcesu:
+- Template loading: <50ms
+- Quick start to running: <2s
+- Template coverage: >10 scenarios
+
+### Walidacja:
+```python
+async def test_quick_start():
+    response = await client.post("/api/v1/crews/quick-start", json={
+        "template": "quick-debate",
+        "topic": "AI Safety"
+    })
+    assert response.status_code == 201
+    assert response.json()["crew_id"]
+    assert response.json()["estimated_time"] < 600
+```
+
+## Blok 7.2: Web UI Process Builder (Dzień 38-39)
+
+### Zadania atomowe:
+- [ ] Dodaj process selector do dashboard
+- [ ] Implementuj dynamic config forms
+- [ ] Stwórz process wizard component
+- [ ] Dodaj live conversation view
+- [ ] Implementuj share links
+- [ ] Napisz frontend testy
+
+### Metryki sukcesu:
+- Wizard completion rate: >80%
+- Time to first process: <60s
+- UI responsiveness: <100ms
+
+### Walidacja:
+```javascript
+test('Process wizard creates crew', async () => {
+    await selectProcess('debate');
+    await setTopic('Test topic');
+    await clickStart();
+    
+    expect(await getCrewStatus()).toBe('running');
+    expect(await getConversationView()).toBeVisible();
+});
+```
+
+## Blok 7.3: One-Click Templates (Dzień 40)
+
+### Zadania atomowe:
+- [ ] Stwórz template gallery UI
+- [ ] Implementuj pre-built scenarios
+- [ ] Dodaj template customization
+- [ ] Stwórz shareable links generator
+- [ ] Implementuj template analytics
+- [ ] Napisz template documentation
+
+### Metryki sukcesu:
+- Template usage: >50% of crews
+- Customization rate: <30%
+- Share link CTR: >20%
+
+### Walidacja:
+```python
+def test_template_gallery():
+    templates = get_templates()
+    assert len(templates) >= 10
+    
+    # Test one-click
+    result = create_from_template("decision-panel", topic="Budget")
+    assert result.status == "running"
+    assert len(result.agents) == 3
+```
+
+---
+
+# FAZA 8: Advanced Memory & Knowledge (5 dni) [PRZESUNIĘTĄ]
 
 ## Blok 7.1: Long-term Memory (Dzień 31-32)
 
