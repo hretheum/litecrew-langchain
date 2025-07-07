@@ -8,6 +8,7 @@ from ..models import CrewCreate, CrewResponse, QuickStartRequest, TemplateInfo
 from ..storage import get_storage
 from ..templates import get_template, list_templates
 from ..share_links import get_share_manager
+from ..template_analytics import get_analytics
 
 router = APIRouter()
 
@@ -79,15 +80,39 @@ async def quick_start_crew(request: QuickStartRequest) -> Dict[str, Any]:
         
         # Auto-execute if requested
         execution_info = {}
+        execution_success = True
+        execution_time = None
+        
         if request.auto_execute:
+            import time
             from .crews import execute_crew
             
-            execution_data = {"inputs": {}, "async_execution": True}
-            execution = await execute_crew(crew_response.crew_id, execution_data)
-            execution_info = {
-                "execution_id": execution["execution_id"],
-                "execution_status": execution["status"],
+            start_time = time.time()
+            try:
+                execution_data = {"inputs": {}, "async_execution": True}
+                execution = await execute_crew(crew_response.crew_id, execution_data)
+                execution_info = {
+                    "execution_id": execution["execution_id"],
+                    "execution_status": execution["status"],
+                }
+                execution_time = time.time() - start_time
+            except Exception as e:
+                execution_success = False
+                execution_time = time.time() - start_time
+                raise e
+        
+        # Track usage analytics
+        analytics = get_analytics()
+        analytics.track_template_usage(
+            template_name=request.template,
+            success=execution_success,
+            execution_time=execution_time,
+            metadata={
+                "auto_execute": request.auto_execute,
+                "crew_id": crew_response.crew_id,
+                **kwargs
             }
+        )
         
         # Return response with additional info
         return {
@@ -146,3 +171,31 @@ async def get_shared_config(link_id: str) -> Dict[str, Any]:
         raise HTTPException(status_code=404, detail="Shared configuration not found")
     
     return config
+
+
+@router.get("/process-templates/analytics/popular")
+async def get_popular_templates() -> List[Dict[str, Any]]:
+    """Get popular templates by usage."""
+    analytics = get_analytics()
+    return analytics.get_popular_templates()
+
+
+@router.get("/process-templates/analytics/{template_name}")
+async def get_template_analytics(template_name: str) -> Dict[str, Any]:
+    """Get analytics for a specific template."""
+    analytics = get_analytics()
+    return analytics.get_template_stats(template_name)
+
+
+@router.get("/process-templates/analytics/trends/{days}")
+async def get_usage_trends(days: int = 30) -> Dict[str, Any]:
+    """Get usage trends over specified period."""
+    analytics = get_analytics()
+    return analytics.get_usage_trends(days)
+
+
+@router.get("/process-templates/analytics/insights")
+async def get_usage_insights() -> Dict[str, List[str]]:
+    """Get usage insights and recommendations."""
+    analytics = get_analytics()
+    return {"insights": analytics.generate_insights()}

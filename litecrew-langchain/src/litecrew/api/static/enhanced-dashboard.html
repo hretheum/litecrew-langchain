@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LiteCrew Dashboard</title>
     <link rel="stylesheet" href="process-builder.css">
+    <link rel="stylesheet" href="template-gallery.css">
     <style>
         * {
             margin: 0;
@@ -245,6 +246,7 @@
             <h1>🚀 LiteCrew Dashboard</h1>
             <nav class="nav-tabs">
                 <a href="#" class="nav-tab active" onclick="showTab('overview')">Overview</a>
+                <a href="#" class="nav-tab" onclick="showTab('gallery')">Template Gallery</a>
                 <a href="#" class="nav-tab" onclick="showTab('builder')">Process Builder</a>
                 <a href="#" class="nav-tab" onclick="showTab('monitoring')">Monitoring</a>
             </nav>
@@ -337,6 +339,13 @@
             </div>
         </div>
         
+        <!-- Template Gallery Tab -->
+        <div id="gallery-tab" class="tab-content">
+            <div id="template-gallery">
+                <!-- Template gallery will be populated here -->
+            </div>
+        </div>
+        
         <!-- Process Builder Tab -->
         <div id="builder-tab" class="tab-content">
             <div class="process-builder-section">
@@ -390,6 +399,7 @@
     
     <script src="dashboard.js"></script>
     <script src="process-builder.js"></script>
+    <script src="template-gallery.js"></script>
     <script>
         // Tab switching
         function showTab(tabName) {
@@ -410,7 +420,9 @@
             event.target.classList.add('active');
             
             // Load tab-specific content
-            if (tabName === 'builder' && window.processBuilder) {
+            if (tabName === 'gallery' && window.templateGallery) {
+                window.templateGallery.renderGallery();
+            } else if (tabName === 'builder' && window.processBuilder) {
                 // Process builder will auto-initialize
             } else if (tabName === 'monitoring') {
                 loadSystemInfo();
