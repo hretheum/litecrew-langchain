@@ -1,14 +1,14 @@
 """LiteCrew Process Types - Multi-Process Engine"""
 
 from .base import BaseProcess, ProcessConfig, ProcessResult, ProcessTurn
-from .factory import ProcessFactory
-from .prompts import ProcessPrompts, enhance_agent_for_process
 
 # Import process types to trigger registration
 from .conversational import ConversationalProcess
 from .debate import DebateProcess
+from .factory import ProcessFactory
 from .hierarchical import HierarchicalProcess
 from .panel import PanelProcess
+from .prompts import ProcessPrompts, enhance_agent_for_process
 from .sequential import SequentialProcess
 
 __all__ = [
