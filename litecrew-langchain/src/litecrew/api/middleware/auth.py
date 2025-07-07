@@ -102,3 +102,17 @@ async def require_api_key(api_key: Optional[str] = None) -> str:
         )
 
     return api_key
+
+
+def verify_api_key(api_key: Optional[str]) -> bool:
+    """Verify if API key is valid."""
+    if not api_key:
+        return False
+    
+    valid_keys = set(
+        key.strip()
+        for key in os.getenv("LITECREW_API_KEYS", "").split(",")
+        if key.strip()
+    )
+    
+    return api_key in valid_keys

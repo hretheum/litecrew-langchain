@@ -382,5 +382,97 @@ def test_event_emitter_creation():
     assert EventType.CREW_COMPLETED.value == "crew.completed"
 
 
+def test_outputs_extended():
+    """Test outputs module extended functionality."""
+    from litecrew.outputs import OutputFormat, OutputType
+    
+    # Test enums
+    assert OutputFormat.RAW.value == "raw"
+    assert OutputFormat.JSON.value == "json"
+    assert OutputFormat.PYDANTIC.value == "pydantic"
+    
+    assert OutputType.FINAL.value == "final"
+    assert OutputType.INTERMEDIATE.value == "intermediate"
+
+
+def test_agent_memory_flag():
+    """Test agent memory flag."""
+    from litecrew import LiteAgent
+    
+    # Test agent with memory disabled
+    agent_no_memory = LiteAgent(
+        role="No Memory Agent",
+        goal="Work without memory",
+        backstory="Forgetful agent",
+        memory=False
+    )
+    assert agent_no_memory._memory_enabled is False
+    
+    # Test agent with memory enabled (default)
+    agent_with_memory = LiteAgent(
+        role="Memory Agent",
+        goal="Remember everything",
+        backstory="Has perfect memory",
+        memory=True
+    )
+    assert agent_with_memory._memory_enabled is True
+
+
+def test_llm_config_extended():
+    """Test extended LLM config functionality."""
+    from litecrew.llm.config import LLMConfig, LLMProvider
+    
+    # Test with all providers
+    for provider in LLMProvider:
+        config = LLMConfig(
+            provider=provider,
+            model="test-model",
+            temperature=0.5,
+            max_tokens=500
+        )
+        assert config.provider == provider
+        assert config.model == "test-model"
+        assert config.temperature == 0.5
+        assert config.max_tokens == 500
+        
+        # Test that config was created
+        assert config is not None
+
+
+def test_state_migration_simple():
+    """Test state migration basic functionality."""
+    from litecrew.state.migration import StateVersion
+    
+    # Test version creation
+    version = StateVersion(major=1, minor=0, patch=0)
+    assert version.major == 1
+    assert version.minor == 0
+    assert version.patch == 0
+    
+    # Test version string
+    assert str(version) == "1.0.0"
+
+
+def test_crew_output_extended():
+    """Test CrewOutput additional functionality."""
+    from litecrew.crew import CrewOutput
+    from litecrew.task import TaskOutput
+    
+    task_output = TaskOutput(
+        raw="Test",
+        task_id="task-1",
+        agent_role="Agent"
+    )
+    
+    crew_output = CrewOutput(
+        raw="Final output",
+        tasks_output=[task_output]
+    )
+    
+    assert crew_output.raw == "Final output"
+    assert len(crew_output.tasks_output) == 1
+    assert crew_output.tasks_output[0].raw == "Test"
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
