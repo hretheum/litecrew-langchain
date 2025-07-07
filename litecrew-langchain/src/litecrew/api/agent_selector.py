@@ -7,7 +7,7 @@ class AgentSelector:
     """Automatically select appropriate agents based on task requirements."""
 
     # Default agent configurations for common roles
-    DEFAULT_AGENTS = {
+    DEFAULT_AGENTS: Dict[str, Dict[str, Any]] = {
         "analyst": {
             "role": "Data Analyst",
             "goal": "Analyze data and provide insights",
@@ -60,7 +60,7 @@ class AgentSelector:
     }
 
     # Keywords that suggest specific agent types
-    TASK_KEYWORDS = {
+    TASK_KEYWORDS: Dict[str, List[str]] = {
         "analyze": ["analyst", "reviewer"],
         "write": ["writer", "communicator"],
         "develop": ["developer", "strategist"],

@@ -35,7 +35,7 @@ class ProcessTemplate:
 class QuickDebateTemplate(ProcessTemplate):
     """Quick debate template for discussing topics."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(
             name="quick-debate",
             description="A quick debate between proponent and critic on any topic",
@@ -94,7 +94,7 @@ class QuickDebateTemplate(ProcessTemplate):
 class DecisionPanelTemplate(ProcessTemplate):
     """Decision panel template for making group decisions."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(
             name="decision-panel",
             description="A panel of experts making a decision through discussion",
@@ -150,7 +150,7 @@ class DecisionPanelTemplate(ProcessTemplate):
 class BrainstormingTemplate(ProcessTemplate):
     """Brainstorming template for generating ideas."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(
             name="brainstorming",
             description="Creative brainstorming session with multiple perspectives",
@@ -207,7 +207,7 @@ class BrainstormingTemplate(ProcessTemplate):
 class CodeReviewTemplate(ProcessTemplate):
     """Code review template for reviewing code changes."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(
             name="code-review",
             description="Thorough code review with multiple expert perspectives",
@@ -269,7 +269,7 @@ class CodeReviewTemplate(ProcessTemplate):
 class ResearchTeamTemplate(ProcessTemplate):
     """Research team template for investigating topics."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(
             name="research-team",
             description="Comprehensive research team investigating a topic",
@@ -350,7 +350,7 @@ class ResearchTeamTemplate(ProcessTemplate):
 class AutoTemplate(ProcessTemplate):
     """Auto template that selects agents based on task description."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(
             name="auto",
             description="Automatically selects agents and process based on your task",

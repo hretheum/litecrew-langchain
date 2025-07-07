@@ -2,7 +2,7 @@
 
 import asyncio
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, List
 
 from fastapi import APIRouter, HTTPException, status
@@ -75,7 +75,7 @@ async def create_crew(crew_data: CrewCreate) -> CrewResponse:
         "tasks": crew_data.tasks,
         "process": crew_data.process or "sequential",
         "process_config": crew_data.process_config,
-        "created_at": datetime.utcnow().isoformat(),
+        "created_at": datetime.now(timezone.utc).isoformat(),
         "crew_instance": crew,
     }
 
@@ -114,7 +114,13 @@ async def list_crews() -> Dict[str, List[CrewResponse]]:
     """List all crews."""
     storage = get_storage()
     crews = await storage.list_crews()
-    crew_responses = [CrewResponse(**crew) for crew in crews]
+    # Remove non-serializable fields before creating responses
+    crew_responses = []
+    for crew in crews:
+        response_data = {
+            k: v for k, v in crew.items() if k not in ["crew_instance", "_instance"]
+        }
+        crew_responses.append(CrewResponse(**response_data))
     return {"crews": crew_responses}
 
 
@@ -132,7 +138,7 @@ async def update_crew(crew_id: str, update_data: CrewUpdate) -> CrewResponse:
     if update_data.description is not None:
         crew_info["description"] = update_data.description
 
-    crew_info["updated_at"] = datetime.utcnow().isoformat()
+    crew_info["updated_at"] = datetime.now(timezone.utc).isoformat()
 
     storage = get_storage()
     await storage.store_crew(crew_id, crew_info)
@@ -175,7 +181,7 @@ async def submit_task(crew_id: str, task_data: TaskSubmission) -> Dict[str, Any]
         "expected_output": task_data.expected_output,
         "priority": task_data.priority or "medium",
         "status": "accepted",
-        "created_at": datetime.utcnow().isoformat(),
+        "created_at": datetime.now(timezone.utc).isoformat(),
     }
 
     storage = get_storage()
@@ -221,7 +227,7 @@ async def execute_crew(crew_id: str, execution_data: Dict[str, Any]) -> Dict[str
                 "completed" if not execution_data.get("async_execution") else "running"
             ),
             "result": result,
-            "created_at": datetime.utcnow().isoformat(),
+            "created_at": datetime.now(timezone.utc).isoformat(),
         }
 
         storage = get_storage()

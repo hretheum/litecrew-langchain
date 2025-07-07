@@ -171,7 +171,7 @@ class TemplateAnalytics:
             if datetime.fromisoformat(e["timestamp"]) > thirty_days_ago
         ]
 
-        daily_usage = defaultdict(int)
+        daily_usage: defaultdict[str, int] = defaultdict(int)
         for event in recent_events:
             date = datetime.fromisoformat(event["timestamp"]).date().isoformat()
             daily_usage[date] += 1
@@ -201,8 +201,8 @@ class TemplateAnalytics:
         ]
 
         # Group by day
-        daily_success = defaultdict(int)
-        daily_total = defaultdict(int)
+        daily_success: defaultdict[str, int] = defaultdict(int)
+        daily_total: defaultdict[str, int] = defaultdict(int)
 
         for event in recent_events:
             date = datetime.fromisoformat(event["timestamp"]).date().isoformat()
@@ -216,7 +216,9 @@ class TemplateAnalytics:
             daily_success_rates[date] = (daily_success[date] / daily_total[date]) * 100
 
         # Template trends
-        template_trends = defaultdict(lambda: defaultdict(int))
+        template_trends: defaultdict[str, defaultdict[str, int]] = defaultdict(
+            lambda: defaultdict(int)
+        )
         for event in recent_events:
             date = datetime.fromisoformat(event["timestamp"]).date().isoformat()
             template_trends[event["template_name"]][date] += 1

@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
 
-from litecrew.agent import LiteAgent
+from litecrew import LiteAgent
 from litecrew.task import LiteTask, TaskOutput
 
 
@@ -99,7 +99,9 @@ class BaseProcess(ABC):
             return False
         return True
 
-    def _create_turn(self, agent: LiteAgent, content: str, **metadata) -> ProcessTurn:
+    def _create_turn(
+        self, agent: LiteAgent, content: str, **metadata: Any
+    ) -> ProcessTurn:
         """Create a process turn"""
         return ProcessTurn(
             agent=agent.role,

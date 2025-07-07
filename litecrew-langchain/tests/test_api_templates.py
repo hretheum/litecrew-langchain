@@ -1,7 +1,12 @@
 """Tests for API process templates."""
 
+import os
 import pytest
 from unittest.mock import AsyncMock, MagicMock
+
+# Set test environment
+os.environ["LITECREW_API_KEYS"] = "test-key-123,test-key-456"
+os.environ["ENVIRONMENT"] = "test"
 
 from litecrew.api.templates import (
     QuickDebateTemplate,

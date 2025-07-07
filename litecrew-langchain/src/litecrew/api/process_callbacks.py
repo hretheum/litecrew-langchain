@@ -67,7 +67,7 @@ def create_process_config_with_websocket(
     crew_id: str, base_config: Optional[Dict[str, Any]] = None
 ) -> ProcessConfig:
     """Create process config with WebSocket callback."""
-    config_dict = base_config or {}
+    config_dict = (base_config or {}).copy()
 
     # Create callback
     ws_callback = WebSocketProcessCallback(crew_id)

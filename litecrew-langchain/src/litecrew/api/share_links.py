@@ -9,8 +9,8 @@ from typing import Any, Dict, Optional
 class ShareLinkManager:
     """Manage shareable links for process configurations."""
 
-    def __init__(self):
-        self.links = {}  # In-memory storage for demo
+    def __init__(self) -> None:
+        self.links: Dict[str, Dict[str, Any]] = {}  # In-memory storage for demo
 
     def create_share_link(self, config: Dict[str, Any], base_url: str = "") -> str:
         """

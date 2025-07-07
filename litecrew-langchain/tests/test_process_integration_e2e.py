@@ -2,11 +2,16 @@
 
 import asyncio
 import json
+import os
 from unittest.mock import AsyncMock, patch
 
 import pytest
 import websockets
 from fastapi.testclient import TestClient
+
+# Set test environment
+os.environ["LITECREW_API_KEYS"] = "test-key-123,test-key-456"
+os.environ["ENVIRONMENT"] = "test"
 
 from litecrew.api import app
 
@@ -18,6 +23,11 @@ class TestProcessIntegrationE2E:
     def client(self):
         """Create test client."""
         return TestClient(app)
+
+    @pytest.fixture
+    def auth_headers(self):
+        """Authentication headers for tests."""
+        return {"X-API-Key": "test-key-123"}
 
     @pytest.fixture
     def sample_crew_data(self):
@@ -62,9 +72,9 @@ class TestProcessIntegrationE2E:
             },
         }
 
-    def test_list_process_types(self, client):
+    def test_list_process_types(self, client, auth_headers):
         """Test listing available process types."""
-        response = client.get("/api/v1/process-types")
+        response = client.get("/api/v1/process-types", headers=auth_headers)
         assert response.status_code == 200
 
         process_types = response.json()
@@ -81,10 +91,10 @@ class TestProcessIntegrationE2E:
             assert "configurable_options" in process_type
             assert "example_config" in process_type
 
-    def test_get_process_type_details(self, client):
+    def test_get_process_type_details(self, client, auth_headers):
         """Test getting details of specific process type."""
         # Test conversational process
-        response = client.get("/api/v1/process-types/conversational")
+        response = client.get("/api/v1/process-types/conversational", headers=auth_headers)
         assert response.status_code == 200
 
         process_info = response.json()
@@ -94,12 +104,12 @@ class TestProcessIntegrationE2E:
         assert "max_turns" in process_info["configurable_options"]
 
         # Test non-existent process
-        response = client.get("/api/v1/process-types/nonexistent")
+        response = client.get("/api/v1/process-types/nonexistent", headers=auth_headers)
         assert response.status_code == 404
 
-    def test_create_crew_with_process_config(self, client, sample_crew_data):
+    def test_create_crew_with_process_config(self, client, sample_crew_data, auth_headers):
         """Test creating crew with process configuration."""
-        response = client.post("/api/v1/crews", json=sample_crew_data)
+        response = client.post("/api/v1/crews", json=sample_crew_data, headers=auth_headers)
         assert response.status_code == 201
 
         crew = response.json()
@@ -107,12 +117,10 @@ class TestProcessIntegrationE2E:
         assert crew["process_config"]["min_turns"] == 2
         assert crew["process_config"]["max_turns"] == 6
 
-        return crew["crew_id"]
-
-    def test_switch_crew_process(self, client, sample_crew_data):
+    def test_switch_crew_process(self, client, sample_crew_data, auth_headers):
         """Test switching crew process type."""
         # Create crew first
-        create_response = client.post("/api/v1/crews", json=sample_crew_data)
+        create_response = client.post("/api/v1/crews", json=sample_crew_data, headers=auth_headers)
         crew_id = create_response.json()["crew_id"]
 
         # Switch to debate process
@@ -125,31 +133,31 @@ class TestProcessIntegrationE2E:
             },
         }
 
-        response = client.put(f"/api/v1/crews/{crew_id}/process", json=switch_data)
+        response = client.put(f"/api/v1/crews/{crew_id}/process", json=switch_data, headers=auth_headers)
         assert response.status_code == 200
 
         updated_crew = response.json()
         assert updated_crew["process"] == "debate"
         assert updated_crew["process_config"]["rounds"] == 3
 
-    def test_invalid_process_switch(self, client, sample_crew_data):
+    def test_invalid_process_switch(self, client, sample_crew_data, auth_headers):
         """Test switching to invalid process type."""
         # Create crew
-        create_response = client.post("/api/v1/crews", json=sample_crew_data)
+        create_response = client.post("/api/v1/crews", json=sample_crew_data, headers=auth_headers)
         crew_id = create_response.json()["crew_id"]
 
         # Try to switch to non-existent process
         switch_data = {"process_type": "invalid_process", "process_config": {}}
 
-        response = client.put(f"/api/v1/crews/{crew_id}/process", json=switch_data)
+        response = client.put(f"/api/v1/crews/{crew_id}/process", json=switch_data, headers=auth_headers)
         assert response.status_code == 400
         assert "Invalid process type" in response.json()["detail"]
 
     @pytest.mark.asyncio
-    async def test_websocket_process_events(self, client, sample_crew_data):
+    async def test_websocket_process_events(self, client, sample_crew_data, auth_headers):
         """Test WebSocket events for process execution."""
         # Create crew
-        create_response = client.post("/api/v1/crews", json=sample_crew_data)
+        create_response = client.post("/api/v1/crews", json=sample_crew_data, headers=auth_headers)
         crew_id = create_response.json()["crew_id"]
 
         # Mock WebSocket connection
@@ -173,7 +181,7 @@ class TestProcessIntegrationE2E:
                     pass
 
         # Execute crew in background
-        asyncio.create_task(client.post(f"/api/v1/crews/{crew_id}/execute", json={}))
+        asyncio.create_task(client.post(f"/api/v1/crews/{crew_id}/execute", json={}, headers=auth_headers))
 
         # Listen for WebSocket events
         try:
@@ -190,10 +198,10 @@ class TestProcessIntegrationE2E:
                 assert "crew_id" in event
                 assert event["crew_id"] == crew_id
 
-    def test_crew_visualization_endpoint(self, client, sample_crew_data):
+    def test_crew_visualization_endpoint(self, client, sample_crew_data, auth_headers):
         """Test crew visualization endpoint."""
         # Create and execute crew
-        create_response = client.post("/api/v1/crews", json=sample_crew_data)
+        create_response = client.post("/api/v1/crews", json=sample_crew_data, headers=auth_headers)
         crew_id = create_response.json()["crew_id"]
 
         # Mock execution
@@ -208,15 +216,15 @@ class TestProcessIntegrationE2E:
             mock_kickoff.return_value = mock_result
 
             # Execute crew
-            client.post(f"/api/v1/crews/{crew_id}/execute", json={})
+            client.post(f"/api/v1/crews/{crew_id}/execute", json={}, headers=auth_headers)
 
         # Get visualization
-        response = client.get(f"/api/v1/crews/{crew_id}/visualization")
+        response = client.get(f"/api/v1/crews/{crew_id}/visualization", headers=auth_headers)
 
         # Should return message since no real execution happened
         assert response.status_code == 200
 
-    def test_process_config_validation(self, client):
+    def test_process_config_validation(self, client, auth_headers):
         """Test process configuration validation."""
         crew_data = {
             "name": "Test Crew",
@@ -230,10 +238,10 @@ class TestProcessIntegrationE2E:
         }
 
         # Should still create (validation happens at process level)
-        response = client.post("/api/v1/crews", json=crew_data)
+        response = client.post("/api/v1/crews", json=crew_data, headers=auth_headers)
         assert response.status_code == 201
 
-    def test_multiple_process_types_execution(self, client):
+    def test_multiple_process_types_execution(self, client, auth_headers):
         """Test executing different process types."""
         process_configs = [
             ("sequential", {}),
@@ -258,17 +266,17 @@ class TestProcessIntegrationE2E:
                 "process_config": config,
             }
 
-            response = client.post("/api/v1/crews", json=crew_data)
+            response = client.post("/api/v1/crews", json=crew_data, headers=auth_headers)
             assert response.status_code == 201
 
             crew = response.json()
             assert crew["process"] == process_type
 
     @pytest.mark.asyncio
-    async def test_process_performance_metrics(self, client, sample_crew_data):
+    async def test_process_performance_metrics(self, client, sample_crew_data, auth_headers):
         """Test that process metrics meet performance requirements."""
         # Create crew
-        create_response = client.post("/api/v1/crews", json=sample_crew_data)
+        create_response = client.post("/api/v1/crews", json=sample_crew_data, headers=auth_headers)
         crew_id = create_response.json()["crew_id"]
 
         # Measure API response times
@@ -276,7 +284,7 @@ class TestProcessIntegrationE2E:
 
         # Test process type listing
         start = time.perf_counter()
-        response = client.get("/api/v1/process-types")
+        response = client.get("/api/v1/process-types", headers=auth_headers)
         duration = (time.perf_counter() - start) * 1000
         assert response.status_code == 200
         assert duration < 100  # Should be under 100ms
@@ -286,6 +294,7 @@ class TestProcessIntegrationE2E:
         response = client.put(
             f"/api/v1/crews/{crew_id}/process",
             json={"process_type": "panel", "process_config": {}},
+            headers=auth_headers,
         )
         duration = (time.perf_counter() - start) * 1000
         assert response.status_code == 200
