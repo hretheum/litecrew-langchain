@@ -237,7 +237,13 @@ class LiteCrew:
             # Create process executor if not already created
             if not self._process_executor:
                 # Add verbose and callbacks to config
-                config = self.process_config.copy()
+                # Handle both dict and ProcessConfig instances
+                if hasattr(self.process_config, '__dict__'):
+                    # It's a ProcessConfig instance, convert to dict
+                    config = vars(self.process_config).copy()
+                else:
+                    # It's already a dict
+                    config = self.process_config.copy()
                 config["verbose"] = self.verbose
                 config["callbacks"] = []
                 if self.event_emitter:
