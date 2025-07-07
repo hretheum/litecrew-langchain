@@ -568,15 +568,15 @@ async def test_quick_start():
     assert response.json()["estimated_time"] < 600
 ```
 
-## Blok 7.2: Web UI Process Builder (Dzień 38-39)
+## Blok 7.2: Web UI Process Builder (Dzień 38-39) ✅
 
 ### Zadania atomowe:
-- [ ] Dodaj process selector do dashboard
-- [ ] Implementuj dynamic config forms
-- [ ] Stwórz process wizard component
-- [ ] Dodaj live conversation view
-- [ ] Implementuj share links
-- [ ] Napisz frontend testy
+- [x] Dodaj process selector do dashboard
+- [x] Implementuj dynamic config forms
+- [x] Stwórz process wizard component
+- [x] Dodaj live conversation view
+- [x] Implementuj share links
+- [x] Napisz frontend testy
 
 ### Metryki sukcesu:
 - Wizard completion rate: >80%

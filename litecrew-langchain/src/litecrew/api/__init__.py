@@ -124,9 +124,14 @@ def create_app() -> FastAPI:
                 status_code=401,
             )
 
-        dashboard_path = os.path.join(static_dir, "index.html")
-        if os.path.exists(dashboard_path):
-            return FileResponse(dashboard_path)
+        # Try enhanced dashboard first, fall back to basic
+        enhanced_path = os.path.join(static_dir, "enhanced-dashboard.html")
+        basic_path = os.path.join(static_dir, "index.html")
+        
+        if os.path.exists(enhanced_path):
+            return FileResponse(enhanced_path)
+        elif os.path.exists(basic_path):
+            return FileResponse(basic_path)
         return {"message": "LiteCrew API", "docs": "/docs"}
 
     @app.get("/dashboard")

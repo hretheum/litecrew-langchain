@@ -7,6 +7,7 @@ from fastapi import APIRouter, HTTPException
 from ..models import CrewCreate, CrewResponse, QuickStartRequest, TemplateInfo
 from ..storage import get_storage
 from ..templates import get_template, list_templates
+from ..share_links import get_share_manager
 
 router = APIRouter()
 
@@ -113,3 +114,35 @@ async def quick_start_specific_template(
     """Create and start a crew from a specific template with inputs."""
     request = QuickStartRequest(template=template_name, **inputs)
     return await quick_start_crew(request)
+
+
+@router.post("/process-templates/share", response_model=Dict[str, str])
+async def create_share_link(config: Dict[str, Any]) -> Dict[str, str]:
+    """Create a shareable link for a process configuration."""
+    share_manager = get_share_manager()
+    
+    # For now, use embedded links (no server storage required)
+    share_url = share_manager.create_embedded_link(config, base_url="")
+    
+    return {
+        "share_url": share_url,
+        "message": "Share link created successfully"
+    }
+
+
+@router.get("/process-templates/shared/{link_id}")
+async def get_shared_config(link_id: str) -> Dict[str, Any]:
+    """Get process configuration from a share link."""
+    share_manager = get_share_manager()
+    
+    # Try to get from stored links first
+    config = share_manager.get_config_from_link(link_id)
+    
+    if config is None:
+        # Try to decode as embedded config
+        config = share_manager.get_config_from_embedded(link_id)
+    
+    if config is None:
+        raise HTTPException(status_code=404, detail="Shared configuration not found")
+    
+    return config
