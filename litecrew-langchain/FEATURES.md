@@ -197,24 +197,86 @@
 - Memory analysis
 - Performance profiling
 
-## 🚧 Coming Soon (Phase 7-9)
+## 🧠 Advanced Memory & Knowledge (Phase 7)
 
-### Advanced Memory & Knowledge
-- Long-term memory with persistence
-- RAG (Retrieval Augmented Generation)
-- Entity extraction and tracking
-- Knowledge base integration
+### Long-term Memory
+- **Persistent Storage** - SQLite-based memory persistence
+- **Importance Scoring** - Automatic importance calculation
+- **Memory Decay** - Time-based importance decay
+- **Memory Search** - Semantic search with <25ms latency
+- **Compression** - Automatic removal of low-importance items
+- **Versioning** - Memory history and restoration
 
-### Advanced Orchestration
-- Dynamic task planning
-- Goal decomposition
-- Reasoning chains
-- Conditional flows
-- Consensus mechanisms
+### Knowledge Base & RAG
+- **Document Ingestion** - Automatic chunking with overlap
+- **Semantic Embeddings** - Using sentence-transformers
+- **Vector Search** - FAISS integration (numpy fallback)
+- **Source Tracking** - Document source management
+- **Metadata Support** - Rich metadata for documents
+- **Update & Delete** - Document lifecycle management
 
-### Production Features
-- Testing framework
-- Advanced debugging
-- Human-in-the-loop
-- A/B testing
-- Quality metrics
+### Entity Memory
+- **Entity Extraction** - spaCy NER (regex fallback)
+- **Relationship Mapping** - Automatic relationship detection
+- **Entity Aliases** - Multiple names for same entity
+- **Contextual Layers** - Context-aware entity tracking
+- **Cross-session Support** - Entity persistence across sessions
+- **Privacy Controls** - Entity masking for sensitive data
+
+## 🚧 Coming Soon (Phase 8-9)
+
+### Phase 8: Advanced Orchestration
+- **Planning System** - Dynamic task planning and decomposition
+- **Conditional Flows** - If/else and loop constructs
+- **Consensus Mechanisms** - Multi-agent voting and agreement
+
+### Phase 9: Production Features
+- **Testing Framework** - Crew testing utilities
+- **Debugging Tools** - Execution tracing and replay
+- **Human-in-the-loop** - Approval flows and feedback
+
+## 🔧 Configuration Examples
+
+### Advanced Memory Configuration
+```python
+agent = LiteAgent(
+    role="Researcher",
+    goal="Analyze complex data",
+    backstory="Expert analyst",
+    # Enable all memory systems
+    enable_long_term_memory=True,
+    enable_knowledge_base=True,
+    enable_entity_memory=True,
+    memory_config={
+        "long_term": {
+            "max_items": 10000,
+            "importance_threshold": 0.3,
+            "decay_rate": 0.95
+        },
+        "knowledge_base": {
+            "chunk_size": 512,
+            "chunk_overlap": 50,
+            "model_name": "all-MiniLM-L6-v2"
+        },
+        "entity": {
+            "enable_privacy": True,
+            "cross_session": True
+        }
+    }
+)
+
+# Add knowledge
+agent.add_knowledge(
+    content="Important document content...",
+    source="research_paper.pdf",
+    metadata={"author": "John Doe", "year": 2024}
+)
+
+# Search knowledge
+results = agent.search_knowledge("specific topic", k=5)
+
+# Get memory statistics
+stats = agent.get_memory_stats()
+```
+
+## 🎯 Performance Targets
