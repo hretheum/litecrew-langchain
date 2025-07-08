@@ -10,10 +10,9 @@ from litecrew.processes import (
     ProcessFactory,
     ProcessPrompts,
 )
-from litecrew.task import LiteTask
 
 # Ensure process is registered
-from litecrew.processes.panel import PanelProcess as _PanelProcess
+from litecrew.task import LiteTask
 
 
 class TestPanelProcess:

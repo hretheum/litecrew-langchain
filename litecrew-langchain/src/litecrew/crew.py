@@ -256,14 +256,14 @@ class LiteCrew:
             # Execute process
             # Handle async execution
             import asyncio
-            
+
             # Create new event loop if needed
             try:
                 loop = asyncio.get_running_loop()
                 # We're in an async context, use async directly
                 process_result = asyncio.run_coroutine_threadsafe(
                     self._process_executor.execute(self.agents, self.tasks, inputs),
-                    loop
+                    loop,
                 ).result()
             except RuntimeError:
                 # No event loop, create one

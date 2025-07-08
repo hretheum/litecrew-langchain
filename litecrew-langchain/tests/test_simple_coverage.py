@@ -123,6 +123,7 @@ def test_cache_imports():
 
     # Test cache entry - CacheEntry requires timestamp
     import time
+
     entry = CacheEntry(value="test", timestamp=time.time(), ttl=60)
     assert entry.value == "test"
     assert entry.is_expired() is False
@@ -176,7 +177,7 @@ def test_state_imports():
         agents=[{"role": "TestAgent", "goal": "Test", "backstory": "Test"}],
         tasks=[{"description": "Test Task", "expected_output": "Test Output"}],
         process="sequential",
-        status="pending"
+        status="pending",
     )
     assert state.crew_id == "test-123"
     assert state.status == "pending"
@@ -185,10 +186,7 @@ def test_state_imports():
 
     # Test snapshot
     snapshot = StateSnapshot(
-        crew_id="test-123",
-        version=1,
-        timestamp=datetime.now(),
-        data={"state": "test"}
+        crew_id="test-123", version=1, timestamp=datetime.now(), data={"state": "test"}
     )
     assert snapshot.crew_id == "test-123"
     assert snapshot.version == 1
@@ -221,7 +219,7 @@ def test_config_module():
 def test_agent_extended():
     """Test more agent functionality."""
     from litecrew import LiteAgent
-    
+
     # Test agent with various configurations
     agent = LiteAgent(
         role="Advanced Agent",
@@ -230,18 +228,18 @@ def test_agent_extended():
         max_iter=5,
         max_rpm=100,
         verbose=True,
-        allow_delegation=True
+        allow_delegation=True,
     )
-    
+
     assert agent.role == "Advanced Agent"
     assert agent.max_iter == 5
     assert agent.max_rpm == 100
     assert agent.verbose is True
     assert agent.allow_delegation is True
-    
+
     # Test agent methods
     assert hasattr(agent, "execute")
-    
+
     # Test agent string representation
     assert "Advanced Agent" in str(agent)
 
@@ -249,32 +247,28 @@ def test_agent_extended():
 def test_crew_extended():
     """Test more crew functionality."""
     from litecrew import LiteAgent, LiteCrew, LiteTask
-    
+
     # Create agents
     agent1 = LiteAgent(role="Leader", goal="Lead", backstory="Leader")
     agent2 = LiteAgent(role="Worker", goal="Work", backstory="Worker")
-    
+
     # Create tasks
-    task = LiteTask(
-        description="Team task",
-        agent=agent1,
-        expected_output="Result"
-    )
-    
+    task = LiteTask(description="Team task", agent=agent1, expected_output="Result")
+
     # Create crew with various configurations
     crew = LiteCrew(
         agents=[agent1, agent2],
         tasks=[task],
         process="sequential",
         verbose=True,
-        memory=True
+        memory=True,
     )
-    
+
     assert crew.verbose is True
     assert crew.memory is True
     assert len(crew.agents) == 2
     assert len(crew.tasks) == 1
-    
+
     # Test crew id generation
     assert hasattr(crew, "id")
     assert crew.id is not None
@@ -284,30 +278,25 @@ def test_outputs_module():
     """Test outputs module."""
     from litecrew.crew import CrewOutput
     from litecrew.task import TaskOutput
-    
+
     # Create task outputs
     task_output1 = TaskOutput(
-        raw="Task 1 result",
-        task_id="task-1",
-        agent_role="Agent1"
+        raw="Task 1 result", task_id="task-1", agent_role="Agent1"
     )
-    
+
     task_output2 = TaskOutput(
-        raw="Task 2 result",
-        task_id="task-2",
-        agent_role="Agent2"
+        raw="Task 2 result", task_id="task-2", agent_role="Agent2"
     )
-    
+
     # Create crew output
     crew_output = CrewOutput(
-        raw="Final output",
-        tasks_output=[task_output1, task_output2]
+        raw="Final output", tasks_output=[task_output1, task_output2]
     )
-    
+
     assert crew_output.raw == "Final output"
     assert len(crew_output.tasks_output) == 2
     assert str(crew_output) == "Final output"
-    
+
     # Test json output
     json_output = crew_output.json()
     assert isinstance(json_output, str)
@@ -316,17 +305,13 @@ def test_outputs_module():
 def test_events_module():
     """Test events module."""
     from litecrew.events import EventEmitter, EventType
-    
+
     # Create event emitter
     emitter = EventEmitter()
-    
+
     # Test emit
-    emitter.emit(
-        EventType.TASK_STARTED,
-        {"task": "test_task"},
-        source="test"
-    )
-    
+    emitter.emit(EventType.TASK_STARTED, {"task": "test_task"}, source="test")
+
     # Test event types
     assert EventType.TASK_STARTED.value == "task.started"
     assert EventType.TASK_COMPLETED.value == "task.completed"
@@ -337,14 +322,14 @@ def test_events_module():
 def test_rate_limiter():
     """Test rate limiter functionality."""
     from litecrew.rate_limiter import RateLimiter
-    
+
     # Create rate limiter
     limiter = RateLimiter(max_rpm=60)
-    
+
     assert limiter.max_rpm == 60
     # Calculate expected requests per second
     assert limiter.max_rpm / 60 == 1.0
-    
+
     # Test that rate limiter has necessary attributes
     assert hasattr(limiter, "max_rpm")
     assert isinstance(limiter.max_rpm, int)

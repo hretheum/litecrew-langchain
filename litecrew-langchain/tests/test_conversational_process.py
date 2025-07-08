@@ -11,10 +11,9 @@ from litecrew.processes import (
     ProcessFactory,
     ProcessPrompts,
 )
-from litecrew.task import LiteTask
 
 # Ensure process is registered
-from litecrew.processes.conversational import ConversationalProcess as _ConvProcess
+from litecrew.task import LiteTask
 
 
 class TestConversationalProcess:

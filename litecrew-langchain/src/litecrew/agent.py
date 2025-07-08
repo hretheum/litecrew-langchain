@@ -17,7 +17,12 @@ from typing import (
     Union,
 )
 
-from langchain.agents import AgentExecutor, create_react_agent
+from langchain.agents import AgentExecutor
+try:
+    from langchain.agents import create_react_agent
+except ImportError:
+    # Fallback for older versions
+    from langchain.agents.react.agent import create_react_agent
 from langchain.memory import ConversationBufferMemory
 from langchain.prompts import PromptTemplate
 from langchain.tools import Tool

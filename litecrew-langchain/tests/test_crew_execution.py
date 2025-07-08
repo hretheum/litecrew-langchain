@@ -105,7 +105,9 @@ class TestCrewExecution:
         manager = LiteAgent(
             role="Manager", goal="Coordinate team", backstory="Team coordinator"
         )
-        manager.execute = Mock(side_effect=lambda *args, **kwargs: "Coordination result")
+        manager.execute = Mock(
+            side_effect=lambda *args, **kwargs: "Coordination result"
+        )
 
         # Worker agents
         worker1 = LiteAgent(role="Worker1", goal="Work", backstory="Worker")
@@ -224,7 +226,7 @@ class TestCrewExecution:
 
         # Execution should handle errors gracefully
         result = crew.kickoff()
-        
+
         # Check that the result indicates failure
         # The process should return a result with success=False rather than raising
         assert result is not None

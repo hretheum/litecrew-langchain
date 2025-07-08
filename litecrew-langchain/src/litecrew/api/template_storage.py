@@ -55,18 +55,22 @@ class TemplateStorage:
         for filename in os.listdir(self.storage_path):
             if filename.endswith(".json"):
                 template_name = filename[:-5]  # Remove .json extension
-                template_data = self.load_template(template_name)
-                if template_data:
-                    templates.append(
-                        {
-                            "name": template_name,
-                            "description": template_data.get("description", ""),
-                            "process_type": template_data.get(
-                                "process_type", "sequential"
-                            ),
-                            "custom": True,
-                        }
-                    )
+                try:
+                    template_data = self.load_template(template_name)
+                    if template_data:
+                        templates.append(
+                            {
+                                "name": template_name,
+                                "description": template_data.get("description", ""),
+                                "process_type": template_data.get(
+                                    "process_type", "sequential"
+                                ),
+                                "custom": True,
+                            }
+                        )
+                except Exception:
+                    # Skip corrupted files
+                    continue
 
         return templates
 

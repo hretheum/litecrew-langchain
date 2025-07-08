@@ -4,7 +4,7 @@ import json
 import os
 from collections import Counter, defaultdict
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 
 class TemplateAnalytics:
@@ -113,6 +113,36 @@ class TemplateAnalytics:
             "avg_execution_times": avg_execution_times,
             "recent_usage": recent_counts,
             "last_updated": datetime.utcnow().isoformat(),
+        }
+
+    def get_usage_stats(self) -> Dict[str, Any]:
+        """Get overall usage statistics."""
+        self._update_aggregated_stats()
+        aggregated = self.usage_data.get("aggregated", {})
+        total_usage = aggregated.get("total_usage", Counter())
+        success_rates = aggregated.get("success_rates", {})
+        
+        # Calculate total usage and unique templates
+        total_count = sum(total_usage.values())
+        unique_count = len(total_usage)
+        
+        # Calculate overall success rate
+        total_successes = 0
+        total_attempts = 0
+        for template, rate in success_rates.items():
+            count = total_usage.get(template, 0)
+            # rate is in percentage (0-100), so divide by 100
+            successes = count * rate / 100
+            total_successes += successes
+            total_attempts += count
+        
+        overall_success_rate = total_successes / total_attempts if total_attempts > 0 else 0.0
+        
+        return {
+            "total_usage": total_count,
+            "unique_templates": unique_count,
+            "success_rate": overall_success_rate,
+            "template_counts": dict(total_usage)
         }
 
     def get_popular_templates(self, limit: int = 10) -> List[Dict[str, Any]]:
@@ -233,6 +263,63 @@ class TemplateAnalytics:
                 set(e["template_name"] for e in recent_events)
             ),
         }
+
+    def get_recent_usage(self, limit: int = 10) -> List[Dict[str, Any]]:
+        """Get recent template usage events."""
+        events = self.usage_data.get("usage_events", [])
+        # Sort by timestamp descending and return latest events
+        sorted_events = sorted(events, key=lambda x: x["timestamp"], reverse=True)
+        return sorted_events[:limit]
+    
+    def cleanup_old_events(self, days: int = 90) -> None:
+        """Remove events older than specified days."""
+        cutoff_date = datetime.utcnow() - timedelta(days=days)
+        events = self.usage_data.get("usage_events", [])
+        
+        # Filter out old events
+        self.usage_data["usage_events"] = [
+            e for e in events 
+            if datetime.fromisoformat(e["timestamp"]) > cutoff_date
+        ]
+        
+        # Update aggregated stats and save
+        self._update_aggregated_stats()
+        self.save_usage_data()
+    
+    def export_analytics_report(self, format: str = "json") -> Union[str, Dict[str, Any]]:
+        """Export analytics report in specified format."""
+        report = {
+            "summary": self.get_usage_stats(),
+            "popular_templates": self.get_popular_templates(),
+            "recent_usage": self.get_recent_usage(),
+            "trends": self.get_usage_trends(),
+            "insights": self.generate_insights(),
+            "generated_at": datetime.utcnow().isoformat()
+        }
+        
+        if format == "json":
+            return report
+        elif format == "markdown":
+            # Generate markdown report
+            md = ["# Template Analytics Report", ""]
+            md.append(f"Generated at: {report['generated_at']}")
+            md.append("")
+            md.append("## Summary")
+            summary = report["summary"]
+            md.append(f"- Total Usage: {summary['total_usage']}")
+            md.append(f"- Unique Templates: {summary['unique_templates']}")
+            md.append(f"- Success Rate: {summary['success_rate']:.2%}")
+            md.append("")
+            md.append("## Popular Templates")
+            for t in report["popular_templates"]:
+                md.append(f"- {t['template_name']}: {t['usage_count']} uses")
+            md.append("")
+            md.append("## Insights")
+            for insight in report["insights"]:
+                md.append(f"- {insight}")
+            return "\n".join(md)
+        else:
+            raise ValueError(f"Unsupported format: {format}")
 
     def generate_insights(self) -> List[str]:
         """Generate insights based on usage patterns."""

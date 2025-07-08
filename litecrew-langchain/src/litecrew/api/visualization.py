@@ -66,22 +66,142 @@ class ProcessVisualizer:
             if agent not in stats:
                 stats[agent] = {
                     "turn_count": 0,
+                    "total_length": 0,
                     "phases": set(),
                     "first_turn": turn.timestamp,
                     "last_turn": turn.timestamp,
                 }
 
             stats[agent]["turn_count"] += 1
+            stats[agent]["total_length"] += len(turn.content)
             stats[agent]["phases"].add(turn.metadata.get("phase", "unknown"))
             stats[agent]["last_turn"] = turn.timestamp
 
-        # Convert sets to lists for JSON serialization
+        # Convert sets to lists for JSON serialization and calculate averages
         for agent in stats:
             stats[agent]["phases"] = list(stats[agent]["phases"])
             stats[agent]["first_turn"] = stats[agent]["first_turn"].isoformat()
             stats[agent]["last_turn"] = stats[agent]["last_turn"].isoformat()
+            stats[agent]["avg_length"] = stats[agent]["total_length"] / stats[agent]["turn_count"]
 
         return stats
+
+    @staticmethod
+    def create_phase_distribution(turns: List[ProcessTurn]) -> Dict[str, int]:
+        """Create phase distribution statistics."""
+        distribution = {}
+        for turn in turns:
+            phase = turn.metadata.get("phase", "unknown")
+            distribution[phase] = distribution.get(phase, 0) + 1
+        return distribution
+
+    @staticmethod
+    def create_mermaid_diagram(turns: List[ProcessTurn]) -> str:
+        """Create a Mermaid diagram from process turns."""
+        diagram = ["graph TD"]
+        
+        # Track phases and agents
+        phases_seen = set()
+        agent_nodes = set()
+        
+        for i, turn in enumerate(turns):
+            phase = turn.metadata.get("phase", "unknown")
+            phases_seen.add(phase)
+            agent_nodes.add(turn.agent)
+            
+            # Add phase and agent info
+            node_id = f"{turn.agent}_{i}"
+            label = f"{turn.agent}[{phase}]"
+            diagram.append(f"    {node_id}[{label}]")
+            
+            # Add transition to next turn
+            if i < len(turns) - 1:
+                next_id = f"{turns[i + 1].agent}_{i + 1}"
+                diagram.append(f"    {node_id} --> {next_id}")
+        
+        # Add phase indicators
+        for phase in phases_seen:
+            diagram.append(f"    %% Phase: {phase}")
+        
+        return "\n".join(diagram)
+
+    @staticmethod
+    def create_gantt_chart_data(turns: List[ProcessTurn]) -> List[Dict[str, Any]]:
+        """Create data for Gantt chart visualization."""
+        gantt_data = []
+        
+        if not turns:
+            return gantt_data
+            
+        start_time = turns[0].timestamp
+        
+        for i, turn in enumerate(turns):
+            duration = 1  # Default duration in seconds
+            if i < len(turns) - 1:
+                duration = (turns[i + 1].timestamp - turn.timestamp).total_seconds()
+            
+            start_seconds = (turn.timestamp - start_time).total_seconds()
+            gantt_data.append({
+                "agent": turn.agent,
+                "phase": turn.metadata.get("phase", "unknown"),
+                "start": start_seconds,
+                "end": start_seconds + duration,
+                "duration": duration,
+                "content_preview": turn.content[:50] + "..."
+            })
+        
+        return gantt_data
+
+    @staticmethod
+    def get_process_insights(result: ProcessResult) -> List[str]:
+        """Generate insights from process result."""
+        insights = []
+        
+        # Basic insights
+        insights.append(f"Process completed in {result.duration:.2f} seconds")
+        insights.append(f"Total {len(result.turns)} turns between agents")
+        
+        if result.tasks_output:
+            insights.append(f"Completed {len(result.tasks_output)} tasks")
+        
+        if result.error:
+            insights.append(f"Process ended with error: {result.error}")
+        
+        # Agent participation
+        agent_counts = {}
+        for turn in result.turns:
+            agent_counts[turn.agent] = agent_counts.get(turn.agent, 0) + 1
+        
+        most_active = max(agent_counts, key=agent_counts.get)
+        insights.append(f"Most active agent: {most_active} ({agent_counts[most_active]} turns)")
+        
+        return insights
+
+    @staticmethod
+    def format_for_export(result: ProcessResult) -> Dict[str, Any]:
+        """Format process result for export."""
+        return {
+            "metadata": {
+                "success": result.success,
+                "duration": result.duration,
+                "error": result.error,
+                "timestamp": result.turns[0].timestamp.isoformat() if result.turns else None,
+                "total_turns": len(result.turns),
+                "tasks_completed": len(result.tasks_output)
+            },
+            "turns": [
+                {
+                    "turn_number": i + 1,
+                    "agent": turn.agent,
+                    "content": turn.content,
+                    "timestamp": turn.timestamp.isoformat(),
+                    "metadata": turn.metadata
+                }
+                for i, turn in enumerate(result.turns)
+            ],
+            "tasks_output": result.tasks_output,
+            "final_output": result.raw
+        }
 
     @staticmethod
     def create_process_flow(
@@ -120,7 +240,13 @@ class ProcessVisualizer:
     @staticmethod
     def create_debate_visualization(turns: List[ProcessTurn]) -> Dict[str, Any]:
         """Create specialized visualization for debate process."""
-        debate_data = {"rounds": {}, "positions": {}, "arguments_count": {}}
+        debate_data = {
+            "rounds": {}, 
+            "positions": {}, 
+            "arguments_count": {},
+            "for_arguments": [],
+            "against_arguments": []
+        }
 
         for turn in turns:
             # Extract round information
@@ -149,6 +275,20 @@ class ProcessVisualizer:
             debate_data["arguments_count"][agent] = (
                 debate_data["arguments_count"].get(agent, 0) + 1
             )
+            
+            # Categorize arguments
+            if position == "for" or "for" in turn.content.lower():
+                debate_data["for_arguments"].append({
+                    "agent": turn.agent,
+                    "content": turn.content[:200] + "..." if len(turn.content) > 200 else turn.content,
+                    "round": round_num
+                })
+            elif position == "against" or "against" in turn.content.lower():
+                debate_data["against_arguments"].append({
+                    "agent": turn.agent,
+                    "content": turn.content[:200] + "..." if len(turn.content) > 200 else turn.content,
+                    "round": round_num
+                })
 
         return debate_data
 
