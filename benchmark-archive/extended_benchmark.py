@@ -118,9 +118,9 @@ try:
         from langchain.tools import Tool
         from langchain.llms.fake import FakeListLLM
         framework = "langchain"
-    elif venv_name == "pyautogen":
+    elif venv_name == "ag2":
         import autogen
-        framework = "pyautogen"
+        framework = "ag2"
     else:
         framework = "unknown"
     
@@ -183,7 +183,7 @@ try:
         agent = create_react_agent(llm, tools, prompt)
         result = "Agent created successfully"
         
-    elif framework == "pyautogen":
+    elif framework == "ag2":
         # Create simple autogen agent
         config_list = [{
             "model": "gpt-4",
@@ -404,7 +404,7 @@ def main():
         'crewai_full': 'crewai_full', 
         'litecrew_slim': 'litecrew_slim',
         'langchain': 'langchain',
-        'pyautogen': 'pyautogen'
+        'ag2': 'ag2'
     }
     
     # Determine which frameworks to test

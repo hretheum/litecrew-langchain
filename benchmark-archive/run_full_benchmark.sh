@@ -90,9 +90,9 @@ deactivate
 log_success "LangChain installed"
 
 # PyAutoGen
-python -m venv envs/pyautogen
-source envs/pyautogen/bin/activate
-pip install --quiet pyautogen
+python -m venv envs/ag2
+source envs/ag2/bin/activate
+pip install --quiet ag2
 deactivate
 log_success "PyAutoGen installed"
 
@@ -118,7 +118,7 @@ METRICS_PID=$!
 log_success "Metrics collector started (PID: $METRICS_PID)"
 
 # Run each framework
-FRAMEWORKS=("crewai" "langchain" "pyautogen" "litecrew")
+FRAMEWORKS=("crewai" "langchain" "ag2" "litecrew")
 ITERATIONS=3
 
 for framework in "${FRAMEWORKS[@]}"; do

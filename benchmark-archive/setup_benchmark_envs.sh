@@ -7,7 +7,7 @@ echo "📦 Setting up benchmark environments..."
 echo "Creating virtual environments..."
 python3 -m venv envs/crewai_official
 python3 -m venv envs/langchain
-python3 -m venv envs/pyautogen
+python3 -m venv envs/ag2
 python3 -m venv envs/crewai_full  # Pełny CrewAI dla porównania
 python3 -m venv envs/litecrew_slim  # Twój odchudzony fork
 
@@ -25,8 +25,8 @@ deactivate
 
 # Install PyAutoGen
 echo "Installing PyAutoGen..."
-source envs/pyautogen/bin/activate
-pip install pyautogen
+source envs/ag2/bin/activate
+pip install ag2
 deactivate
 
 # CrewAI Full - identyczny jak official dla porównania
@@ -62,4 +62,4 @@ echo "   - crewai_official: Oficjalny CrewAI z PyPI"
 echo "   - crewai_full: Ten sam CrewAI (dla double-check)" 
 echo "   - litecrew_slim: TWÓJ ODCHUDZONY FORK"
 echo "   - langchain: LangChain"
-echo "   - pyautogen: Microsoft AutoGen"
+echo "   - ag2: Microsoft AutoGen"
