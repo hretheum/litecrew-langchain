@@ -19,11 +19,11 @@ def main():
     
     parser = argparse.ArgumentParser(description='Visual benchmark for agent frameworks')
     parser.add_argument('frameworks', nargs='*',
-                       help='Frameworks to test: crewai, crewai_full, litecrew_slim, langchain, pyautogen (default: all)')
+                       help='Frameworks to test: crewai, crewai_full, litecrew_slim, langchain, ag2 (default: all)')
     args = parser.parse_args()
     
     # Validate framework choices
-    valid_frameworks = ['crewai', 'crewai_full', 'litecrew_slim', 'langchain', 'pyautogen']
+    valid_frameworks = ['crewai', 'crewai_full', 'litecrew_slim', 'langchain', 'ag2']
     if args.frameworks:
         for f in args.frameworks:
             if f not in valid_frameworks:
@@ -72,9 +72,9 @@ try:
     elif venv_name == "langchain":
         import langchain
         framework = "langchain"
-    elif venv_name == "pyautogen":
+    elif venv_name == "ag2":
         import autogen
-        framework = "pyautogen"
+        framework = "ag2"
     else:
         framework = "unknown"
         
@@ -133,7 +133,7 @@ print(json.dumps(result))
         'crewai_full': 'crewai_full',
         'litecrew_slim': 'litecrew_slim',
         'langchain': 'langchain',
-        'pyautogen': 'pyautogen'
+        'ag2': 'ag2'
     }
     
     # Determine which frameworks to test
@@ -141,7 +141,7 @@ print(json.dumps(result))
         frameworks = [framework_map[f] for f in args.frameworks]
         console.print(f"[yellow]Testing selected frameworks: {', '.join(args.frameworks)}[/yellow]\n")
     else:
-        frameworks = ["crewai_official", "crewai_full", "litecrew_slim", "langchain", "pyautogen"]
+        frameworks = ["crewai_official", "crewai_full", "litecrew_slim", "langchain", "ag2"]
         console.print("[yellow]Testing all frameworks[/yellow]\n")
     
     for env in track(frameworks, description="Testing frameworks..."):

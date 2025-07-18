@@ -39,7 +39,7 @@ def setup_environments():
     frameworks = {
         'crewai_official': 'crewai==0.134.0',
         'langchain': 'langchain langchain-openai',
-        'pyautogen': 'pyautogen',
+        'ag2': 'ag2',
         'litecrew_fork': '../crewai-fork'  # Local fork
     }
     
@@ -65,7 +65,7 @@ def run_benchmark():
     results = []
     
     # Test każdego frameworka
-    for env_name in ['crewai_official', 'langchain', 'pyautogen', 'litecrew_fork']:
+    for env_name in ['crewai_official', 'langchain', 'ag2', 'litecrew_fork']:
         print(f"\n🧪 Testing {env_name}...")
         
         start_time = time.time()
@@ -83,7 +83,7 @@ try:
     elif '{env_name}' == 'langchain':
         from langchain.agents import AgentExecutor
         print("SUCCESS")
-    elif '{env_name}' == 'pyautogen':
+    elif '{env_name}' == 'ag2':
         import autogen
         print("SUCCESS")
 except Exception as e:

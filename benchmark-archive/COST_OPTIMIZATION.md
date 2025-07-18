@@ -44,7 +44,7 @@ def calculate_migration_roi(current_framework, target_framework, num_instances):
     costs = {
         'crewai': {'memory_mb': 208, 'startup_s': 3.268},
         'langchain': {'memory_mb': 17, 'startup_s': 0.008},
-        'pyautogen': {'memory_mb': 17, 'startup_s': 0.266}
+        'ag2': {'memory_mb': 17, 'startup_s': 0.266}
     }
     
     # Memory cost savings (monthly)
@@ -77,7 +77,7 @@ tier_1_hot_path:
     - Latency sensitive
   
 tier_2_batch_processing:
-  framework: pyautogen
+  framework: ag2
   characteristics:
     - Scheduled jobs
     - Background processing
@@ -99,7 +99,7 @@ class CostOptimizedAgentPool:
     def __init__(self):
         self.pools = {
             'langchain': self._create_pool('langchain', size=20),
-            'pyautogen': self._create_pool('pyautogen', size=10),
+            'ag2': self._create_pool('ag2', size=10),
             'crewai': self._create_pool('crewai', size=2)  # Minimal due to memory
         }
     
@@ -111,10 +111,10 @@ class CostOptimizedAgentPool:
         if priority == 'high':
             return self.pools['langchain'].pop()
         elif priority == 'low':
-            return self.pools['pyautogen'].pop()
+            return self.pools['ag2'].pop()
         else:
             # Route based on availability
-            for framework in ['langchain', 'pyautogen', 'crewai']:
+            for framework in ['langchain', 'ag2', 'crewai']:
                 if self.pools[framework]:
                     return self.pools[framework].pop()
 ```
@@ -147,7 +147,7 @@ def lambda_handler(event, context):
 # Memory allocation recommendations
 LAMBDA_MEMORY_CONFIG = {
     'langchain': 128,   # MB - Minimal needed
-    'pyautogen': 256,   # MB - Safe margin
+    'ag2': 256,   # MB - Safe margin
     'crewai': 3008      # MB - Maximum Lambda memory!
 }
 ```
@@ -181,11 +181,11 @@ def route_request(request):
     if request.latency_requirement < 100:  # ms
         return 'lambda-langchain'
     elif request.is_batch:
-        return 'ecs-pyautogen'
+        return 'ecs-ag2'
     elif request.is_experimental:
         return 'reserved-crewai'
     else:
-        return 'ecs-pyautogen'  # Default
+        return 'ecs-ag2'  # Default
 ```
 
 ## Strategy 6: Monitoring and Alerting
@@ -196,7 +196,7 @@ class FrameworkCostMonitor:
     def __init__(self):
         self.baselines = {
             'langchain': {'memory_mb': 17, 'cpu_percent': 5},
-            'pyautogen': {'memory_mb': 17, 'cpu_percent': 7},
+            'ag2': {'memory_mb': 17, 'cpu_percent': 7},
             'crewai': {'memory_mb': 208, 'cpu_percent': 15}
         }
     
@@ -223,7 +223,7 @@ development:
     - Use spot instances
 
 staging:
-  primary_framework: pyautogen
+  primary_framework: ag2
   secondary_framework: langchain
   restrictions:
     - Max 10 instances
@@ -232,7 +232,7 @@ staging:
 
 production:
   primary_framework: langchain
-  fallback_framework: pyautogen
+  fallback_framework: ag2
   restrictions:
     - Auto-scaling enabled
     - Multi-region deployment

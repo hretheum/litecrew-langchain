@@ -41,7 +41,7 @@
         "status": "success"
       },
       {
-        "framework": "pyautogen",
+        "framework": "ag2",
         "import_time": 0.508,
         "package_size_mb": 40.7,
         "status": "success"

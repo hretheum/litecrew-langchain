@@ -39,7 +39,7 @@ deactivate
 # Test 3: PyAutoGen
 python3.11 -m venv test_autogen
 source test_autogen/bin/activate
-pip install pyautogen
+pip install ag2
 python3 -c "
 import time
 import sys
